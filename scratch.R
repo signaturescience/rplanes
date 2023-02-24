@@ -182,7 +182,6 @@ plane_diff <- function(.location, .input, .seed) {
     ## ... because the lag subtraction below will always return NA for the first element
     c(tmp_seed$last_value, tmp_seed$last_value, .)
 
-  tmp_vals - dplyr::lag(tmp_vals,1)
   all_diffs <- tmp_vals - dplyr::lag(tmp_vals,1)
   tst <- any(abs(all_diffs) > tmp_seed$diff$max, na.rm = TRUE)
 
