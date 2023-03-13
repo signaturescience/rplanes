@@ -83,7 +83,7 @@ to_signal <- function(.input,
 }
 
 
-## TODO: maek sure these helpers are actually working as expected
+## TODO: make sure these helpers are actually working as expected
 ## helpers
 is_observed <- function(x) {
   all(class(x) == c("signal","observed"))
@@ -109,11 +109,15 @@ seed_engine <- function(.input, .location, .cut_date=NULL) {
     .cut_date <- as.Date(.cut_date, format = "%Y-%m-%d")
   }
 
-  ## get vector of observed values for the outcome
-  tmp_obs <-
+  ## use cut date to get
+  tmp_data <-
     .input$data %>%
     dplyr::filter(location == .location) %>%
-    dplyr::filter(date <= .cut_date) %>%
+    dplyr::filter(date <= .cut_date)
+
+  ## get vector of observed values for the outcome
+  tmp_obs <-
+    tmp_data %>%
     dplyr::pull(.input$outcome)
 
   ## return max diff
@@ -139,7 +143,7 @@ seed_engine <- function(.input, .location, .cut_date=NULL) {
       range = list(min = min_val, max = max_val),
       last_value = last_val,
       ## TODO: add other metadata to this list
-      meta = list(cut_date = .cut_date, resolution = .input$resolution, date_range = list(min = min(.input$data$date), max = max(.input$data$date)))
+      meta = list(cut_date = .cut_date, resolution = .input$resolution, date_range = list(min = min(tmp_data$date), max = max(tmp_data$date)))
     )
 
   return(l)
@@ -159,51 +163,86 @@ plane_diff <- function(.location, .input, .seed) {
   ## TODO: add check for .location in names of seed
   tmp_seed <- .seed[[.location]]
 
+  print(tmp_seed$meta$cut_date)
   ## check for class of input to see if it is observed
   ## if so ... filter on seed dates to so that we're comparing the observed of interest to seed vals
+  ## TODO: do we need a check that the observed data doesn't overlap with seed ?
   if(is_observed(.input)) {
     tmp_dat <-
       .input$data %>%
       dplyr::filter(location == .location) %>%
-      dplyr::filter(date < as.Date(tmp_seed$meta$cut_date, format = "%Y-%m-%d"))
+      dplyr::filter(date > as.Date(tmp_seed$meta$cut_date, format = "%Y-%m-%d"))
+    print(tmp_dat)
+
+    ## pull the point estimate and concatenate with most recent value in seed
+    tmp_vals <-
+      tmp_dat %>%
+      dplyr::pull(.input$outcome) %>%
+      ## NOTE: need to pad here with repeat last value ...
+      ## ... because the lag subtraction below will always return NA for the first element
+      c(tmp_seed$last_value, tmp_seed$last_value, .)
+
   } else if(is_forecast(.input)) {
     ## check for class to see if it is forecast
-    ## if so ... make sure cut date immediately precedes the first forecast horizon
+    ## if so ... a couple checks for cut date
+    ## we can use horizon 1 data for these checks
     tmp_dat_h1 <-
       .input$data %>%
       dplyr::filter(location == .location) %>%
       dplyr::filter(horizon == 1)
 
+    ## first check to see if the date range in seed overlaps the forecast
+    if(tmp_seed$meta$resolution == "days") {
+      if((tmp_seed$meta$date_range$max - tmp_dat_h1$date) > 0) {
+        stop("The seed data extends beyond the horizon forecasted ...")
+      }
+    } else if (tmp_seed$meta$resolution == "weeks") {
+      if((tmp_seed$meta$date_range$max - tmp_dat_h1$date) > 7) {
+        stop("The seed data extends beyond the horizon forecasted ...")
+      }
+    } else if (tmp_seed$meta$resolution == "months") {
+      if((tmp_seed$meta$date_range$max - tmp_dat_h1$date) > 31) {
+        stop("The seed data extends beyond the horizon forecasted ...")
+      }
+    }
+
+    ## then make sure cut date immediately precedes the first forecast horizon
     ## IN PROGRESS
     ## get epiweek of cut date (and epiyear??? to handle spanning years)
     ## same for h1 date
     ## check that diff is no greater > 1
     ## or just check that dates minus each other are > 7
     if(tmp_seed$meta$resolution == "days") {
-      if((tmp_dat_h1$date - tmp_seed$meta$cut_date) > 1) {
+      if((tmp_dat_h1$date - tmp_seed$meta$date_range$max) > 1) {
         stop("The cut date is too far back ...")
       }
     } else if (tmp_seed$meta$resolution == "weeks") {
-      if((tmp_dat_h1$date - tmp_seed$meta$cut_date) > 7) {
+      if((tmp_dat_h1$date - tmp_seed$meta$date_range$max) > 7) {
         stop("The cut date is too far back ...")
         }
       } else if (tmp_seed$meta$resolution == "months") {
-        if((tmp_dat_h1$date - tmp_seed$meta$cut_date) > 31) {
+        if((tmp_dat_h1$date - tmp_seed$meta$date_range$max) > 31) {
           stop("The cut date is too far back ...")
         }
-    }
-    ## NOTE: this is a little tricky because could be week before ... or day before
-    ## might need to write this conditional on the value of resolution passed in to_signal
+      }
 
-    stop("FORECAST DIFF STILL NEEDS TO BE IMPLEMENTED")
+    ## after all the checks ...
+    ## return the forecast data (with the filter on cut date jic)
+    tmp_dat <-
+      .input$data %>%
+      dplyr::filter(location == .location) %>%
+      dplyr::filter(date > as.Date(tmp_seed$meta$cut_date, format = "%Y-%m-%d"))
+
+    ## pull the point estimate and concatenate with most recent value in seed
+    tmp_vals <-
+      tmp_dat %>%
+      dplyr::pull("point") %>%
+      ## NOTE: need to pad here with repeat last value ...
+      ## ... because the lag subtraction below will always return NA for the first element
+      c(tmp_seed$last_value, tmp_seed$last_value, .)
+
   }
 
-  tmp_vals <-
-    tmp_dat %>%
-    dplyr::pull(.input$outcome) %>%
-    ## NOTE: need to pad here with repeat last value ...
-    ## ... because the lag subtraction below will always return NA for the first element
-    c(tmp_seed$last_value, tmp_seed$last_value, .)
 
   all_diffs <- tmp_vals - dplyr::lag(tmp_vals,1)
   tst <- any(abs(all_diffs) > tmp_seed$diff$max, na.rm = TRUE)
@@ -239,12 +278,11 @@ prepped_observed <- to_signal(tmp_hosp, .outcome = "flu.admits", .type = "observ
 prepped_forecast <- read_forecast("https://raw.githubusercontent.com/signaturescience/Flusight-forecast-data/SigSci-TSENS/data-forecasts/SigSci-TSENS/2022-05-16-SigSci-TSENS.csv") %>%
   to_signal(., .outcome = "flu.admits", .type = "forecast", .horizon = 4)
 
-# prepped_seed <- plane_seed(prepped_observed, .cut_date = "2022-04-01")
-prepped_seed <- plane_seed(prepped_observed, .cut_date = NULL)
+# prepped_seed <- plane_seed(prepped_observed, .cut_date = NULL)
+prepped_seed <- plane_seed(prepped_observed, .cut_date = "2022-05-15")
 
 prepped_seed
 
 plane_diff(.location = "10", .input = prepped_observed, .seed = prepped_seed)
 plane_diff(.location = "56", .input = prepped_observed, .seed = prepped_seed)
-## TODO: implement
 plane_diff(.location = "10", .input = prepped_forecast, .seed = prepped_seed)
