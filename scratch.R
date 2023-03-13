@@ -138,9 +138,8 @@ seed_engine <- function(.input, .location, .cut_date=NULL) {
       diff = list(max = max_diff),
       range = list(min = min_val, max = max_val),
       last_value = last_val,
-      meta = list(cut_date = .cut_date)
       ## TODO: add other metadata to this list
-      # meta = list(resolution = "get resolution from observed", date_range = "range of dates in input data")
+      meta = list(cut_date = .cut_date, resolution = .input$resolution, date_range = list(min = min(.input$data$date), max = max(.input$data$date)))
     )
 
   return(l)
@@ -170,8 +169,32 @@ plane_diff <- function(.location, .input, .seed) {
   } else if(is_forecast(.input)) {
     ## check for class to see if it is forecast
     ## if so ... make sure cut date immediately precedes the first forecast horizon
+    tmp_dat_h1 <-
+      .input$data %>%
+      dplyr::filter(location == .location) %>%
+      dplyr::filter(horizon == 1)
+
+    ## IN PROGRESS
+    ## get epiweek of cut date (and epiyear??? to handle spanning years)
+    ## same for h1 date
+    ## check that diff is no greater > 1
+    ## or just check that dates minus each other are > 7
+    if(tmp_seed$meta$resolution == "days") {
+      if((tmp_dat_h1$date - tmp_seed$meta$cut_date) > 1) {
+        stop("The cut date is too far back ...")
+      }
+    } else if (tmp_seed$meta$resolution == "weeks") {
+      if((tmp_dat_h1$date - tmp_seed$meta$cut_date) > 7) {
+        stop("The cut date is too far back ...")
+        }
+      } else if (tmp_seed$meta$resolution == "months") {
+        if((tmp_dat_h1$date - tmp_seed$meta$cut_date) > 31) {
+          stop("The cut date is too far back ...")
+        }
+    }
     ## NOTE: this is a little tricky because could be week before ... or day before
     ## might need to write this conditional on the value of resolution passed in to_signal
+
     stop("FORECAST DIFF STILL NEEDS TO BE IMPLEMENTED")
   }
 
