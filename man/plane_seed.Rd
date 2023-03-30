@@ -4,12 +4,12 @@
 \alias{plane_seed}
 \title{driver to create seeds for every location in data}
 \usage{
-plane_seed(.input, .cut_date = NULL)
+plane_seed(input, cut_date = NULL)
 }
 \arguments{
-\item{.input}{fixme}
+\item{input}{fixme}
 
-\item{.cut_date}{fixme}
+\item{cut_date}{fixme}
 }
 \description{
 driver to create seeds for every location in data

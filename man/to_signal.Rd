@@ -5,23 +5,23 @@
 \title{Title}
 \usage{
 to_signal(
-  .input,
-  .outcome,
-  .type = "observed",
-  .resolution = "weeks",
-  .horizon = NULL
+  input,
+  outcome,
+  type = "observed",
+  resolution = "weeks",
+  horizon = NULL
 )
 }
 \arguments{
-\item{.input}{needs location (FIPS); date (in YYYY-mm-dd format); outcome value}
+\item{input}{needs location (FIPS); date (in YYYY-mm-dd format); outcome value}
 
-\item{.outcome}{fixme}
+\item{outcome}{fixme}
 
-\item{.type}{fixme}
+\item{type}{fixme}
 
-\item{.resolution}{fixme}
+\item{resolution}{fixme}
 
-\item{.horizon}{fixme}
+\item{horizon}{fixme}
 }
 \description{
 Title

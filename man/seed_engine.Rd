@@ -4,14 +4,14 @@
 \alias{seed_engine}
 \title{helper function used in plane_seed()}
 \usage{
-seed_engine(.input, .location, .cut_date = NULL)
+seed_engine(input, location, cut_date = NULL)
 }
 \arguments{
-\item{.input}{fixme}
+\item{input}{fixme}
 
-\item{.location}{fixme}
+\item{location}{fixme}
 
-\item{.cut_date}{fixme}
+\item{cut_date}{fixme}
 }
 \description{
 helper function used in plane_seed()
