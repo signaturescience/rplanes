@@ -1,9 +1,9 @@
 #' Title
 #' @param .input needs location (FIPS); date (in YYYY-mm-dd format); outcome value
-#' @param .outcome
-#' @param .type
-#' @param .resolution
-#' @param .horizon
+#' @param .outcome fixme
+#' @param .type fixme
+#' @param .resolution fixme
+#' @param .horizon fixme
 #'
 #' @return
 #' @export
