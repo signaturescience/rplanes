@@ -1,38 +1,38 @@
 #' helper function used in plane_seed()
 #'
-#' @param .input fixme
-#' @param .location fixme
-#' @param .cut_date fixme
+#' @param input fixme
+#' @param location fixme
+#' @param cut_date fixme
 #'
 #' @return
 #' @export
 #'
 #' @examples
-seed_engine <- function(.input, .location, .cut_date=NULL) {
+seed_engine <- function(input, location, cut_date=NULL) {
 
   ## check class for signal, observed
-  stopifnot(is_observed(.input))
+  stopifnot(is_observed(input))
   ## if no cut date is provided then just use the max
-  if(is.null(.cut_date)) {
-    .cut_date <-
-      .input$data %>%
-      dplyr::filter(.data$location == .location) %>%
+  if(is.null(cut_date)) {
+    cut_date <-
+      input$data %>%
+      dplyr::filter(.data$location == .env$location) %>%
       dplyr::pull(date) %>%
       max(.)
   } else {
-    .cut_date <- as.Date(.cut_date, format = "%Y-%m-%d")
+    cut_date <- as.Date(cut_date, format = "%Y-%m-%d")
   }
 
   ## use cut date to get
   tmp_data <-
-    .input$data %>%
-    dplyr::filter(.data$location == .location) %>%
-    dplyr::filter(.data$date <= .cut_date)
+    input$data %>%
+    dplyr::filter(.data$location == .env$location) %>%
+    dplyr::filter(.data$date <= cut_date)
 
   ## get vector of observed values for the outcome
   tmp_obs <-
     tmp_data %>%
-    dplyr::pull(.input$outcome)
+    dplyr::pull(input$outcome)
 
   ## return max diff
   max_diff <-
@@ -57,7 +57,7 @@ seed_engine <- function(.input, .location, .cut_date=NULL) {
       range = list(min = min_val, max = max_val),
       last_value = last_val,
       ## TODO: add other metadata to this list
-      meta = list(cut_date = .cut_date, resolution = .input$resolution, date_range = list(min = min(tmp_data$date), max = max(tmp_data$date)))
+      meta = list(cut_date = cut_date, resolution = input$resolution, date_range = list(min = min(tmp_data$date), max = max(tmp_data$date)))
     )
 
   return(l)
@@ -65,16 +65,16 @@ seed_engine <- function(.input, .location, .cut_date=NULL) {
 
 #' driver to create seeds for every location in data
 #'
-#' @param .input fixme
-#' @param .cut_date fixme
+#' @param input fixme
+#' @param cut_date fixme
 #'
 #' @return
 #' @export
 #'
 #' @examples
-plane_seed <- function(.input, .cut_date=NULL) {
-  locs <- unique(.input$data$location)
+plane_seed <- function(input, cut_date=NULL) {
+  locs <- unique(input$data$location)
 
-  purrr::map(locs, function(x) seed_engine(.input = .input, .location = x, .cut_date = .cut_date)) %>%
+  purrr::map(locs, function(x) seed_engine(input = input, location = x, cut_date = cut_date)) %>%
     purrr::set_names(locs)
 }

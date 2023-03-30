@@ -23,55 +23,55 @@ read_forecast <- function(.file, .pi_width=95) {
 }
 
 
-## .input needs location (FIPS); date (in YYYY-mm-dd format); outcome value
-to_signal <- function(.input,
-                      .outcome,
-                      .type="observed",
-                      .resolution = "weeks",
-                      .horizon = NULL) {
+## input needs location (FIPS); date (in YYYY-mm-dd format); outcome value
+to_signal <- function(input,
+                      outcome,
+                      type="observed",
+                      resolution = "weeks",
+                      horizon = NULL) {
 
   ## arg match if we want
 
-  if(.type == "observed") {
+  if(type == "observed") {
     ## return special signal, observed list
 
     ## create exhaustive tibble with range of dates given specified resolution and all observations
     ## use this to check for data gaps
     tmp_expanded <-
-      tidyr::crossing(date = seq(min(.input$date),max(.input$date),by=.resolution),
-                      location = unique(.input$location))
+      tidyr::crossing(date = seq(min(input$date),max(input$date),by=resolution),
+                      location = unique(input$location))
 
     ## join to see if there are any gaps in data by resolution
-    tmp_joined <- dplyr::left_join(tmp_expanded, .input)
+    tmp_joined <- dplyr::left_join(tmp_expanded, input)
 
-    check_gaps <- any(is.na(tmp_joined[,.outcome]))
+    check_gaps <- any(is.na(tmp_joined[,outcome]))
 
     if(check_gaps) {
       warning("There are gaps in the observed data for one or more locations.")
     }
 
     l <-
-      list(data = .input,
+      list(data = input,
            gaps = check_gaps,
-           outcome = .outcome,
-           resolution = .resolution)
+           outcome = outcome,
+           resolution = resolution)
 
     class(l) <- c("signal","observed")
     return(l)
 
-  } else if (.type == "forecast") {
+  } else if (type == "forecast") {
 
     ## TODO: add the forecast object prep here
     ## return special signal, forecast list with attributes (like horizon)
     ## check here that the number of horizons in input forecast matches the horizons specified
 
-    stopifnot(!is.null(.horizon))
+    stopifnot(!is.null(horizon))
 
     l <-
-      list(data = .input,
-           horizon = .horizon,
-           outcome = .outcome,
-           resolution = .resolution)
+      list(data = input,
+           horizon = horizon,
+           outcome = outcome,
+           resolution = resolution)
 
     class(l) <- c("signal","forecast")
     return(l)
@@ -94,31 +94,31 @@ is_forecast <- function(x) {
 }
 
 ## helper function used in plane_seed()
-seed_engine <- function(.input, .location, .cut_date=NULL) {
+seed_engine <- function(input, location, cut_date=NULL) {
 
   ## check class for signal, observed
-  stopifnot(is_observed(.input))
+  stopifnot(is_observed(input))
   ## if no cut date is provided then just use the max
-  if(is.null(.cut_date)) {
-    .cut_date <-
-      .input$data %>%
-      dplyr::filter(.data$location == .location) %>%
+  if(is.null(cut_date)) {
+    cut_date <-
+      input$data %>%
+      dplyr::filter(.data$location == .env$location) %>%
       dplyr::pull(date) %>%
       max(.)
   } else {
-    .cut_date <- as.Date(.cut_date, format = "%Y-%m-%d")
+    cut_date <- as.Date(cut_date, format = "%Y-%m-%d")
   }
 
   ## use cut date to get
   tmp_data <-
-    .input$data %>%
-    dplyr::filter(.data$location == .location) %>%
-    dplyr::filter(.data$date <= .cut_date)
+    input$data %>%
+    dplyr::filter(.data$location == .env$location) %>%
+    dplyr::filter(.data$date <= cut_date)
 
   ## get vector of observed values for the outcome
   tmp_obs <-
     tmp_data %>%
-    dplyr::pull(.input$outcome)
+    dplyr::pull(input$outcome)
 
   ## return max diff
   max_diff <-
@@ -143,52 +143,52 @@ seed_engine <- function(.input, .location, .cut_date=NULL) {
       range = list(min = min_val, max = max_val),
       last_value = last_val,
       ## TODO: add other metadata to this list
-      meta = list(cut_date = .cut_date, resolution = .input$resolution, date_range = list(min = min(tmp_data$date), max = max(tmp_data$date)))
+      meta = list(cut_date = cut_date, resolution = input$resolution, date_range = list(min = min(tmp_data$date), max = max(tmp_data$date)))
     )
 
   return(l)
 }
 
 ## driver to create seeds for every location in data
-plane_seed <- function(.input, .cut_date=NULL) {
-  locs <- unique(.input$data$location)
+plane_seed <- function(input, cut_date=NULL) {
+  locs <- unique(input$data$location)
 
-  purrr::map(locs, function(x) seed_engine(.input = .input, .location = x, .cut_date = .cut_date)) %>%
+  purrr::map(locs, function(x) seed_engine(input = input, location = x, cut_date = cut_date)) %>%
     purrr::set_names(locs)
 }
 
 ## plane funs take a forecast object OR observed object and a seed
-plane_diff <- function(.location, .input, .seed) {
+plane_diff <- function(location, input, seed) {
 
-  ## TODO: add check for .location in names of seed
-  tmp_seed <- .seed[[.location]]
+  ## TODO: add check for location in names of seed
+  tmp_seed <- seed[[location]]
 
   print(tmp_seed$meta$cut_date)
   ## check for class of input to see if it is observed
   ## if so ... filter on seed dates to so that we're comparing the observed of interest to seed vals
   ## TODO: do we need a check that the observed data doesn't overlap with seed ?
-  if(is_observed(.input)) {
+  if(is_observed(input)) {
     tmp_dat <-
-      .input$data %>%
-      dplyr::filter(.data$location == .location) %>%
+      input$data %>%
+      dplyr::filter(.data$location == .env$location) %>%
       dplyr::filter(.data$date > as.Date(tmp_seed$meta$cut_date, format = "%Y-%m-%d"))
     print(tmp_dat)
 
     ## pull the point estimate and concatenate with most recent value in seed
     tmp_vals <-
       tmp_dat %>%
-      dplyr::pull(.input$outcome) %>%
+      dplyr::pull(input$outcome) %>%
       ## NOTE: need to pad here with repeat last value ...
       ## ... because the lag subtraction below will always return NA for the first element
       c(tmp_seed$last_value, tmp_seed$last_value, .)
 
-  } else if(is_forecast(.input)) {
+  } else if(is_forecast(input)) {
     ## check for class to see if it is forecast
     ## if so ... a couple checks for cut date
     ## we can use horizon 1 data for these checks
     tmp_dat_h1 <-
-      .input$data %>%
-      dplyr::filter(.data$location == .location) %>%
+      input$data %>%
+      dplyr::filter(.data$location == .env$location) %>%
       dplyr::filter(.data$horizon == 1)
 
     ## first check to see if the date range in seed overlaps the forecast
@@ -229,8 +229,8 @@ plane_diff <- function(.location, .input, .seed) {
     ## after all the checks ...
     ## return the forecast data (with the filter on cut date jic)
     tmp_dat <-
-      .input$data %>%
-      dplyr::filter(.data$location == .location) %>%
+      input$data %>%
+      dplyr::filter(.data$location == .env$location) %>%
       dplyr::filter(.data$date > as.Date(tmp_seed$meta$cut_date, format = "%Y-%m-%d"))
 
     ## pull the point estimate and concatenate with most recent value in seed
@@ -262,6 +262,7 @@ plane_diff <- function(.location, .input, .seed) {
 
 #######################################################################
 ## example
+library(rplanes)
 library(magrittr)
 library(fiphde)
 hosp <-
@@ -272,17 +273,17 @@ tmp_hosp <-
   hosp %>%
   dplyr::select(date = week_start, location, flu.admits)
 
-prepped_observed <- to_signal(tmp_hosp, .outcome = "flu.admits", .type = "observed", .resolution = "weeks")
+prepped_observed <- to_signal(tmp_hosp, outcome = "flu.admits", type = "observed", resolution = "weeks")
 
-## TODO: add to_signal logic that actually works for .type = "forecast"
+## TODO: add to_signal logic that actually works for type = "forecast"
 prepped_forecast <- read_forecast("https://raw.githubusercontent.com/signaturescience/Flusight-forecast-data/SigSci-TSENS/data-forecasts/SigSci-TSENS/2022-05-16-SigSci-TSENS.csv") %>%
-  to_signal(., .outcome = "flu.admits", .type = "forecast", .horizon = 4)
+  to_signal(., outcome = "flu.admits", type = "forecast", horizon = 4)
 
-# prepped_seed <- plane_seed(prepped_observed, .cut_date = NULL)
-prepped_seed <- plane_seed(prepped_observed, .cut_date = "2022-05-15")
+# prepped_seed <- plane_seed(prepped_observed, cut_date = NULL)
+prepped_seed <- plane_seed(prepped_observed, cut_date = "2022-05-15")
 
 prepped_seed
 
-plane_diff(.location = "10", .input = prepped_observed, .seed = prepped_seed)
-plane_diff(.location = "56", .input = prepped_observed, .seed = prepped_seed)
-plane_diff(.location = "10", .input = prepped_forecast, .seed = prepped_seed)
+plane_diff(location = "10", input = prepped_observed, seed = prepped_seed)
+plane_diff(location = "56", input = prepped_observed, seed = prepped_seed)
+plane_diff(location = "10", input = prepped_forecast, seed = prepped_seed)

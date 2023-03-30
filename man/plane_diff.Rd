@@ -4,14 +4,14 @@
 \alias{plane_diff}
 \title{Title}
 \usage{
-plane_diff(.location, .input, .seed)
+plane_diff(location, input, seed)
 }
 \arguments{
-\item{.location}{fixme}
+\item{location}{fixme}
 
-\item{.input}{fixme}
+\item{input}{fixme}
 
-\item{.seed}{fixme}
+\item{seed}{fixme}
 }
 \description{
 Title
