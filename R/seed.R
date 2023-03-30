@@ -27,7 +27,7 @@ seed_engine <- function(.input, .location, .cut_date=NULL) {
   tmp_data <-
     .input$data %>%
     dplyr::filter(.data$location == .location) %>%
-    dplyr::filter(date <= .cut_date)
+    dplyr::filter(.data$date <= .cut_date)
 
   ## get vector of observed values for the outcome
   tmp_obs <-

@@ -22,7 +22,7 @@ plane_diff <- function(.location, .input, .seed) {
     tmp_dat <-
       .input$data %>%
       dplyr::filter(.data$location == .location) %>%
-      dplyr::filter(date > as.Date(tmp_seed$meta$cut_date, format = "%Y-%m-%d"))
+      dplyr::filter(.data$date > as.Date(tmp_seed$meta$cut_date, format = "%Y-%m-%d"))
     print(tmp_dat)
 
     ## pull the point estimate and concatenate with most recent value in seed
@@ -82,7 +82,7 @@ plane_diff <- function(.location, .input, .seed) {
     tmp_dat <-
       .input$data %>%
       dplyr::filter(.data$location == .location) %>%
-      dplyr::filter(date > as.Date(tmp_seed$meta$cut_date, format = "%Y-%m-%d"))
+      dplyr::filter(.data$date > as.Date(tmp_seed$meta$cut_date, format = "%Y-%m-%d"))
 
     ## pull the point estimate and concatenate with most recent value in seed
     tmp_vals <-
