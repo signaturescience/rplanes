@@ -102,7 +102,7 @@ seed_engine <- function(.input, .location, .cut_date=NULL) {
   if(is.null(.cut_date)) {
     .cut_date <-
       .input$data %>%
-      dplyr::filter(location == .location) %>%
+      dplyr::filter(.data$location == .location) %>%
       dplyr::pull(date) %>%
       max(.)
   } else {
@@ -112,8 +112,8 @@ seed_engine <- function(.input, .location, .cut_date=NULL) {
   ## use cut date to get
   tmp_data <-
     .input$data %>%
-    dplyr::filter(location == .location) %>%
-    dplyr::filter(date <= .cut_date)
+    dplyr::filter(.data$location == .location) %>%
+    dplyr::filter(.data$date <= .cut_date)
 
   ## get vector of observed values for the outcome
   tmp_obs <-
@@ -170,8 +170,8 @@ plane_diff <- function(.location, .input, .seed) {
   if(is_observed(.input)) {
     tmp_dat <-
       .input$data %>%
-      dplyr::filter(location == .location) %>%
-      dplyr::filter(date > as.Date(tmp_seed$meta$cut_date, format = "%Y-%m-%d"))
+      dplyr::filter(.data$location == .location) %>%
+      dplyr::filter(.data$date > as.Date(tmp_seed$meta$cut_date, format = "%Y-%m-%d"))
     print(tmp_dat)
 
     ## pull the point estimate and concatenate with most recent value in seed
@@ -188,8 +188,8 @@ plane_diff <- function(.location, .input, .seed) {
     ## we can use horizon 1 data for these checks
     tmp_dat_h1 <-
       .input$data %>%
-      dplyr::filter(location == .location) %>%
-      dplyr::filter(horizon == 1)
+      dplyr::filter(.data$location == .location) %>%
+      dplyr::filter(.data$horizon == 1)
 
     ## first check to see if the date range in seed overlaps the forecast
     if(tmp_seed$meta$resolution == "days") {
@@ -230,8 +230,8 @@ plane_diff <- function(.location, .input, .seed) {
     ## return the forecast data (with the filter on cut date jic)
     tmp_dat <-
       .input$data %>%
-      dplyr::filter(location == .location) %>%
-      dplyr::filter(date > as.Date(tmp_seed$meta$cut_date, format = "%Y-%m-%d"))
+      dplyr::filter(.data$location == .location) %>%
+      dplyr::filter(.data$date > as.Date(tmp_seed$meta$cut_date, format = "%Y-%m-%d"))
 
     ## pull the point estimate and concatenate with most recent value in seed
     tmp_vals <-

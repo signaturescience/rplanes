@@ -1,8 +1,8 @@
 #' helper function used in plane_seed()
 #'
-#' @param .input
-#' @param .location
-#' @param .cut_date
+#' @param .input fixme
+#' @param .location fixme
+#' @param .cut_date fixme
 #'
 #' @return
 #' @export
@@ -16,7 +16,7 @@ seed_engine <- function(.input, .location, .cut_date=NULL) {
   if(is.null(.cut_date)) {
     .cut_date <-
       .input$data %>%
-      dplyr::filter(location == .location) %>%
+      dplyr::filter(.data$location == .location) %>%
       dplyr::pull(date) %>%
       max(.)
   } else {
@@ -26,8 +26,8 @@ seed_engine <- function(.input, .location, .cut_date=NULL) {
   ## use cut date to get
   tmp_data <-
     .input$data %>%
-    dplyr::filter(location == .location) %>%
-    dplyr::filter(date <= .cut_date)
+    dplyr::filter(.data$location == .location) %>%
+    dplyr::filter(.data$date <= .cut_date)
 
   ## get vector of observed values for the outcome
   tmp_obs <-
@@ -45,7 +45,7 @@ seed_engine <- function(.input, .location, .cut_date=NULL) {
   max_val <- max(tmp_obs, na.rm = TRUE)
 
   ## get last value
-  last_val <- tail(tmp_obs, 1)
+  last_val <- utils::tail(tmp_obs, 1)
 
   ## TODO: return last k values (for repeat) ??
   ## TODO: return trends
@@ -65,8 +65,8 @@ seed_engine <- function(.input, .location, .cut_date=NULL) {
 
 #' driver to create seeds for every location in data
 #'
-#' @param .input
-#' @param .cut_date
+#' @param .input fixme
+#' @param .cut_date fixme
 #'
 #' @return
 #' @export

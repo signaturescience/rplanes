@@ -1,7 +1,7 @@
 
 #' Title
 #'
-#' @param x
+#' @param x fixme
 #'
 #' @return
 #' @export
@@ -13,7 +13,7 @@ is_observed <- function(x) {
 
 #' Title
 #'
-#' @param x
+#' @param x fixme
 #'
 #' @return
 #' @export
