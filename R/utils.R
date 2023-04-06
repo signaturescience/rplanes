@@ -53,14 +53,14 @@ read_forecast <- function(file, pi_width=95) {
 }
 
 
-#' Check date spans
+#' Check that date span is valid
 #'
 #' Description FIXME
 #'
 #' Details here FIXME
 #'
 #' @param seed_date fixme
-#' @param this_date fixme
+#' @param signal_date fixme
 #' @param resolution fixme
 #'
 #' @return Invisible: a list of input values
@@ -68,53 +68,51 @@ read_forecast <- function(file, pi_width=95) {
 #'
 #' @examples
 #' seed_date <- as.Date("2023-03-08")
-#' this_date <- as.Date("2023-03-15")
-#' check_date_spans(seed_date = seed_date, this_date = this_date, resolution="weeks")
-#' x <- try(check_date_spans(seed_date = seed_date,
-#'                           this_date = this_date,
+#' signal_date <- as.Date("2023-03-15")
+#' valid_dates(seed_date = seed_date, signal_date = signal_date, resolution="weeks")
+#' x <- try(valid_dates(seed_date = seed_date,
+#'                           signal_date = signal_date,
 #'                           resolution="days"), silent=TRUE)
 #' x
-#' x <- try(check_date_spans(seed_date = seed_date,
-#'                           this_date = this_date,
+#' x <- try(valid_dates(seed_date = seed_date,
+#'                           signal_date = signal_date,
 #'                           resolution="months"), silent=TRUE)
 #' x
-check_date_spans <- function(seed_date, this_date, resolution) {
+valid_dates <- function(seed_date, signal_date, resolution) {
 
   # Sanity checks
   stopifnot(inherits(seed_date, "Date"))
-  stopifnot(inherits(this_date, "Date"))
-  stopifnot(identical(length(resolution), 1L))
-  stopifnot(inherits(resolution, "character"))
+  stopifnot(inherits(signal_date, "Date"))
   stopifnot(resolution %in% c("days", "weeks", "months"))
 
   ## first check to see if the date range in seed overlaps the forecast
   if(resolution == "days") {
-    if(seed_date > this_date) {
-      stop("Daily: seed_date extends beyond this_date ...")
+    if(seed_date > signal_date) {
+      stop("Daily: seed_date extends beyond signal_date ...")
     }
   } else if (resolution == "weeks") {
-    if (clock::add_weeks(seed_date, 1) > this_date) {
-      stop("Weekly: Less than one week between the seed_date and this_date ...")
+    if (clock::add_weeks(seed_date, 1) > signal_date) {
+      stop("Weekly: Less than one week between the seed_date and signal_date ...")
     }
   } else if (resolution == "months") {
-    if(clock::add_months(seed_date, 1, invalid="previous") > this_date) {
-      stop("Monthly: Less than one month between the seed_date and this_date ...")
+    if(clock::add_months(seed_date, 1, invalid="previous") > signal_date) {
+      stop("Monthly: Less than one month between the seed_date and signal_date ...")
     }
   }
 
   ## then make sure cut date immediately precedes the first forecast horizon
   if(resolution == "days") {
-    if(this_date-seed_date > 1) {
-      stop("Daily: More than one day between the seed_date and this_date ...")
+    if(signal_date-seed_date > 1) {
+      stop("Daily: More than one day between the seed_date and signal_date ...")
     }
   } else if (resolution == "weeks") {
-    if(clock::add_weeks(seed_date, 1)-this_date > 1) {
-      stop("Weekly: More than one week between the seed_date and this_date ...")
+    if(clock::add_weeks(seed_date, 1)-signal_date > 1) {
+      stop("Weekly: More than one week between the seed_date and signal_date ...")
     }
   } else if (resolution == "months") {
-    if(clock::add_months(seed_date, 1, invalid="previous")-this_date > 1) {
-      stop("Monthly: More than one month between the seed_date and this_date ...")
+    if(clock::add_months(seed_date, 1, invalid="previous")-signal_date > 1) {
+      stop("Monthly: More than one month between the seed_date and signal_date ...")
     }
   }
-  invisible(list(seed_date=seed_date, this_date=this_date, resolution=resolution))
+  invisible(list(seed_date=seed_date, signal_date=signal_date, resolution=resolution))
 }
