@@ -69,7 +69,7 @@ read_forecast <- function(file, pi_width=95) {
 #' @param resolution Character vector specifying the temporal resolution (e.g., "days", "weeks", "months")
 #' @param warn_incomplete Logical as to whether or not the validation should warn for completeness of seed and signal; default is `FALSE`
 #'
-#' @return Invisible: a list of input values
+#' @return The validation will return with a `stop()` if there is an overlap or gap between seed and signal dates. Otherwise the function will invisibly return `TRUE` indicating that the date span is valid.
 #' @export
 #'
 #' @examples
@@ -99,9 +99,9 @@ valid_dates <- function(seed_date, signal_date, resolution, warn_incomplete = FA
   ## for days
   if(resolution == "days") {
     if(seed_date > signal_date) {
-      stop("Daily: seed_date extends beyond signal_date ...")
+      stop("Daily: The seed date overlaps with signal date.")
     } else if (signal_date-seed_date > 1) {
-      stop("Daily: More than one day between the seed_date and signal_date ...")
+      stop("Daily: There is a gap of more than one day between the seed date and signal date.")
     }
   ## for weeks
   } else if (resolution == "weeks") {
@@ -112,9 +112,9 @@ valid_dates <- function(seed_date, signal_date, resolution, warn_incomplete = FA
     ## calculate the expected week start for signal date
     expected_seed_epiweek_start <- signal_epiweek_start - 7
     if(seed_epiweek_start > expected_seed_epiweek_start) {
-      stop("Weekly: seed_date extends beyond signal_date ...")
+      stop("Weekly: The seed date overlaps with signal date.")
     } else if (seed_epiweek_start < expected_seed_epiweek_start) {
-      stop("Weekly: More than one week between the seed_date and signal_date ...")
+      stop("Weekly: There is a gap of more than one week between the seed date and signal date.")
     }
   ## for months
   } else if (resolution == "months") {
@@ -122,17 +122,23 @@ valid_dates <- function(seed_date, signal_date, resolution, warn_incomplete = FA
     seed_month_start <- month_start(seed_date)
     expected_seed_month_start <- signal_month_start %m-% months(1)
     if(seed_month_start > expected_seed_month_start) {
-      stop("Monthly: seed_date extends beyond signal_date ...")
+      stop("Monthly: The seed date overlaps with signal date.")
     } else if (seed_month_start < expected_seed_month_start) {
-      stop("Monthly: More than one month between the seed_date and signal_date ...")
+      stop("Monthly: There is a gap of more than one month between the seed date and signal date.")
     }
   }
 
+  ## adding a step to optionally warn if the seed and signal data is "incomplete"
+  ## this calls the unexported check_incomplete function
+  ## effectively this function looks to see if there is ...
+  ## != 7 days between seed and signal (for weekly)
+  ## != n days in the given month between seed and signal (for monthly)
   if(warn_incomplete) {
     check_incomplete(seed_date = seed_date, signal_date = signal_date, resolution = resolution)
   }
 
-  invisible(list(seed_date=seed_date, signal_date=signal_date, resolution=resolution))
+  ## if the validation proceeds this far return TRUE
+  return(invisible(TRUE))
 }
 
 

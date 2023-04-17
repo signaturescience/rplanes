@@ -16,7 +16,7 @@ valid_dates(seed_date, signal_date, resolution, warn_incomplete = FALSE)
 \item{warn_incomplete}{Logical as to whether or not the validation should warn for completeness of seed and signal; default is \code{FALSE}}
 }
 \value{
-Invisible: a list of input values
+The validation will return with a \code{stop()} if there is an overlap or gap between seed and signal dates. Otherwise the function will invisibly return \code{TRUE} indicating that the date span is valid.
 }
 \description{
 Check that date span is valid
