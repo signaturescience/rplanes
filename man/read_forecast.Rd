@@ -11,6 +11,17 @@ read_forecast(file, pi_width = 95)
 
 \item{pi_width}{fixme}
 }
+\value{
+A \code{tibble} with the following columns:
+\itemize{
+\item \strong{location}
+\item \strong{date}
+\item \strong{horizon}
+\item \strong{lower}
+\item \strong{point}
+\item \strong{upper}
+}
+}
 \description{
 Read in forecast file
 }

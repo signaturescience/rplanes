@@ -7,7 +7,7 @@
 month_start(date)
 }
 \arguments{
-\item{date}{FIXME}
+\item{date}{Date to be queried}
 }
 \description{
 Resolve start of month from a given date

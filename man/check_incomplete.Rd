@@ -2,17 +2,20 @@
 % Please edit documentation in R/utils.R
 \name{check_incomplete}
 \alias{check_incomplete}
-\title{Title}
+\title{Check completeness of seed and signal data}
 \usage{
 check_incomplete(seed_date, signal_date, resolution)
 }
 \arguments{
-\item{seed_date}{FIXME}
+\item{seed_date}{Last date available in seed object}
 
-\item{signal_date}{FIXME}
+\item{signal_date}{First date available in signal object}
 
-\item{resolution}{FIXME}
+\item{resolution}{Character vector specifying the temporal resolution (e.g., "weeks", "months")}
+}
+\value{
+Operates as side-effect and returns a \code{warning()} if there are the seed and signal dates combined indicate an incomplete week or month.
 }
 \description{
-Title
+This unexported helper is used internally in \link{valid_dates} to optionally issue a warning for potential completeness of seed and signal data based on dates provided.
 }

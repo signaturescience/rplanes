@@ -2,11 +2,8 @@
 
 export("%>%")
 export("%m-%")
-export(check_incomplete)
-export(epiweek_start)
 export(is_forecast)
 export(is_observed)
-export(month_start)
 export(plane_diff)
 export(plane_seed)
 export(read_forecast)

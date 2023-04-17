@@ -1,9 +1,9 @@
 
-#' Title
+#' Check if object is observed
 #'
-#' @param x fixme
+#' @param x Input object to be checked
 #'
-#' @return
+#' @return Logical as to whether or not the input object inherits the "signal" and "observed" classes.
 #' @export
 #'
 #' @examples
@@ -11,11 +11,11 @@ is_observed <- function(x) {
   all(class(x) == c("signal","observed"))
 }
 
-#' Title
+#' Check if object is forecast
 #'
-#' @param x fixme
+#' @param x Input object to be checked
 #'
-#' @return
+#' @return Logical as to whether or not the input object inherits the "signal" and "forecast" classes.
 #' @export
 #'
 #' @examples
@@ -28,7 +28,15 @@ is_forecast <- function(x) {
 #' @param file fixme
 #' @param pi_width fixme
 #'
-#' @return
+#' @return A `tibble` with the following columns:
+#'
+#' - **location**
+#' - **date**
+#' - **horizon**
+#' - **lower**
+#' - **point**
+#' - **upper**
+#'
 #' @export
 #'
 #' @examples
@@ -55,14 +63,11 @@ read_forecast <- function(file, pi_width=95) {
 
 #' Check that date span is valid
 #'
-#' Description FIXME
 #'
-#' Details here FIXME
-#'
-#' @param seed_date fixme
-#' @param signal_date fixme
-#' @param resolution fixme
-#' @param warn_incomplete FIXME
+#' @param seed_date Last date available in seed object
+#' @param signal_date First date available in signal object
+#' @param resolution Character vector specifying the temporal resolution (e.g., "days", "weeks", "months")
+#' @param warn_incomplete Logical as to whether or not the validation should warn for completeness of seed and signal; default is `FALSE`
 #'
 #' @return Invisible: a list of input values
 #' @export
@@ -81,31 +86,37 @@ read_forecast <- function(file, pi_width=95) {
 #' x
 valid_dates <- function(seed_date, signal_date, resolution, warn_incomplete = FALSE) {
 
-  resolution <- match.arg(resolution, choices = c("days","weeks","months"))
-  # Sanity checks
+  ## handle the resolution argument
+  resolution <- resolve_resolution(resolution)
+  ## check that dates are formatted
   stopifnot(inherits(seed_date, "Date"))
   stopifnot(inherits(signal_date, "Date"))
-  stopifnot(resolution %in% c("days", "weeks", "months"))
 
-  ## first check to see if the date range in seed overlaps the forecast
-  ## days
+  ## check that there is ...
+  ## 1) no overlap of seed beyond signal
+  ## 2) no gap between seed and signal
+  ## these expectations vary by resolution
+  ## for days
   if(resolution == "days") {
     if(seed_date > signal_date) {
       stop("Daily: seed_date extends beyond signal_date ...")
     } else if (signal_date-seed_date > 1) {
       stop("Daily: More than one day between the seed_date and signal_date ...")
     }
-  ## weeks
+  ## for weeks
   } else if (resolution == "weeks") {
+    ## get the week start for the signal date
     signal_epiweek_start <- epiweek_start(signal_date)
+    ## get the week start for the seed date
     seed_epiweek_start <- epiweek_start(seed_date)
+    ## calculate the expected week start for signal date
     expected_seed_epiweek_start <- signal_epiweek_start - 7
     if(seed_epiweek_start > expected_seed_epiweek_start) {
       stop("Weekly: seed_date extends beyond signal_date ...")
     } else if (seed_epiweek_start < expected_seed_epiweek_start) {
       stop("Weekly: More than one week between the seed_date and signal_date ...")
     }
-  ## months
+  ## for months
   } else if (resolution == "months") {
     signal_month_start <- month_start(signal_date)
     seed_month_start <- month_start(seed_date)
@@ -126,40 +137,26 @@ valid_dates <- function(seed_date, signal_date, resolution, warn_incomplete = FA
 
 
 
-#' Title
+#' Check completeness of seed and signal data
 #'
-#' @param seed_date FIXME
-#' @param signal_date FIXME
-#' @param resolution FIXME
+#' @description
 #'
-#' @return
-#' @export
+#' This unexported helper is used internally in [valid_dates] to optionally issue a warning for potential completeness of seed and signal data based on dates provided.
 #'
-#' @examples
+#' @param seed_date Last date available in seed object
+#' @param signal_date First date available in signal object
+#' @param resolution Character vector specifying the temporal resolution (e.g., "weeks", "months")
+#'
+#' @return Operates as side-effect and returns a `warning()` if there are the seed and signal dates combined indicate an incomplete week or month.
+#'
 #'
 check_incomplete <- function(seed_date, signal_date, resolution) {
 
-  resolution <- match.arg(resolution, choices = c("days","weeks","months"))
-  ## TODO: add some arg matching for resolution to get day/daily, week/weekly, etc.
-  # Sanity checks
+  ## handle the resolution argument
+  resolution <- resolve_resolution(resolution)
+  ## check that dates are formatted
   stopifnot(inherits(seed_date, "Date"))
   stopifnot(inherits(signal_date, "Date"))
-  stopifnot(resolution %in% c("days", "weeks", "months"))
-
-  # ## then make sure cut date immediately precedes the first forecast horizon
-  # if(resolution == "days") {
-  #   if(signal_date-seed_date > 1) {
-  #     warning("Daily: More than one day between the seed_date and signal_date ...")
-  #   }
-  # } else if (resolution == "weeks") {
-  #   if(clock::add_weeks(signal_date, 1)-seed_date > 1) {
-  #     warning("Weekly: More than one week between the seed_date and signal_date ...")
-  #   }
-  # } else if (resolution == "months") {
-  #   if(clock::add_months(signal_date, 1, invalid="previous")-seed_date > 1) {
-  #     warning("Monthly: More than one month between the seed_date and signal_date ...")
-  #   }
-  # }
 
   ## then make sure cut date immediately precedes the first forecast horizon
   ## NOTE: only week and month resolution can be considered "incomplete"
@@ -178,36 +175,57 @@ check_incomplete <- function(seed_date, signal_date, resolution) {
 
 #' Resolve start of week from a given date
 #'
-#' @param date FIXME
+#' @param date Date to be queried
 #'
-#' @return
-#' @export
+#' @return Date of the first day of the epiweek for the input date.
 #'
-#' @examples
 #'
 epiweek_start <- function(date) {
 
+  ## get the epiyear and epiweek from the input date
   ey <- lubridate::epiyear(date)
   ew <- lubridate::epiweek(date)
 
+  ## create the epiyear-epiweek format
+  ## this will pad leading zeros for epiweek
+  ## e.g., epiweek 1 in 2012 would be "2012-01"
   eyew <- paste0(ey, "-", sprintf("%02d", ew))
 
+  ## use the built-in lookup object to find the first day (sunday) of the given eyew
   return(eyew_lookup[eyew_lookup$epiyear_epiweek == eyew,]$sunday)
 }
 
 
 #' Resolve start of month from a given date
 #'
-#' @param date FIXME
+#' @param date Date to be queried
 #'
 #' @return
-#' @export
 #'
-#' @examples
 month_start <- function(date) {
 
   tmp_year <- lubridate::year(date)
   tmp_month <- lubridate::month(date)
 
   return(as.Date(paste0(tmp_year, "-", tmp_month, "-01")))
+}
+
+
+#' Resolve resolution
+#'
+#' @description
+#'
+#' This helper function uses argument matching to resolve the resolution from input. The function also handles casing. This will allow, for example, an input resolution of "daily" or "day" to be resolved to "days".
+#'
+#' @param resolution Character vector specifying the temporal resolution (e.g., "days", "weeks", "months")
+#'
+#' @return If the resolution matches to "days", "weeks", or "months" then the match will be returned. If not, the function will throw an error.
+#'
+resolve_resolution <- function(resolution) {
+  ## handle casing
+  resolution <- tolower(resolution)
+  ## get first two characters
+  resolution <- strtrim(resolution, 2)
+  ## match the first two characters to "days", "weeks", or "months"
+  match.arg(resolution, choices = c("days","weeks","months"))
 }

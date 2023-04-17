@@ -7,22 +7,19 @@
 valid_dates(seed_date, signal_date, resolution, warn_incomplete = FALSE)
 }
 \arguments{
-\item{seed_date}{fixme}
+\item{seed_date}{Last date available in seed object}
 
-\item{signal_date}{fixme}
+\item{signal_date}{First date available in signal object}
 
-\item{resolution}{fixme}
+\item{resolution}{Character vector specifying the temporal resolution (e.g., "days", "weeks", "months")}
 
-\item{warn_incomplete}{FIXME}
+\item{warn_incomplete}{Logical as to whether or not the validation should warn for completeness of seed and signal; default is \code{FALSE}}
 }
 \value{
 Invisible: a list of input values
 }
 \description{
-Description FIXME
-}
-\details{
-Details here FIXME
+Check that date span is valid
 }
 \examples{
 seed_date <- as.Date("2023-03-08")

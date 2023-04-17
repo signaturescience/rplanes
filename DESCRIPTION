@@ -21,9 +21,10 @@ Imports:
     tidyr,
     stringr,
     readr,
-    clock,
     lubridate
 Suggests:
+    testthat (>= 3.0.0),
     MMWRweek
 Depends: 
     R (>= 2.10)
+Config/testthat/edition: 3

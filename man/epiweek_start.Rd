@@ -7,7 +7,10 @@
 epiweek_start(date)
 }
 \arguments{
-\item{date}{FIXME}
+\item{date}{Date to be queried}
+}
+\value{
+Date of the first day of the epiweek for the input date.
 }
 \description{
 Resolve start of week from a given date
