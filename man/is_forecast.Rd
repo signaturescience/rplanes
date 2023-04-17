@@ -2,13 +2,16 @@
 % Please edit documentation in R/utils.R
 \name{is_forecast}
 \alias{is_forecast}
-\title{Title}
+\title{Check if object is forecast}
 \usage{
 is_forecast(x)
 }
 \arguments{
-\item{x}{fixme}
+\item{x}{Input object to be checked}
+}
+\value{
+Logical as to whether or not the input object inherits the "signal" and "forecast" classes.
 }
 \description{
-Title
+Check if object is forecast
 }

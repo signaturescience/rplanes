@@ -2,3 +2,4 @@
 ^\.Rproj\.user$
 scratch.R
 ^LICENSE\.md$
+^data-raw$

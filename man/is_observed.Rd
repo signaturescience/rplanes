@@ -2,13 +2,16 @@
 % Please edit documentation in R/utils.R
 \name{is_observed}
 \alias{is_observed}
-\title{Title}
+\title{Check if object is observed}
 \usage{
 is_observed(x)
 }
 \arguments{
-\item{x}{fixme}
+\item{x}{Input object to be checked}
+}
+\value{
+Logical as to whether or not the input object inherits the "signal" and "observed" classes.
 }
 \description{
-Title
+Check if object is observed
 }
