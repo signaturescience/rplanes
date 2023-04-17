@@ -2,7 +2,7 @@
 % Please edit documentation in R/utils.R
 \name{read_forecast}
 \alias{read_forecast}
-\title{Title}
+\title{Read in forecast file}
 \usage{
 read_forecast(file, pi_width = 95)
 }
@@ -12,5 +12,5 @@ read_forecast(file, pi_width = 95)
 \item{pi_width}{fixme}
 }
 \description{
-Title
+Read in forecast file
 }

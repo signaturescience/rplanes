@@ -4,7 +4,7 @@
 \alias{valid_dates}
 \title{Check that date span is valid}
 \usage{
-valid_dates(seed_date, signal_date, resolution)
+valid_dates(seed_date, signal_date, resolution, warn_incomplete = FALSE)
 }
 \arguments{
 \item{seed_date}{fixme}
@@ -12,6 +12,8 @@ valid_dates(seed_date, signal_date, resolution)
 \item{signal_date}{fixme}
 
 \item{resolution}{fixme}
+
+\item{warn_incomplete}{FIXME}
 }
 \value{
 Invisible: a list of input values
