@@ -11,7 +11,11 @@
 #'
 plane_diff <- function(location, input, seed) {
 
-  ## TODO: add check for location in names of seed
+  ## double check that location is in seed before proceeding
+  if(!location %in% names(seed)) {
+    stop(sprintf("%s does not appear in the seed object. Check that the seed was prepared with the location specified.", location))
+  }
+
   tmp_seed <- seed[[location]]
 
   ## check for class of input to see if it is observed
@@ -24,8 +28,6 @@ plane_diff <- function(location, input, seed) {
 
     ## check that dates are valid (i.e., no observed data doesnt overlap with seed
     valid_dates(seed_date = tmp_seed$meta$date_range$max, signal_date = min(tmp_dat$date), resolution = tmp_seed$meta$resolution)
-
-    print(tmp_dat)
 
     ## pull the outcome values to be evaluated and concatenate with most recent value in seed
     tmp_vals <-
