@@ -1,13 +1,23 @@
-#' Title
+#' Difference component
 #'
-#' @param location fixme
-#' @param input fixme
-#' @param seed fixme
+#' @description
+#'
+#' This function implements the point-to-point difference plausibility component. Differences in evaluated signals are calculated from input values iteratively subtracted from the previous values (i.e., for each x at time point i, the difference will be calculated as xi - xi-1). The plausibility analysis uses the evaluated differences to compare against the maximum difference observed and recorded in the seed.
+#'
+#' @param location Character vector with location code; the location must appear in input and seed
+#' @param input Input signal data to be scored; object must be one of [forecast][to_signal()] or [observed][to_signal()]
+#' @param seed Prepared [seed][plane_seed()]
 #'
 #' @return
-#' @export
 #'
-#' @examples
+#' A `list` with the following values:
+#'
+#' - **indicator**: Logical as to whether or not the absolute value of any of the evaluated differences exceeds the maximum difference
+#' - **values**: A vector with the values assessed including the last value in seed concatenated with the evaluated signal values
+#' - **evaluated_differences**: A vector with the consecutive differences for the values
+#' - **maximum_difference**: A vector with one value for the maximum difference observed in seed
+#'
+#' @export
 #'
 plane_diff <- function(location, input, seed) {
 

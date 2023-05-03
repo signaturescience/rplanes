@@ -2,17 +2,26 @@
 % Please edit documentation in R/planes.R
 \name{plane_diff}
 \alias{plane_diff}
-\title{Title}
+\title{Difference component}
 \usage{
 plane_diff(location, input, seed)
 }
 \arguments{
-\item{location}{fixme}
+\item{location}{Character vector with location code; the location must appear in input and seed}
 
-\item{input}{fixme}
+\item{input}{Input signal data to be scored; object must be one of \link[=to_signal]{forecast} or \link[=to_signal]{observed}}
 
-\item{seed}{fixme}
+\item{seed}{Prepared \link[=plane_seed]{seed}}
+}
+\value{
+A \code{list} with the following values:
+\itemize{
+\item \strong{indicator}: Logical as to whether or not the absolute value of any of the evaluated differences exceeds the maximum difference
+\item \strong{values}: A vector with the values assessed including the last value in seed concatenated with the evaluated signal values
+\item \strong{evaluated_differences}: A vector with the consecutive differences for the values
+\item \strong{maximum_difference}: A vector with one value for the maximum difference observed in seed
+}
 }
 \description{
-Title
+This function implements the point-to-point difference plausibility component. Differences in evaluated signals are calculated from input values iteratively subtracted from the previous values (i.e., for each x at time point i, the difference will be calculated as xi - xi-1). The plausibility analysis uses the evaluated differences to compare against the maximum difference observed and recorded in the seed.
 }
