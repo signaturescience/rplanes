@@ -73,3 +73,58 @@ plane_diff <- function(location, input, seed) {
 
 
 }
+
+
+#' Title
+#'
+#' @param location fixme
+#' @param input fixme
+#' @param seed fixme
+#'
+#' @return
+#' @export
+#'
+#' @examples
+#'
+plane_cover <- function(location, input, seed) {
+
+  ## double check that location is in seed before proceeding
+  if(!location %in% names(seed)) {
+    stop(sprintf("%s does not appear in the seed object. Check that the seed was prepared with the location specified.", location))
+  }
+
+  tmp_seed <- seed[[location]]
+
+  ## check for class of input to see if it is observed
+  ## if so ... stop for now because pi width doesnt apply?
+  ## TODO: add backcasting approach to allow us to use this for observed data
+  if(is_observed(input)) {
+
+    stop("Must be forecast ...")
+
+  } else if(is_forecast(input)) {
+
+    ## return the forecast data (with the filter on cut date)
+    tmp_dat <-
+      input$data %>%
+      dplyr::filter(.data$location == .env$location) %>%
+      dplyr::filter(.data$date > as.Date(tmp_seed$meta$cut_date, format = "%Y-%m-%d"))
+
+    ## check that dates are valid (i.e., no observed data doesnt overlap with seed
+    valid_dates(seed_date = tmp_seed$meta$date_range$max, signal_date = min(tmp_dat$date), resolution = tmp_seed$meta$resolution)
+
+    bounds <-
+      tmp_dat %>%
+      dplyr::filter(.data$horizon == 1) %>%
+      dplyr::select(.data$lower, .data$upper)
+
+    ind <- dplyr::between(tmp_seed$last_value, bounds$lower, bounds$upper)
+
+  }
+
+  ## test whether the bounds cover the last value
+  ind <- dplyr::between(tmp_seed$last_value, bounds$lower, bounds$upper)
+
+  return(list(indicator = ind, last_value = tmp_seed$last_value, bounds = list(lower = bounds$lower, upper = bounds$upper)))
+
+}
