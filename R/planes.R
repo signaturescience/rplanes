@@ -75,16 +75,26 @@ plane_diff <- function(location, input, seed) {
 }
 
 
-#' Title
+#' Coverage component
 #'
-#' @param location fixme
-#' @param input fixme
-#' @param seed fixme
+#' @description
+#'
+#' This function evaluates whether or not the evaluated signal interval covers the last observed value. The interval used in this plausbility component is drawn from the upper and lower bounds of the forecasted prediction interval. As such, the only accepted signal format is [forecast][to_signal()], which will include upper and lower bounds.
+#'
+#' @param location Character vector with location code; the location must appear in input and seed
+#' @param input Input signal data to be scored; object must be one of [forecast][to_signal()]
+#' @param seed Prepared [seed][plane_seed()]
 #'
 #' @return
+#'
+#' A `list` with the following values:
+#'
+#' - **indicator**: Logical as to whether or not the last value falls within the interval (e.g., between lower and upper bounds of prediction interval) of the evaluated signal
+#' - **last_value**: A vector with the last value recorded in the seed
+#' - **bounds**: A list with a two elements corresponding to the upper and lower bounds of the evaluated signal interval
+#'
 #' @export
 #'
-#' @examples
 #'
 plane_cover <- function(location, input, seed) {
 
@@ -113,6 +123,8 @@ plane_cover <- function(location, input, seed) {
     ## check that dates are valid (i.e., no observed data doesnt overlap with seed
     valid_dates(seed_date = tmp_seed$meta$date_range$max, signal_date = min(tmp_dat$date), resolution = tmp_seed$meta$resolution)
 
+    ## pull lower and upper bounds from data
+    ## NOTE: for now this only looks at horizon 1
     bounds <-
       tmp_dat %>%
       dplyr::filter(.data$horizon == 1) %>%

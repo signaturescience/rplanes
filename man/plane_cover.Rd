@@ -2,17 +2,25 @@
 % Please edit documentation in R/planes.R
 \name{plane_cover}
 \alias{plane_cover}
-\title{Title}
+\title{Coverage component}
 \usage{
 plane_cover(location, input, seed)
 }
 \arguments{
-\item{location}{fixme}
+\item{location}{Character vector with location code; the location must appear in input and seed}
 
-\item{input}{fixme}
+\item{input}{Input signal data to be scored; object must be one of \link[=to_signal]{forecast}}
 
-\item{seed}{fixme}
+\item{seed}{Prepared \link[=plane_seed]{seed}}
+}
+\value{
+A \code{list} with the following values:
+\itemize{
+\item \strong{indicator}: Logical as to whether or not the last value falls within the interval (e.g., between lower and upper bounds of prediction interval) of the evaluated signal
+\item \strong{last_value}: A vector with the last value recorded in the seed
+\item \strong{bounds}: A list with a two elements corresponding to the upper and lower bounds of the evaluated signal interval
+}
 }
 \description{
-Title
+This function evaluates whether or not the evaluated signal interval covers the last observed value. The interval used in this plausbility component is drawn from the upper and lower bounds of the forecasted prediction interval. As such, the only accepted signal format is \link[=to_signal]{forecast}, which will include upper and lower bounds.
 }
