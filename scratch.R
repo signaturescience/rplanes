@@ -15,7 +15,7 @@ tmp_hosp <-
   dplyr::select(date = week_end, location, flu.admits)
 
 #######################################################################
-## evaluate a forecast for plane diff
+## evaluate a forecast for plane diff and plane_cover
 prepped_observed <- to_signal(tmp_hosp, outcome = "flu.admits", type = "observed", resolution = "weeks")
 
 prepped_forecast <- read_forecast("https://raw.githubusercontent.com/signaturescience/Flusight-forecast-data/SigSci-TSENS/data-forecasts/SigSci-TSENS/2022-05-16-SigSci-TSENS.csv") %>%
@@ -23,6 +23,7 @@ prepped_forecast <- read_forecast("https://raw.githubusercontent.com/signaturesc
 
 prepped_seed <- plane_seed(prepped_observed, cut_date = "2022-05-14")
 plane_diff(location = "10", input = prepped_forecast, seed = prepped_seed)
+plane_cover(location = "10", input = prepped_forecast, seed = prepped_seed)
 
 ## try another date
 prepped_forecast <- read_forecast("https://raw.githubusercontent.com/signaturescience/Flusight-forecast-data/SigSci-TSENS/data-forecasts/SigSci-TSENS/2022-05-09-SigSci-TSENS.csv") %>%
@@ -31,6 +32,7 @@ prepped_forecast <- read_forecast("https://raw.githubusercontent.com/signaturesc
 prepped_seed <- plane_seed(prepped_observed, cut_date = "2022-05-07")
 
 plane_diff(location = "10", input = prepped_forecast, seed = prepped_seed)
+plane_cover(location = "10", input = prepped_forecast, seed = prepped_seed)
 
 ##################################################################################
 ## evaluate an observed signal for plane diff
