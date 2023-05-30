@@ -128,7 +128,8 @@ plane_cover <- function(location, input, seed) {
     bounds <-
       tmp_dat %>%
       dplyr::filter(.data$horizon == 1) %>%
-      dplyr::select(.data$lower, .data$upper)
+      ## NOTE: as of tidyselect v1.2.0 the .data pronoun is deprecated for select-ing
+      dplyr::select("lower", "upper")
 
     ind <- dplyr::between(tmp_seed$last_value, bounds$lower, bounds$upper)
 

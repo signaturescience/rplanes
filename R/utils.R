@@ -53,7 +53,8 @@ read_forecast <- function(file, pi_width=95) {
     ## TODO: double check regex for str_extract  to get horizon from target value
     dplyr::mutate(horizon = stringr::str_extract(.data$target, pattern = "^([0-9]|[0-9][0-9]|[0-9][0-9][0-9])")) %>%
     dplyr::mutate(quantile = ifelse(is.na(.data$quantile), 0.5, .data$quantile)) %>%
-    dplyr::select(.data$location,date = .data$target_end_date, .data$horizon, .data$quantile, .data$value) %>%
+    ## NOTE: as of tidyselect v1.2.0 the .data pronoun is deprecated for select-ing
+    dplyr::select("location", date = "target_end_date", "horizon", "quantile", "value") %>%
     dplyr::arrange(.data$location,.data$date,.data$horizon,.data$quantile) %>%
     dplyr::distinct_all() %>%
     tidyr::spread(.data$quantile,.data$value) %>%
