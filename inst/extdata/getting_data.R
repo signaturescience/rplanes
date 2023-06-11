@@ -53,8 +53,6 @@ quidk <-
   select(quantile, interval, direction, key)
 quidk
 
-saveRDS(quidk, here("data-raw/quidk.rds"))
-
 # Monthly hosp data ####
 
 hosp <- get_hdgov_hosp(limitcols = TRUE)
