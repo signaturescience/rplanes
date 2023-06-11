@@ -5,17 +5,21 @@ library(here)
 # forecast data ####
 # dates are "2023-02-06", "2022-10-31"
 
-base_url <- "https://raw.githubusercontent.com/cdcepi/Flusight-forecast-data/master/data-forecasts/"
-## construct full url
-forecaster <- "SigSci-TSENS"
-date <- "2022-10-31"
-ens <- paste0(base_url, forecaster, "/", date, "-", forecaster, ".csv")
-tsens1 <- read_csv(ens)
+## define a helper function to make this easier
+## noting that it is *not* called read_forecast() to avoid confusion
+pull_forc <- function(forecaster, date) {
+  base_url <- "https://raw.githubusercontent.com/cdcepi/Flusight-forecast-data/master/data-forecasts/"
+  fp <- paste0(base_url, forecaster, "/", date, "-", forecaster, ".csv")
+  read_csv(fp)
+}
 
-write_csv(tsens1, here("inst/extdata/forecast/2022-10-31-SigSci-TSENS.csv"))
-write_csv(tsens2, here("inst/extdata/forecast/2023-02-06-SigSci-TSENS.csv"))
-write_csv(creg1, here("inst/extdata/forecast/2022-10-31-SigSci-CREG.csv"))
-write_csv(creg2, here("inst/extdata/forecast/2023-02-06-SigSci-CREG.csv"))
+## we can test it out on one first
+#pull_forc("SigSci-TSENS", "2022-10-31")
+
+write_csv(pull_forc("SigSci-TSENS", "2022-10-31"), here("inst/extdata/forecast/2022-10-31-SigSci-TSENS.csv"))
+write_csv(pull_forc("SigSci-TSENS", "2023-02-06"), here("inst/extdata/forecast/2023-02-06-SigSci-TSENS.csv"))
+write_csv(pull_forc("SigSci-CREG", "2022-10-31"), here("inst/extdata/forecast/2022-10-31-SigSci-CREG.csv"))
+write_csv(pull_forc("SigSci-CREG", "2023-02-06"), here("inst/extdata/forecast/2023-02-06-SigSci-CREG.csv"))
 
 # observed data ####
 # daily observations
@@ -65,15 +69,13 @@ hosp_month <- hosp %>%
   group_by(location, year, month) %>%
   dplyr::summarize(dplyr::across(c(flu.admits, flu.admits.cov), ~sum(.x, na.rm = TRUE)), .groups = "drop")
 
-locations <- readRDS(here("data-raw/locations.rds"))
-
 # generate a US location that is the sum of admits for all locations and add them to the hosp_month
 all_hosp <- hosp_month %>% dplyr::group_by(year, month) %>%
   dplyr::summarize(dplyr::across(c(flu.admits, flu.admits.cov), ~sum(.x, na.rm = TRUE)), .groups = "drop") %>%
   dplyr::mutate(location = "US", .before = 1) %>% dplyr::bind_rows(hosp_month) %>%
   dplyr::arrange(location, year, month) %>%
   dplyr::rename(abbreviation = location) %>%
-  dplyr::inner_join(locations, ., by = "abbreviation") %>%
+  dplyr::inner_join(fiphde:::locations, ., by = "abbreviation") %>%
   dplyr::select(-location_name, -population) %>%
   dplyr::filter(location %in% c("US", stringr::str_pad(1:56, width = 2, pad = "0"))) %>%
   dplyr::filter(abbreviation != "DC") %>%
@@ -218,7 +220,7 @@ forecasted <-
 bound <-
   dplyr::bind_rows(real, forecasted) %>%
   dplyr::arrange(date, location) %>%
-  dplyr::left_join(dplyr::select(locations, location, location_name), by = "location") %>%
+  dplyr::left_join(dplyr::select(fiphde:::locations, location, location_name), by = "location") %>%
   dplyr::select(-location) %>%
   dplyr::rename(location = location_name)
 
