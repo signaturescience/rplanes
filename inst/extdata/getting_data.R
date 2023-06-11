@@ -7,10 +7,10 @@ library(here)
 
 base_url <- "https://raw.githubusercontent.com/cdcepi/Flusight-forecast-data/master/data-forecasts/"
 ## construct full url
-forecaster = "SigSci-TSENS"
-date = "2022-10-31"
+forecaster <- "SigSci-TSENS"
+date <- "2022-10-31"
 ens <- paste0(base_url, forecaster, "/", date, "-", forecaster, ".csv")
-tsens1 = read_csv(ens)
+tsens1 <- read_csv(ens)
 
 write_csv(tsens1, here("inst/extdata/2022-10-31-SigSci-TSENS.csv"))
 write_csv(tsens2, here("inst/extdata/2023-02-06-SigSci-TSENS.csv"))
@@ -27,10 +27,10 @@ hosp_daily <-
 write_csv(hosp_daily, here("inst/extdata/hdgov_hosp_daily.csv"))
 
 # weekly observations
-hosp_week = get_hdgov_hosp(limitcols = TRUE) %>%
+hosp_week <- get_hdgov_hosp(limitcols = TRUE) %>%
   prep_hdgov_hosp(., min_per_week = 0, remove_incomplete = TRUE, trim = list(epiyear = 2022, epiweek = 6))
 
-hosp_week = hosp_week %>%
+hosp_week <- hosp_week %>%
   dplyr::select(date = week_end, epiyear, epiweek, location, flu.admits)
 
 write_csv(hosp_week, here("inst/extdata/hdgov_hosp_weekly.csv"))
@@ -67,10 +67,10 @@ hosp_month <- hosp %>%
   group_by(location, year, month) %>%
   dplyr::summarize(dplyr::across(c(flu.admits, flu.admits.cov), ~sum(.x, na.rm = TRUE)), .groups = "drop")
 
-locations = readRDS(here("data-raw/locations.rds"))
+locations <- readRDS(here("data-raw/locations.rds"))
 
 # generate a US location that is the sum of admits for all locations and add them to the hosp_month
-all_hosp = hosp_month %>% dplyr::group_by(year, month) %>%
+all_hosp <- hosp_month %>% dplyr::group_by(year, month) %>%
   dplyr::summarize(dplyr::across(c(flu.admits, flu.admits.cov), ~sum(.x, na.rm = TRUE)), .groups = "drop") %>%
   dplyr::mutate(location = "US", .before = 1) %>% dplyr::bind_rows(hosp_month) %>%
   dplyr::arrange(location, year, month) %>%
