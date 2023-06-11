@@ -2,7 +2,7 @@ library(tidyverse)
 library(fiphde)
 library(here)
 
-# forcast data ####
+# forecast data ####
 # dates are "2023-02-06", "2022-10-31"
 
 base_url <- "https://raw.githubusercontent.com/cdcepi/Flusight-forecast-data/master/data-forecasts/"
@@ -12,10 +12,10 @@ date <- "2022-10-31"
 ens <- paste0(base_url, forecaster, "/", date, "-", forecaster, ".csv")
 tsens1 <- read_csv(ens)
 
-write_csv(tsens1, here("inst/extdata/2022-10-31-SigSci-TSENS.csv"))
-write_csv(tsens2, here("inst/extdata/2023-02-06-SigSci-TSENS.csv"))
-write_csv(creg1, here("inst/extdata/2022-10-31-SigSci-CREG.csv"))
-write_csv(creg2, here("inst/extdata/2023-02-06-SigSci-CREG.csv"))
+write_csv(tsens1, here("inst/extdata/forecast/2022-10-31-SigSci-TSENS.csv"))
+write_csv(tsens2, here("inst/extdata/forecast/2023-02-06-SigSci-TSENS.csv"))
+write_csv(creg1, here("inst/extdata/forecast/2022-10-31-SigSci-CREG.csv"))
+write_csv(creg2, here("inst/extdata/forecast/2023-02-06-SigSci-CREG.csv"))
 
 # observed data ####
 # daily observations
@@ -24,7 +24,7 @@ hosp_daily <-
   filter(date > "2022-04-03" & date < "2023-04-03") %>%
   dplyr::select(date, state, flu.admits)
 
-write_csv(hosp_daily, here("inst/extdata/hdgov_hosp_daily.csv"))
+write_csv(hosp_daily, here("inst/extdata/observed/hdgov_hosp_daily.csv"))
 
 # weekly observations
 hosp_week <- get_hdgov_hosp(limitcols = TRUE) %>%
@@ -33,7 +33,7 @@ hosp_week <- get_hdgov_hosp(limitcols = TRUE) %>%
 hosp_week <- hosp_week %>%
   dplyr::select(date = week_end, epiyear, epiweek, location, flu.admits)
 
-write_csv(hosp_week, here("inst/extdata/hdgov_hosp_weekly.csv"))
+write_csv(hosp_week, here("inst/extdata/observed/hdgov_hosp_weekly.csv"))
 
 # Quantiles ---------------------------------------------------------------
 
@@ -83,7 +83,7 @@ all_hosp <- hosp_month %>% dplyr::group_by(year, month) %>%
 glimpse(all_hosp)
 
 
-write_csv(all_hosp, here("inst/extdata/hdgov_hosp_monthly.csv"))
+write_csv(all_hosp, here("inst/extdata/observed/hdgov_hosp_monthly.csv"))
 
 # Monthly Forecast ####
 
@@ -236,4 +236,4 @@ p <-
 p
 
 # save the monthly forecast
-write_csv(submission_list$ensemble, here("inst/extdata/2023-06-01-monthly-TSENS.csv"))
+write_csv(submission_list$ensemble, here("inst/extdata/forecast/2023-06-01-monthly-TSENS.csv"))
