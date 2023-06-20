@@ -1,45 +1,60 @@
-
-#' Check if object is observed
+#' Check observed
+#'
+#' @description
+#'
+#' This function checks if the object is of class `signal` and `observed`.
+#'
 #'
 #' @param x Input object to be checked
 #'
 #' @return Logical as to whether or not the input object inherits the "signal" and "observed" classes.
+#'
 #' @export
 #'
 #' @examples
+#' hosp <- read.csv(system.file("extdata/observed/hdgov_hosp_weekly.csv", package = "rplanes", mustWork=TRUE))
+#' sig <- to_signal(hosp, outcome = "flu.admits", type = "observed", resolution = "weeks")
+#' is_observed(sig)
 is_observed <- function(x) {
   all(class(x) == c("signal","observed"))
 }
 
-#' Check if object is forecast
+#' Check forecast
+#'
+#' @description
+#'
+#' This function checks if the object is of class `signal` and `forecast`.
 #'
 #' @param x Input object to be checked
 #'
 #' @return Logical as to whether or not the input object inherits the "signal" and "forecast" classes.
 #' @export
 #'
-#' @examples
 is_forecast <- function(x) {
   all(class(x) == c("signal","forecast"))
 }
 
 #' Read in forecast file
 #'
-#' @param file fixme
-#' @param pi_width fixme
+#' @description
+#'
+#' This function reads a probabilistic ("quantile") forecast csv file and prepares it for the [to_signal] function and downstream plausibility analysis. The object returned is a tibble with summarized forecast data (i.e., prediction interval) for each location and horizon in the original file.
+#'
+#'
+#' @param file Path to csv file to read
+#' @param pi_width Width of prediction interval as integer; default `95` corresponds to 95% prediction interval
 #'
 #' @return A `tibble` with the following columns:
 #'
-#' - **location**
-#' - **date**
-#' - **horizon**
-#' - **lower**
-#' - **point**
-#' - **upper**
+#' - **location**: Geographic unit such as FIPS code
+#' - **date**: Date corresponding the forecast horizon
+#' - **horizon**: Forecast horizon
+#' - **lower**: Lower limit of the prediction interval for the forecast
+#' - **point**: Point estimate for the forecast
+#' - **upper**: Upper limit of the prediction interval for the forecast
 #'
 #' @export
 #'
-#' @examples
 #'
 read_forecast <- function(file, pi_width=95) {
   tmp_data <- readr::read_csv(file)
@@ -62,7 +77,12 @@ read_forecast <- function(file, pi_width=95) {
 }
 
 
-#' Check that date span is valid
+#' Validate dates
+#'
+#' @description
+#'
+#' This function validates that there are no gaps or overlaps between dates specified in the "seed_date" and "signal_date". During plausibility component analyses, the function is called to validate the seed against the evaluated signal.
+#'
 #'
 #'
 #' @param seed_date Last date available in seed object
@@ -180,7 +200,12 @@ check_incomplete <- function(seed_date, signal_date, resolution) {
   }
 }
 
-#' Resolve start of week from a given date
+#' Epiweek start
+#'
+#' @description
+#'
+#' This unexported helper identifies the date of the first day for the epiweek of the given date. The function is used internally inside of [valid_dates].
+#'
 #'
 #' @param date Date to be queried
 #'
@@ -203,11 +228,13 @@ epiweek_start <- function(date) {
 }
 
 
-#' Resolve start of month from a given date
+#' Month start
 #'
-#' @param date Date to be queried
+#' @description
 #'
-#' @return
+#' This unexported helper identifies the date of the first day of the month for the given date. The function is used internally inside of [valid_dates].
+#'
+#' @return Date of the first day of the month for the input date.
 #'
 month_start <- function(date) {
 

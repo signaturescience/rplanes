@@ -2,13 +2,13 @@
 % Please edit documentation in R/utils.R
 \name{month_start}
 \alias{month_start}
-\title{Resolve start of month from a given date}
+\title{Month start}
 \usage{
 month_start(date)
 }
-\arguments{
-\item{date}{Date to be queried}
+\value{
+Date of the first day of the month for the input date.
 }
 \description{
-Resolve start of month from a given date
+This unexported helper identifies the date of the first day of the month for the given date. The function is used internally inside of \link{valid_dates}.
 }
