@@ -1,13 +1,18 @@
-#' helper function used in plane_seed()
+#' Seed engine
 #'
-#' @param input fixme
-#' @param location fixme
-#' @param cut_date fixme
+#' @description
 #'
-#' @return
+#' This helper function is used inside of [plane_seed] to evaluate characteristics of observed data to use for downstream plausibility analysis. The function
+#'
+#'
+#'
+#' @param input Input signal data used for seeding; must be an observed signal object
+#' @param location Character vector with location code
+#' @param cut_date Maximum date (inclusive) for which seeding should be performed; default is `NULL` and the entire input will be used for seeding
+#'
+#' @return A `list` of length 1 with multiple elements corresponding to seed characteristics and metadata for the given location.
 #' @export
 #'
-#' @examples
 seed_engine <- function(input, location, cut_date=NULL) {
 
   ## check class for signal, observed
@@ -63,15 +68,19 @@ seed_engine <- function(input, location, cut_date=NULL) {
   return(l)
 }
 
-#' driver to create seeds for every location in data
+#' Create seed
 #'
-#' @param input fixme
-#' @param cut_date fixme
+#' @description
 #'
-#' @return
+#' This function wraps the [seed_engine] to operate across all locations in the input signal.
+#'
+#'
+#' @param input Input signal data used for seeding; must be an observed signal object
+#' @param cut_date Maximum date (inclusive) for which seeding should be performed; default is `NULL` and the entire input will be used for seeding
+#'
+#'  @return A named `list` of length *n*, where multiple elements corresponding to seed characteristics and metadata for each of the *n* locations are nested in independent lists.
 #' @export
 #'
-#' @examples
 plane_seed <- function(input, cut_date=NULL) {
   locs <- unique(input$data$location)
 

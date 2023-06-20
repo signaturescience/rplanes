@@ -2,7 +2,7 @@
 % Please edit documentation in R/construct.R
 \name{to_signal}
 \alias{to_signal}
-\title{Title}
+\title{Create signal object}
 \usage{
 to_signal(
   input,
@@ -13,16 +13,30 @@ to_signal(
 )
 }
 \arguments{
-\item{input}{needs location (FIPS); date (in YYYY-mm-dd format); outcome value}
+\item{input}{Data to be converted to signal; see "Details" for more information}
 
-\item{outcome}{fixme}
+\item{outcome}{Name of the outcome column in the input data}
 
-\item{type}{fixme}
+\item{type}{Signal type; must be one of "observed" or "forecast"; default is "observed"}
 
-\item{resolution}{fixme}
+\item{resolution}{The temporal resolution of the signal; data can be aggregated daily, weekly, or monthly; default is \code{"weeks"}}
 
-\item{horizon}{fixme}
+\item{horizon}{Number of time steps ahead for forecast signals; only used if \code{type="forecast"}; default is \code{NULL}}
+}
+\value{
+An object of the class \code{signal}. The object will have a second class of either \code{observed} or \code{forecast} depending on the value passed to the "type" argument.
 }
 \description{
-Title
+This function creates an object of the S3 class "signal". The user can conditionally specify either a "forecast" or "observed" signal.
+}
+\details{
+The input signal data may be either "observed" or "forecast" data. Depending on the type, the input data must conform to certain format prior to submission. In both cases, the data must be passed as a data frame.
+
+For "observed" data the data frame must at minimum include columns for \strong{location} (geographic unit such as FIPS code) and \strong{date} (date of reported value; must be \code{date} class). The data should also include a column that contains the outcome (e.g., case count).
+
+For "forecast" data the data frame must include columns for \strong{location} (geographic unit such as FIPS code), \strong{date} (date corresponding to forecast horizon; must be \code{date} class), \strong{horizon} (forecast horizon), \strong{lower} (the lower limit of the prediction interval for the forecast), \strong{point} (the point estimate for the forecast), and \strong{upper} (the upper limit of the prediction interval for the forecast). Note that the \link{read_forecast} function returns data in this format.
+}
+\examples{
+hosp <- read.csv(system.file("extdata/observed/hdgov_hosp_weekly.csv", package = "rplanes", mustWork=TRUE))
+to_signal(hosp, outcome = "flu.admits", type = "observed", resolution = "weeks")
 }

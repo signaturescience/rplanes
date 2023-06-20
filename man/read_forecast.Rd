@@ -7,21 +7,21 @@
 read_forecast(file, pi_width = 95)
 }
 \arguments{
-\item{file}{fixme}
+\item{file}{Path to csv file to read}
 
-\item{pi_width}{fixme}
+\item{pi_width}{Width of prediction interval as integer; default \code{95} corresponds to 95\% prediction interval}
 }
 \value{
 A \code{tibble} with the following columns:
 \itemize{
-\item \strong{location}
-\item \strong{date}
-\item \strong{horizon}
-\item \strong{lower}
-\item \strong{point}
-\item \strong{upper}
+\item \strong{location}: Geographic unit such as FIPS code
+\item \strong{date}: Date corresponding the forecast horizon
+\item \strong{horizon}: Forecast horizon
+\item \strong{lower}: Lower limit of the prediction interval for the forecast
+\item \strong{point}: Point estimate for the forecast
+\item \strong{upper}: Upper limit of the prediction interval for the forecast
 }
 }
 \description{
-Read in forecast file
+This function reads a probabilistic ("quantile") forecast csv file and prepares it for the \link{to_signal} function and downstream plausibility analysis. The object returned is a tibble with summarized forecast data (i.e., prediction interval) for each location and horizon in the original file.
 }

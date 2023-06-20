@@ -2,7 +2,7 @@
 % Please edit documentation in R/utils.R
 \name{is_observed}
 \alias{is_observed}
-\title{Check if object is observed}
+\title{Check observed}
 \usage{
 is_observed(x)
 }
@@ -13,5 +13,10 @@ is_observed(x)
 Logical as to whether or not the input object inherits the "signal" and "observed" classes.
 }
 \description{
-Check if object is observed
+This function checks if the object is of class \code{signal} and \code{observed}.
+}
+\examples{
+hosp <- read.csv(system.file("extdata/observed/hdgov_hosp_weekly.csv", package = "rplanes", mustWork=TRUE))
+sig <- to_signal(hosp, outcome = "flu.admits", type = "observed", resolution = "weeks")
+is_observed(sig)
 }

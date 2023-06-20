@@ -2,7 +2,7 @@
 % Please edit documentation in R/utils.R
 \name{is_forecast}
 \alias{is_forecast}
-\title{Check if object is forecast}
+\title{Check forecast}
 \usage{
 is_forecast(x)
 }
@@ -13,5 +13,5 @@ is_forecast(x)
 Logical as to whether or not the input object inherits the "signal" and "forecast" classes.
 }
 \description{
-Check if object is forecast
+This function checks if the object is of class \code{signal} and \code{forecast}.
 }

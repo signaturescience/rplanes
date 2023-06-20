@@ -2,17 +2,20 @@
 % Please edit documentation in R/seed.R
 \name{seed_engine}
 \alias{seed_engine}
-\title{helper function used in plane_seed()}
+\title{Seed engine}
 \usage{
 seed_engine(input, location, cut_date = NULL)
 }
 \arguments{
-\item{input}{fixme}
+\item{input}{Input signal data used for seeding; must be an observed signal object}
 
-\item{location}{fixme}
+\item{location}{Character vector with location code}
 
-\item{cut_date}{fixme}
+\item{cut_date}{Maximum date (inclusive) for which seeding should be performed; default is \code{NULL} and the entire input will be used for seeding}
+}
+\value{
+A \code{list} of length 1 with multiple elements corresponding to seed characteristics and metadata for the given location.
 }
 \description{
-helper function used in plane_seed()
+This helper function is used inside of \link{plane_seed} to evaluate characteristics of observed data to use for downstream plausibility analysis. The function
 }

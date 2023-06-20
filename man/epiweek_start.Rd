@@ -2,7 +2,7 @@
 % Please edit documentation in R/utils.R
 \name{epiweek_start}
 \alias{epiweek_start}
-\title{Resolve start of week from a given date}
+\title{Epiweek start}
 \usage{
 epiweek_start(date)
 }
@@ -13,5 +13,5 @@ epiweek_start(date)
 Date of the first day of the epiweek for the input date.
 }
 \description{
-Resolve start of week from a given date
+This unexported helper identifies the date of the first day for the epiweek of the given date. The function is used internally inside of \link{valid_dates}.
 }
