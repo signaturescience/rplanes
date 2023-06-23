@@ -16,7 +16,8 @@ Logical as to whether or not the input object inherits the "signal" and "observe
 This function checks if the object is of class \code{signal} and \code{observed}.
 }
 \examples{
-hosp <- read.csv(system.file("extdata/observed/hdgov_hosp_weekly.csv", package = "rplanes", mustWork=TRUE))
+hosp <- read.csv(system.file("extdata/observed/hdgov_hosp_weekly.csv", package = "rplanes"))
+hosp$date <- as.Date(hosp$date, format = "\%Y-\%m-\%d")
 sig <- to_signal(hosp, outcome = "flu.admits", type = "observed", resolution = "weeks")
 is_observed(sig)
 }

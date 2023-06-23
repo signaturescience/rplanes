@@ -22,7 +22,8 @@
 #' @export
 #'
 #' @examples
-#' hosp <- read.csv(system.file("extdata/observed/hdgov_hosp_weekly.csv", package = "rplanes", mustWork=TRUE))
+#' hosp <- read.csv(system.file("extdata/observed/hdgov_hosp_weekly.csv", package = "rplanes"))
+#' hosp$date <- as.Date(hosp$date, format = "%Y-%m-%d")
 #' to_signal(hosp, outcome = "flu.admits", type = "observed", resolution = "weeks")
 to_signal <- function(input,
                       outcome,

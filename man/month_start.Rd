@@ -6,6 +6,9 @@
 \usage{
 month_start(date)
 }
+\arguments{
+\item{date}{Date to be queried}
+}
 \value{
 Date of the first day of the month for the input date.
 }

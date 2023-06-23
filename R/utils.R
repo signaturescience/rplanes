@@ -12,7 +12,8 @@
 #' @export
 #'
 #' @examples
-#' hosp <- read.csv(system.file("extdata/observed/hdgov_hosp_weekly.csv", package = "rplanes", mustWork=TRUE))
+#' hosp <- read.csv(system.file("extdata/observed/hdgov_hosp_weekly.csv", package = "rplanes"))
+#' hosp$date <- as.Date(hosp$date, format = "%Y-%m-%d")
 #' sig <- to_signal(hosp, outcome = "flu.admits", type = "observed", resolution = "weeks")
 #' is_observed(sig)
 is_observed <- function(x) {
@@ -233,6 +234,8 @@ epiweek_start <- function(date) {
 #' @description
 #'
 #' This unexported helper identifies the date of the first day of the month for the given date. The function is used internally inside of [valid_dates].
+#'
+#' @param date Date to be queried
 #'
 #' @return Date of the first day of the month for the input date.
 #'
