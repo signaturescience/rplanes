@@ -59,13 +59,7 @@ is_forecast <- function(x) {
 #'
 read_forecast <- function(file, pi_width=95) {
   ## use .pi_width argument to construct vector of quantiles. If quantiles not in quart_list, stop.
-
-  quartiles <- function(pi_width) {
-    half_width <- (pi_width/2)/100
-    lower_upper <- 0.5 + (c(-1,1)*half_width)
-    round(c(lower_upper[1], 0.5, lower_upper[2]), 3)
-  }
-  width <- quartiles(pi_width)
+  width <- quart_boundry(pi_width)
   # list of quantiles used in forecasts
   quart_list <- round(c(0.010, 0.025, 0.050, 0.100, 0.150, 0.200, 0.250, 0.300, 0.350, 0.400, 0.450, 0.500, 0.550, 0.600, 0.650, 0.700, 0.750, 0.800, 0.850, 0.900, 0.950, 0.975, 0.990), 3)
   stopifnot("Unavailable quartile width." = width %in% quart_list)
@@ -276,4 +270,22 @@ resolve_resolution <- function(resolution) {
   resolution <- strtrim(resolution, 2)
   ## match the first two characters to "days", "weeks", or "months"
   match.arg(resolution, choices = c("days","weeks","months"))
+}
+
+#' Quart boundry
+#'
+#' @description
+#'
+#' This unexported helper generates a vector of three quartiles depending on the chosen width. The function is used internally inside of [read_forecast].
+#'
+#'
+#' @param pi_width interval width as an integer
+#'
+#' @return vector of three quartiles centered around 0.5
+#'
+#'
+quart_boundry <- function(pi_width) {
+  half_width <- (pi_width/2)/100
+  lower_upper <- 0.5 + (c(-1,1)*half_width)
+  round(c(lower_upper[1], 0.5, lower_upper[2]), 3)
 }
