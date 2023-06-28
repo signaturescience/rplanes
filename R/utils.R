@@ -58,16 +58,21 @@ is_forecast <- function(x) {
 #'
 #'
 read_forecast <- function(file, pi_width=95) {
+  ## use .pi_width argument to construct vector of quantiles. If quantiles not in quant_list, stop.
+  width <- q_boundary(pi_width)
+  # list of quantiles used in forecasts
+  quant_list <- round(c(0.010, 0.025, 0.050, 0.100, 0.150, 0.200, 0.250, 0.300, 0.350, 0.400, 0.450, 0.500, 0.550, 0.600, 0.650, 0.700, 0.750, 0.800, 0.850, 0.900, 0.950, 0.975, 0.990), 3)
+  stopifnot("Quantiles unavailable for width specified." = width %in% quant_list)
+
   tmp_data <- readr::read_csv(file)
 
   tmp_data %>%
     dplyr::mutate(epiweek = lubridate::epiweek(.data$target_end_date),
                   epiyear = lubridate::epiyear(.data$target_end_date)) %>%
-    ## TODO: use .pi_width argument to construct vector of quantiles
-    dplyr::filter(.data$type == "point" | .data$quantile %in% c(0.025,0.5,0.975)) %>%
+    dplyr::filter(.data$type == "point" | .data$quantile %in% width) %>%
     ## get target
-    ## TODO: double check regex for str_extract  to get horizon from target value
-    dplyr::mutate(horizon = stringr::str_extract(.data$target, pattern = "^([0-9]|[0-9][0-9]|[0-9][0-9][0-9])")) %>%
+    ## str_extract between 1 to 3 digits, to get horizon from target value
+    dplyr::mutate(horizon = stringr::str_extract(.data$target, pattern = "\\d{1,3}")) %>%
     dplyr::mutate(quantile = ifelse(is.na(.data$quantile), 0.5, .data$quantile)) %>%
     ## NOTE: as of tidyselect v1.2.0 the .data pronoun is deprecated for select-ing
     dplyr::select("location", date = "target_end_date", "horizon", "quantile", "value") %>%
@@ -265,4 +270,22 @@ resolve_resolution <- function(resolution) {
   resolution <- strtrim(resolution, 2)
   ## match the first two characters to "days", "weeks", or "months"
   match.arg(resolution, choices = c("days","weeks","months"))
+}
+
+#' Quantile boundary
+#'
+#' @description
+#'
+#' This unexported helper generates a vector of lower bound, median, and upper bound for the prediction interval of specified width. The function is used internally inside of [read_forecast].
+#'
+#'
+#' @param pi_width Interval width as an integer
+#'
+#' @return Vector of quantiles corresponding to lower and upper bounds centered on median.
+#'
+#'
+q_boundary <- function(pi_width) {
+  half_width <- (pi_width/2)/100
+  lower_upper <- 0.5 + (c(-1,1)*half_width)
+  round(c(lower_upper[1], 0.5, lower_upper[2]), 3)
 }
