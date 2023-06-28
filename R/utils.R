@@ -58,11 +58,11 @@ is_forecast <- function(x) {
 #'
 #'
 read_forecast <- function(file, pi_width=95) {
-  ## use .pi_width argument to construct vector of quantiles. If quantiles not in quart_list, stop.
-  width <- quart_boundry(pi_width)
+  ## use .pi_width argument to construct vector of quantiles. If quantiles not in quant_list, stop.
+  width <- q_boundary(pi_width)
   # list of quantiles used in forecasts
-  quart_list <- round(c(0.010, 0.025, 0.050, 0.100, 0.150, 0.200, 0.250, 0.300, 0.350, 0.400, 0.450, 0.500, 0.550, 0.600, 0.650, 0.700, 0.750, 0.800, 0.850, 0.900, 0.950, 0.975, 0.990), 3)
-  stopifnot("Unavailable quartile width." = width %in% quart_list)
+  quant_list <- round(c(0.010, 0.025, 0.050, 0.100, 0.150, 0.200, 0.250, 0.300, 0.350, 0.400, 0.450, 0.500, 0.550, 0.600, 0.650, 0.700, 0.750, 0.800, 0.850, 0.900, 0.950, 0.975, 0.990), 3)
+  stopifnot("Quantiles unavailable for width specified." = width %in% quant_list)
 
   tmp_data <- readr::read_csv(file)
 
@@ -272,19 +272,19 @@ resolve_resolution <- function(resolution) {
   match.arg(resolution, choices = c("days","weeks","months"))
 }
 
-#' Quart boundry
+#' Quantile boundary
 #'
 #' @description
 #'
-#' This unexported helper generates a vector of three quartiles depending on the chosen width. The function is used internally inside of [read_forecast].
+#' This unexported helper generates a vector of lower bound, median, and upper bound for the prediction interval of specified width. The function is used internally inside of [read_forecast].
 #'
 #'
-#' @param pi_width interval width as an integer
+#' @param pi_width Interval width as an integer
 #'
-#' @return vector of three quartiles centered around 0.5
+#' @return Vector of quantiles corresponding to lower and upper bounds centered on median.
 #'
 #'
-quart_boundry <- function(pi_width) {
+q_boundary <- function(pi_width) {
   half_width <- (pi_width/2)/100
   lower_upper <- 0.5 + (c(-1,1)*half_width)
   round(c(lower_upper[1], 0.5, lower_upper[2]), 3)
