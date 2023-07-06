@@ -141,3 +141,38 @@ plane_cover <- function(location, input, seed) {
   return(list(indicator = ind, last_value = tmp_seed$last_value, bounds = list(lower = bounds$lower, upper = bounds$upper)))
 
 }
+
+
+#' Taper component
+#'
+#' @description
+#'
+#' FIXME
+#'
+#'
+#' @param location Character vector with location code; the location must appear in input and seed
+#' @param input Input signal data to be scored; object must be one of [forecast][to_signal()]
+#' @param seed Prepared [seed][plane_seed()]
+#'
+#' @return FIXME
+#'
+#' @export
+#'
+#'
+plane_taper <- function(location, input, seed) {
+
+  ## NOTE: do we need seed here? maybe not?
+
+  ## get the consecutive widths for prediction interval
+  interval_widths <-
+    input %>%
+    dplyr::filter(.data$location == .env$location) %>%
+    dplyr::mutate(width = upper - lower) %>%
+    dplyr::arrange(date) %>%
+    dplyr::pull(width)
+
+  ind <- any(interval_widths - dplyr::lag(interval_widths) < 0, na.rm = TRUE)
+
+  return(list(indicator = ind,widths = interval_widths))
+
+}
