@@ -14,8 +14,12 @@ plane_taper(location, input, seed)
 \item{seed}{Prepared \link[=plane_seed]{seed}}
 }
 \value{
-FIXME
+A \code{list} with the following values:
+\itemize{
+\item \strong{indicator}: Logical as to whether or not the prediction interval width tapers with advancing horizons
+\item \strong{widths}: Consecutive interval widths for
+}
 }
 \description{
-FIXME
+This function evaluates whether or not the evaluated signal interval tapers (i.e., decreases in width) as horizons progress. The interval used in this plausbility component is drawn from the upper and lower bounds of the forecasted prediction interval. As such, the only accepted signal format is \link[=to_signal]{forecast}, which will include upper and lower bounds.
 }
