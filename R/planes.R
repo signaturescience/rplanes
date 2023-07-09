@@ -141,3 +141,51 @@ plane_cover <- function(location, input, seed) {
   return(list(indicator = ind, last_value = tmp_seed$last_value, bounds = list(lower = bounds$lower, upper = bounds$upper)))
 
 }
+
+
+#' Taper component
+#'
+#' @description
+#'
+#' This function evaluates whether or not the evaluated signal interval tapers (i.e., decreases in width) as horizons progress. The interval used in this plausbility component is drawn from the upper and lower bounds of the forecasted prediction interval. As such, the only accepted signal format is [forecast][to_signal()], which will include upper and lower bounds.
+#'
+#'
+#' @param location Character vector with location code; the location must appear in input and seed
+#' @param input Input signal data to be scored; object must be one of [forecast][to_signal()]
+#' @param seed Prepared [seed][plane_seed()]
+#'
+#' @return
+#'
+#' A `list` with the following values:
+#'
+#' - **indicator**: Logical as to whether or not the prediction interval width tapers with advancing horizons
+#' - **widths**: Consecutive interval widths for
+#'
+#' @export
+#'
+#'
+plane_taper <- function(location, input, seed) {
+
+  ## NOTE: do we need seed here? maybe not?
+
+  if(is_observed(input)) {
+
+    stop("Must be forecast ...")
+
+  } else if(is_forecast(input)) {
+
+    ## get the consecutive widths for prediction interval
+    interval_widths <-
+      input %>%
+      dplyr::filter(.data$location == .env$location) %>%
+      dplyr::mutate(width = upper - lower) %>%
+      dplyr::arrange(date) %>%
+      dplyr::pull(width)
+
+    ind <- any(interval_widths - dplyr::lag(interval_widths) < 0, na.rm = TRUE)
+
+    return(list(indicator = ind, widths = interval_widths))
+
+  }
+
+}
