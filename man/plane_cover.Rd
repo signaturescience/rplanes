@@ -16,11 +16,11 @@ plane_cover(location, input, seed)
 \value{
 A \code{list} with the following values:
 \itemize{
-\item \strong{indicator}: Logical as to whether or not the last value falls within the interval (e.g., between lower and upper bounds of prediction interval) of the evaluated signal
+\item \strong{indicator}: Logical as to whether or not the last value falls outside of the interval (e.g., not in between lower and upper bounds of prediction interval) of the evaluated signal
 \item \strong{last_value}: A vector with the last value recorded in the seed
 \item \strong{bounds}: A list with a two elements corresponding to the upper and lower bounds of the evaluated signal interval
 }
 }
 \description{
-This function evaluates whether or not the evaluated signal interval covers the last observed value. The interval used in this plausbility component is drawn from the upper and lower bounds of the forecasted prediction interval. As such, the only accepted signal format is \link[=to_signal]{forecast}, which will include upper and lower bounds.
+This function evaluates whether or not the evaluated signal interval covers the last observed value. The interval used in this plausibility component is drawn from the upper and lower bounds of the forecasted prediction interval. As such, the only accepted signal format is \link[=to_signal]{forecast}, which will include upper and lower bounds.
 }
