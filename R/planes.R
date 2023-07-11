@@ -219,7 +219,8 @@ plane_score <- function(input, seed, components = "all") {
   ## TODO: create this list as a built-in object?
   complist <-
     list(cover = list(.function = plane_cover),
-         diff = list(.function = plane_diff)
+         diff = list(.function = plane_diff),
+         taper = list(.function = plane_taper)
     )
 
   ## TODO: verify components for signal type ... some won't apply to observed
@@ -241,5 +242,5 @@ plane_score <- function(input, seed, components = "all") {
 
   ## pull out summary from the returned list above
   dplyr::tibble(component_loc = names(retl), indicator = purrr::map_lgl(retl, "indicator")) %>%
-    tidyr::separate(component_loc, into = c("component", "location"), sep = "-")
+    tidyr::separate(.data$component_loc, into = c("component", "location"), sep = "-")
 }
