@@ -189,3 +189,54 @@ plane_taper <- function(location, input, seed) {
   }
 
 }
+
+
+#' Score PLANES components
+#'
+#' @description
+#' FIXME
+#'
+#'
+#' @param input Input signal data to be scored; object must be one of [forecast][to_signal()] or [observed][to_signal()]
+#' @param seed Prepared [seed][plane_seed()]
+#' @param components Character vector specifying components; default is `'all'` and will use all available components for the given signal
+#'
+#' @details
+#'
+#' FIXME
+#'
+#'
+#' @return
+#' FIXME
+#'
+#' @export
+#'
+plane_score <- function(input, seed, components = "all") {
+
+  ## TODO: create this list as a built-in object?
+  complist <-
+    list(cover = list(.function = plane_cover),
+         diff = list(.function = plane_diff)
+    )
+
+  ## TODO: verify components for signal type ... some won't apply to observed
+  if(components == "all") {
+    components <- names(complist)
+  }
+
+  ## get all possible locations
+  ## TODO: make this easier to access in prepped signal by adding locations element
+  locs <- unique(input$data$location)
+
+  ## create combinations of locations and components for mapping below
+  to_map <- tidyr::crossing(locs = locs, comps = components)
+
+  ## TODO: better way do this mapping and tracking of location / components by name
+  retl <-
+    purrr::map2(to_map$comps, to_map$locs, ~ purrr::exec(complist[[.x]]$.function, location = .y, input = input, seed = seed)) %>%
+    purrr::set_names(paste0(to_map$comps, "-", to_map$locs))
+
+  ## pull out summary from the returned list above
+  dplyr::tibble(component_loc = names(retl), indicator = purrr::map_lgl(retl, "indicator")) %>%
+    tidyr::separate(component_loc, into = c("component", "location"), sep = "-")
+}
