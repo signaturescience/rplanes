@@ -79,7 +79,7 @@ plane_diff <- function(location, input, seed) {
 #'
 #' @description
 #'
-#' This function evaluates whether or not the evaluated signal interval covers the last observed value. The interval used in this plausbility component is drawn from the upper and lower bounds of the forecasted prediction interval. As such, the only accepted signal format is [forecast][to_signal()], which will include upper and lower bounds.
+#' This function evaluates whether or not the evaluated signal interval covers the last observed value. The interval used in this plausibility component is drawn from the upper and lower bounds of the forecasted prediction interval. As such, the only accepted signal format is [forecast][to_signal()], which will include upper and lower bounds.
 #'
 #' @param location Character vector with location code; the location must appear in input and seed
 #' @param input Input signal data to be scored; object must be one of [forecast][to_signal()]
@@ -89,7 +89,7 @@ plane_diff <- function(location, input, seed) {
 #'
 #' A `list` with the following values:
 #'
-#' - **indicator**: Logical as to whether or not the last value falls within the interval (e.g., between lower and upper bounds of prediction interval) of the evaluated signal
+#' - **indicator**: Logical as to whether or not the last value falls outside of the interval (e.g., not in between lower and upper bounds of prediction interval) of the evaluated signal
 #' - **last_value**: A vector with the last value recorded in the seed
 #' - **bounds**: A list with a two elements corresponding to the upper and lower bounds of the evaluated signal interval
 #'
@@ -136,7 +136,10 @@ plane_cover <- function(location, input, seed) {
   }
 
   ## test whether the bounds cover the last value
-  ind <- dplyr::between(tmp_seed$last_value, bounds$lower, bounds$upper)
+  ## NOTE: the logic is flipped here with ! operator
+  ## this helps standardize interpretation across components
+  ## effectively asking ... is the most recent value *outside* of the prediction interval
+  ind <- !dplyr::between(tmp_seed$last_value, bounds$lower, bounds$upper)
 
   return(list(indicator = ind, last_value = tmp_seed$last_value, bounds = list(lower = bounds$lower, upper = bounds$upper)))
 
@@ -176,11 +179,11 @@ plane_taper <- function(location, input, seed) {
 
     ## get the consecutive widths for prediction interval
     interval_widths <-
-      input %>%
+      input$data %>%
       dplyr::filter(.data$location == .env$location) %>%
-      dplyr::mutate(width = upper - lower) %>%
+      dplyr::mutate(width = .data$upper - .data$lower) %>%
       dplyr::arrange(date) %>%
-      dplyr::pull(width)
+      dplyr::pull(.data$width)
 
     ind <- any(interval_widths - dplyr::lag(interval_widths) < 0, na.rm = TRUE)
 
