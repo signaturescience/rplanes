@@ -192,3 +192,79 @@ plane_taper <- function(location, input, seed) {
   }
 
 }
+
+
+#' Score PLANES components
+#'
+#' @description
+#'
+#' This function wraps PLANES scoring for specified components across all locations in single step.
+#'
+#'
+#' @param input Input signal data to be scored; object must be one of [forecast][to_signal()] or [observed][to_signal()]
+#' @param seed Prepared [seed][plane_seed()]
+#' @param components Character vector specifying components; default is `'all'` and will use all available components for the given signal
+#'
+#'
+#'
+#' @return
+#'
+#' A `list` with scoring results for all locations.
+#'
+#' @export
+#'
+plane_score <- function(input, seed, components = "all") {
+
+  ## TODO: create this list as a built-in object?
+  ## NOTE: consider using getFromNamespace to simplify this step
+  complist <-
+    list(cover = list(.function = plane_cover),
+         diff = list(.function = plane_diff),
+         taper = list(.function = plane_taper)
+    )
+
+  ## TODO: verify components for signal type ... some won't apply to observed
+  if(components == "all") {
+    components <- names(complist)
+  }
+
+  ## get all possible locations
+  ## TODO: make this easier to access in prepped signal by adding locations element
+  locs <- unique(input$data$location)
+
+  ## create combinations of locations and components for mapping below
+  to_map <- tidyr::crossing(locs = locs, comps = components)
+
+  ## TODO: better way do this mapping and tracking of location / components by name
+  retl <-
+    purrr::map2(to_map$comps, to_map$locs, ~ purrr::exec(complist[[.x]]$.function, location = .y, input = input, seed = seed)) %>%
+    purrr::set_names(paste0(to_map$comps, "-", to_map$locs))
+
+  ## pull out summary tibble components and locations from the returned list above
+  loc_tbl <-
+    dplyr::tibble(component_loc = names(retl), indicator = purrr::map_lgl(retl, "indicator")) %>%
+    tidyr::separate(.data$component_loc, into = c("component", "location"), sep = "-")
+
+  ## convert the tibble into a list
+  loc_list <-
+    loc_tbl %>%
+    ## count number of flags (numerator for score)
+    ## count number of components (denominator for score)
+    ## convert to score
+    ## hold onto the names of the components used
+    dplyr::group_by(.data$location) %>%
+    dplyr::summarise(n_flags = sum(.data$indicator),
+                     n_components = dplyr::n(),
+                     score = .data$n_flags / .data$n_components,
+                     components = paste0(.data$component, collapse = ";")
+    ) %>%
+    ## split into a list by location
+    dplyr::group_split(.data$location, .keep = TRUE) %>%
+    ## use the location column from the tibble in each split list element as name
+    purrr::set_names(purrr::map_chr(., "location")) %>%
+    ## make sure it is a list of lists (not a list of tibbles)
+    purrr::map(., as.list)
+
+  return(list(scores_summary = loc_list, scores_raw = loc_tbl))
+
+}
