@@ -14,11 +14,8 @@ plane_score(input, seed, components = "all")
 \item{components}{Character vector specifying components; default is \code{'all'} and will use all available components for the given signal}
 }
 \value{
-FIXME
+A \code{list} with scoring results for all locations.
 }
 \description{
-FIXME
-}
-\details{
-FIXME
+This function wraps PLANES scoring for specified components across all locations in single step.
 }
