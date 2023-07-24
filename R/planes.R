@@ -79,7 +79,7 @@ plane_diff <- function(location, input, seed) {
 #'
 #' @description
 #'
-#' This function evaluates whether or not the evaluated signal interval covers the last observed value. The interval used in this plausbility component is drawn from the upper and lower bounds of the forecasted prediction interval. As such, the only accepted signal format is [forecast][to_signal()], which will include upper and lower bounds.
+#' This function evaluates whether or not the evaluated signal interval covers the last observed value. The interval used in this plausibility component is drawn from the upper and lower bounds of the forecasted prediction interval. As such, the only accepted signal format is [forecast][to_signal()], which will include upper and lower bounds.
 #'
 #' @param location Character vector with location code; the location must appear in input and seed
 #' @param input Input signal data to be scored; object must be one of [forecast][to_signal()]
@@ -89,7 +89,7 @@ plane_diff <- function(location, input, seed) {
 #'
 #' A `list` with the following values:
 #'
-#' - **indicator**: Logical as to whether or not the last value falls within the interval (e.g., between lower and upper bounds of prediction interval) of the evaluated signal
+#' - **indicator**: Logical as to whether or not the last value falls outside of the interval (e.g., not in between lower and upper bounds of prediction interval) of the evaluated signal
 #' - **last_value**: A vector with the last value recorded in the seed
 #' - **bounds**: A list with a two elements corresponding to the upper and lower bounds of the evaluated signal interval
 #'
@@ -136,7 +136,10 @@ plane_cover <- function(location, input, seed) {
   }
 
   ## test whether the bounds cover the last value
-  ind <- dplyr::between(tmp_seed$last_value, bounds$lower, bounds$upper)
+  ## NOTE: the logic is flipped here with ! operator
+  ## this helps standardize interpretation across components
+  ## effectively asking ... is the most recent value *outside* of the prediction interval
+  ind <- !dplyr::between(tmp_seed$last_value, bounds$lower, bounds$upper)
 
   return(list(indicator = ind, last_value = tmp_seed$last_value, bounds = list(lower = bounds$lower, upper = bounds$upper)))
 
@@ -176,8 +179,8 @@ plane_taper <- function(location, input, seed) {
 
     ## get the consecutive widths for prediction interval
     interval_widths <-
-      input %>%
-      dplyr::filter(.data$location == .env$location) %>%
+      input$data %>%
+      dplyr::filter(location == .env$location) %>%
       dplyr::mutate(width = upper - lower) %>%
       dplyr::arrange(date) %>%
       dplyr::pull(width)
@@ -252,4 +255,84 @@ plane_repeat <- function(input, location, k = 3, seed){
     ind <- any(tmp_dat$repeated %in% TRUE, na.rm = T)
     return(list(indicator = ind))
   }
+}
+
+#' Score PLANES components
+#'
+#' @description
+#'
+#' This function wraps PLANES scoring for specified components across all locations in single step.
+#'
+#'
+#' @param input Input signal data to be scored; object must be one of [forecast][to_signal()] or [observed][to_signal()]
+#' @param seed Prepared [seed][plane_seed()]
+#' @param components Character vector specifying components; Any combination of "cover", "diff", "taper" and "repeats". Default is `'all'` and will use all available components for the given signal
+#'
+#'
+#'
+#' @return
+#'
+#' A `list` with scoring results for all locations.
+#'
+#' @export
+#'
+plane_score <- function(input, seed, components = "all") {
+
+  ## TODO: create this list as a built-in object?
+  ## NOTE: consider using getFromNamespace to simplify this step
+  complist <-
+    list(cover = list(.function = plane_cover),
+         diff = list(.function = plane_diff),
+         taper = list(.function = plane_taper),
+         repeats = list(.function = plane_repeat)
+    )
+
+  ## TODO: verify components for signal type ... some won't apply to observed
+  if(is_observed(input) & any(components %in% c("cover", "taper", "all"))) {
+    stop("Input must be a forecast when component contains 'cover' or 'taper'.")
+  }
+
+  if(components == "all") {
+    components <- names(complist)
+  }
+
+  ## get all possible locations
+  ## TODO: make this easier to access in prepped signal by adding locations element
+  locs <- unique(input$data$location)
+
+  ## create combinations of locations and components for mapping below
+  to_map <- tidyr::crossing(locs = locs, comps = components)
+
+  ## TODO: better way do this mapping and tracking of location / components by name
+  retl <-
+    purrr::map2(to_map$comps, to_map$locs, ~ purrr::exec(complist[[.x]]$.function, location = .y, input = input, seed = seed)) %>%
+    purrr::set_names(paste0(to_map$comps, "-", to_map$locs))
+
+  ## pull out summary tibble components and locations from the returned list above
+  loc_tbl <-
+    dplyr::tibble(component_loc = names(retl), indicator = purrr::map_lgl(retl, "indicator")) %>%
+    tidyr::separate(.data$component_loc, into = c("component", "location"), sep = "-")
+
+  ## convert the tibble into a list
+  loc_list <-
+    loc_tbl %>%
+    ## count number of flags (numerator for score)
+    ## count number of components (denominator for score)
+    ## convert to score
+    ## hold onto the names of the components used
+    dplyr::group_by(.data$location) %>%
+    dplyr::summarise(n_flags = sum(.data$indicator),
+                     n_components = dplyr::n(),
+                     score = .data$n_flags / .data$n_components,
+                     components = paste0(.data$component, collapse = ";")
+    ) %>%
+    ## split into a list by location
+    dplyr::group_split(.data$location, .keep = TRUE) %>%
+    ## use the location column from the tibble in each split list element as name
+    purrr::set_names(purrr::map_chr(., "location")) %>%
+    ## make sure it is a list of lists (not a list of tibbles)
+    purrr::map(., as.list)
+
+  return(list(scores_summary = loc_list, scores_raw = loc_tbl))
+
 }
