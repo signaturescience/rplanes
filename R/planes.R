@@ -180,10 +180,10 @@ plane_taper <- function(location, input, seed) {
     ## get the consecutive widths for prediction interval
     interval_widths <-
       input$data %>%
-      dplyr::filter(location == .env$location) %>%
-      dplyr::mutate(width = upper - lower) %>%
+      dplyr::filter(.data$location == .env$location) %>%
+      dplyr::mutate(width = .data$upper - .data$lower) %>%
       dplyr::arrange(date) %>%
-      dplyr::pull(width)
+      dplyr::pull(.data$width)
 
     ind <- any(interval_widths - dplyr::lag(interval_widths) < 0, na.rm = TRUE)
 
