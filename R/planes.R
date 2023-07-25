@@ -217,6 +217,7 @@ plane_taper <- function(location, input, seed) {
 #'
 #' @export
 #'
+#'@importFrom stats var
 #'
 plane_repeat <- function(input, location, k = 3, seed){
 
@@ -240,7 +241,7 @@ plane_repeat <- function(input, location, k = 3, seed){
       dplyr::filter(.data$location == .env$location) %>%
       dplyr::filter(.data$date > as.Date(tmp_seed$meta$cut_date, format = "%Y-%m-%d")) %>%
       dplyr::arrange(date) %>%
-      mutate(repeated = ifelse(
+      dplyr::mutate(repeated = ifelse(
         slider::slide_vec(.data$point, var, .before = k) == 0, TRUE, FALSE) # if the variation = 0 for consecutive horizon's points return TRUE else FALSE
       )
   }

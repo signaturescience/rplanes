@@ -21,7 +21,8 @@ Imports:
     tidyr,
     stringr,
     readr,
-    lubridate
+    lubridate,
+    slider
 Suggests:
     testthat (>= 3.0.0),
     MMWRweek
