@@ -80,11 +80,11 @@ read_forecast <- function(file, pi_width=95) {
       dplyr::filter(.data$quantile == 0.5) %>%
       dplyr::group_by(.data$forecast_date, .data$location, .data$target) %>%
       dplyr::mutate(not_equal = ifelse(.data$value[.data$type == "point"] != .data$value[.data$type == "quantile"], TRUE, FALSE)) %>%
-      dplyr::filter(.data$type == "point" & .data$not_equal == TRUE) %>%
+      dplyr::filter(.data$type == "quantile" & .data$not_equal == TRUE) %>%
       dplyr::ungroup()
 
     tmp_data2 <- tmp_data  %>%
-      # remove rows with point types whose values don't equal the 0.5 quantile values
+      # remove rows with quantile types whose values don't equal the point values, keeping the point value.
       dplyr::anti_join(point_test, by = c("forecast_date", "target", "location", "type", "quantile")) %>%
       ## NOTE: as of tidyselect v1.2.0 the .data pronoun is deprecated for select-ing
       dplyr::select("location", date = "target_end_date", "horizon", "quantile", "value") %>%
