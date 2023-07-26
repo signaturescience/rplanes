@@ -50,9 +50,9 @@ is_forecast <- function(x) {
 #' - **location**: Geographic unit such as FIPS code
 #' - **date**: Date corresponding the forecast horizon
 #' - **horizon**: Forecast horizon
-#' - **lower**: Lower limit of the prediction interval for the forecast
+#' - **lower**: Lower limit of the prediction interval for the forecast. If forecast contains quantile predictions.
 #' - **point**: Point estimate for the forecast
-#' - **upper**: Upper limit of the prediction interval for the forecast
+#' - **upper**: Upper limit of the prediction interval for the forecast. If forecast contains quantile predictions.
 #'
 #' @export
 #'
@@ -85,7 +85,7 @@ read_forecast <- function(file, pi_width=95) {
 
     tmp_data2 <- tmp_data  %>%
       # remove rows with point types whose values don't equal the 0.5 quantile values
-      anti_join(point_test, by = c("forecast_date", "target", "location", "type", "quantile")) %>%
+      dplyr::anti_join(point_test, by = c("forecast_date", "target", "location", "type", "quantile")) %>%
       ## NOTE: as of tidyselect v1.2.0 the .data pronoun is deprecated for select-ing
       dplyr::select("location", date = "target_end_date", "horizon", "quantile", "value") %>%
       dplyr::arrange(.data$location,.data$date,.data$horizon,.data$quantile) %>%
