@@ -289,5 +289,3 @@ q_boundary <- function(pi_width) {
   lower_upper <- 0.5 + (c(-1,1)*half_width)
   round(c(lower_upper[1], 0.5, lower_upper[2]), 3)
 }
-
-#' @importFrom package function
