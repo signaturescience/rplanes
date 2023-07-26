@@ -77,10 +77,10 @@ read_forecast <- function(file, pi_width=95) {
   if (sum(stringr::str_count(unique(df$type), "quantile|point")) == 2){
     point_test <- df %>%
       dplyr::mutate(quantile = ifelse(is.na(.data$quantile), 0.5, .data$quantile)) %>%
-      dplyr::filter(quantile == 0.5) %>%
-      dplyr::group_by(forecast_date, location, target) %>%
-      dplyr::mutate(not_equal = ifelse(value[type == "point"] != value[type == "quantile"], TRUE, FALSE)) %>%
-      dplyr::filter(type == "point" & not_equal == TRUE) %>%
+      dplyr::filter(.data$quantile == 0.5) %>%
+      dplyr::group_by(.data$forecast_date, .data$location, .data$target) %>%
+      dplyr::mutate(not_equal = ifelse(.data$value[.data$type == "point"] != .data$value[.data$type == "quantile"], TRUE, FALSE)) %>%
+      dplyr::filter(.data$type == "point" & .data$not_equal == TRUE) %>%
       dplyr::ungroup()
 
     tmp_data2 <- tmp_data  %>%
