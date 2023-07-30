@@ -202,7 +202,8 @@ plane_taper <- function(location, input, seed) {
 #'
 #' @param input Input signal data to be scored; object must be one of [forecast][to_signal()]
 #' @param location Character vector with location code; the location must appear in input and seed
-#' @param tolerance Threshold for the number of allowed repeats before flag is raised. Default is 2.
+#' @param tolerance Integer value for the number of allowed repeats before flag is raised. Default is `NULL` and allowed repeats will be determined from seed.
+#' @param prepend Integer value for the number of values from seed to add before the evaluated signal. Default is `NULL` and the number of values will be determined from seed.
 #' @param seed Prepared [seed][plane_seed()]
 #'
 #' @return
@@ -214,7 +215,7 @@ plane_taper <- function(location, input, seed) {
 #'
 #' @export
 #'
-plane_repeat <- function(input, location, tolerance = NULL, seed){
+plane_repeat <- function(input, location, tolerance = NULL, prepend = NULL, seed){
 
   ## double check that location is in seed before proceeding
   if(!location %in% names(seed)) {
@@ -228,7 +229,17 @@ plane_repeat <- function(input, location, tolerance = NULL, seed){
     tolerance <- tmp_seed$max_repeats
   }
 
-  print(tolerance)
+  ## by default prepend is NULL
+  ## if so ... use seeded "max repeats" (most repeated values observed at location)
+  if(is.null(prepend)) {
+    prepend <- tmp_seed$max_repeats
+  }
+
+  ## get all the values to prepend
+  ## tail will get the last n values
+  ## note that if prepend is 0 then nothing will be prepended
+  prepend_vals <- utils::tail(tmp_seed$all_values,prepend)
+
   ## k is used below to raise flag for repeats
   ## define k as at least as many repeats for flag
   ## i.e., 1 more than what is tolerated
@@ -240,6 +251,12 @@ plane_repeat <- function(input, location, tolerance = NULL, seed){
       dplyr::filter(.data$location == .env$location) %>%
       dplyr::filter(.data$date > as.Date(tmp_seed$meta$cut_date, format = "%Y-%m-%d")) %>%
       dplyr::arrange(date) %>%
+      ## add a column that we can filter on later ...
+      ## ... so we dont return data with prepend in list
+      dplyr::mutate(prepend_type = "evaluated") %>%
+      ## add prepend vals for repeat check
+      ## NOTE: have to do some machinations to get input$outcome as column name
+      dplyr::bind_rows(dplyr::tibble(x1 = prepend_vals, x2 = "prepend") %>% purrr::set_names(c(input$outcome, "prepend_type")), .) %>%
       ## add an identifier for each set of repeating values
       ## consecutive_id will start counting at first value ...
       ## then keep the same id until it sees a new value ...
@@ -253,6 +270,11 @@ plane_repeat <- function(input, location, tolerance = NULL, seed){
       dplyr::filter(.data$location == .env$location) %>%
       dplyr::filter(.data$date > as.Date(tmp_seed$meta$cut_date, format = "%Y-%m-%d")) %>%
       dplyr::arrange(date) %>%
+      ## add a column that we can filter on later ...
+      ## ... so we dont return data with prepend in list
+      dplyr::mutate(prepend_type = "evaluated") %>%
+      ## add prepend vals for repeat check
+      dplyr::bind_rows(dplyr::tibble(point = prepend_vals, prepend_type = "prepend"), .) %>%
       ## add an identifier for each set of repeating values
       ## consecutive_id will start counting at first value ...
       ## then keep the same id until it sees a new value ...
@@ -267,8 +289,9 @@ plane_repeat <- function(input, location, tolerance = NULL, seed){
   ## only include any data that has *more* than allowed repeats
   repeat_tbl <-
     tmp_dat %>%
+    dplyr::filter(.data$prepend_type == "evaluated") %>%
     dplyr::filter(.data$n_repeats >= k) %>%
-    dplyr::select(-"repeat_id", -"n_repeats")
+    dplyr::select(-"repeat_id", -"n_repeats", -"prepend_type")
 
   ## indicator for whether or not the number of rows is > 0
   ## this would indicate that there are repeats
