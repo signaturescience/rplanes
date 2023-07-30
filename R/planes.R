@@ -210,14 +210,9 @@ plane_taper <- function(location, input, seed) {
 #' A `list` with the following values:
 #'
 #' - **indicator**: Logical as to whether or not the value is repeated sequentially k number of times.
-#'
-#' If the **indicator** returns TRUE the additional values returned:
-#' - **dates**: The dates at which the consecutively repeated values occur.
-#'
+#' - **repeats**: A `tibble` with repeating values found. If there are no repeats (i.e., indicator is `FALSE`) then the `tibble` will have 0 rows.
 #'
 #' @export
-#'
-#'@importFrom stats var
 #'
 plane_repeat <- function(input, location, k = 3, seed){
 
@@ -233,29 +228,42 @@ plane_repeat <- function(input, location, k = 3, seed){
       dplyr::filter(.data$location == .env$location) %>%
       dplyr::filter(.data$date > as.Date(tmp_seed$meta$cut_date, format = "%Y-%m-%d")) %>%
       dplyr::arrange(date) %>%
-      dplyr::mutate(repeated = ifelse(
-        slider::slide_vec(.data[[input$outcome]], var, .before = k) == 0, TRUE, FALSE) # if variation for the k consecutive points = 0 then TRUE else FALSE
-      )
+      ## add an identifier for each set of repeating values
+      ## consecutive_id will start counting at first value ...
+      ## then keep the same id until it sees a new value ...
+      ## then will iterate on id ...
+      ## and repeat this procedure through the last row of the tibble
+      dplyr::mutate(repeat_id = dplyr::consecutive_id(.data[[input$outcome]])) %>%
+      ## using the ids created above we can count how many times each value repeats
+      dplyr::add_count(.data$repeat_id, name = "n_repeats")
   } else if(is_forecast(input)) {
     tmp_dat <- input$data %>%
       dplyr::filter(.data$location == .env$location) %>%
       dplyr::filter(.data$date > as.Date(tmp_seed$meta$cut_date, format = "%Y-%m-%d")) %>%
       dplyr::arrange(date) %>%
-      dplyr::mutate(repeated = ifelse(
-        slider::slide_vec(.data$point, var, .before = k) == 0, TRUE, FALSE) # if the variation = 0 for consecutive horizon's points return TRUE else FALSE
-      )
+      ## add an identifier for each set of repeating values
+      ## consecutive_id will start counting at first value ...
+      ## then keep the same id until it sees a new value ...
+      ## then will iterate on id ...
+      ## and repeat this procedure through the last row of the tibble
+      dplyr::mutate(repeat_id = dplyr::consecutive_id(.data$point)) %>%
+      ## using the ids created above we can count how many times each value repeats
+      dplyr::add_count(.data$repeat_id, name = "n_repeats")
   }
-  if(any(tmp_dat$repeated %in% TRUE)){
-    ind <- any(tmp_dat$repeated %in% TRUE, na.rm = T)
-    loc <- tmp_dat$location[tmp_dat$repeated %in% TRUE]
-    dates <- tmp_dat$date[tmp_dat$repeated %in% TRUE]
 
-    return(list(indicator = ind, dates = dates))
+  ## filter the data with repeat counts
+  ## only include any data that has *more* than allowed repeats
+  repeat_tbl <-
+    tmp_dat %>%
+    dplyr::filter(.data$n_repeats >= k) %>%
+    dplyr::select(-"repeat_id", -"n_repeats")
 
-  } else {
-    ind <- any(tmp_dat$repeated %in% TRUE, na.rm = T)
-    return(list(indicator = ind))
-  }
+  ## indicator for whether or not the number of rows is > 0
+  ## this would indicate that there are repeats
+  ind <- nrow(repeat_tbl) > 0
+
+  ## return list with indicator and info
+  return(list(indicator = ind, repeats = repeat_tbl))
 }
 
 #' Score PLANES components

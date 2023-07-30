@@ -19,11 +19,7 @@ plane_repeat(input, location, k = 3, seed)
 A \code{list} with the following values:
 \itemize{
 \item \strong{indicator}: Logical as to whether or not the value is repeated sequentially k number of times.
-}
-
-If the \strong{indicator} returns TRUE the additional values returned:
-\itemize{
-\item \strong{dates}: The dates at which the consecutively repeated values occur.
+\item \strong{repeats}: A \code{tibble} with repeating values found. If there are no repeats (i.e., indicator is \code{FALSE}) then the \code{tibble} will have 0 rows.
 }
 }
 \description{
