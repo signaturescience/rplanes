@@ -52,7 +52,24 @@ seed_engine <- function(input, location, cut_date=NULL) {
   ## get last value
   last_val <- utils::tail(tmp_obs, 1)
 
-  ## TODO: return last k values (for repeat) ??
+  ## get all values for repeat
+  all_vals <- tmp_obs
+
+  ## get max repeats
+  max_repeats <-
+    tmp_data %>%
+    ## add an identifier for each set of repeating values
+    ## consecutive_id will start counting at first value ...
+    ## then keep the same id until it sees a new value ...
+    ## then will iterate on id ...
+    ## and repeat this procedure through the last row of the tibble
+    dplyr::mutate(repeat_id = dplyr::consecutive_id(.data[[input$outcome]])) %>%
+    ## using the ids created above we can count how many times each value repeats
+    dplyr::add_count(.data$repeat_id, name = "n_repeats") %>%
+    dplyr::pull("n_repeats") %>%
+    max(.)
+
+
   ## TODO: return trends
   ## TODO: add other info needed for metrics downstream
 
@@ -60,6 +77,8 @@ seed_engine <- function(input, location, cut_date=NULL) {
     list(
       diff = list(max = max_diff),
       range = list(min = min_val, max = max_val),
+      all_values = all_vals,
+      max_repeats = max_repeats,
       last_value = last_val,
       ## TODO: add other metadata to this list
       meta = list(cut_date = cut_date, resolution = input$resolution, date_range = list(min = min(tmp_data$date), max = max(tmp_data$date)))

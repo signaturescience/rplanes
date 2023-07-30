@@ -202,7 +202,7 @@ plane_taper <- function(location, input, seed) {
 #'
 #' @param input Input signal data to be scored; object must be one of [forecast][to_signal()]
 #' @param location Character vector with location code; the location must appear in input and seed
-#' @param k Threshold for the number of repeats to be flagged. Default is 3.
+#' @param tolerance Threshold for the number of allowed repeats before flag is raised. Default is 2.
 #' @param seed Prepared [seed][plane_seed()]
 #'
 #' @return
@@ -214,13 +214,25 @@ plane_taper <- function(location, input, seed) {
 #'
 #' @export
 #'
-plane_repeat <- function(input, location, k = 3, seed){
+plane_repeat <- function(input, location, tolerance = NULL, seed){
 
   ## double check that location is in seed before proceeding
   if(!location %in% names(seed)) {
     stop(sprintf("%s does not appear in the seed object. Check that the seed was prepared with the location specified.", location))
   }
   tmp_seed <- seed[[location]]
+
+  ## by default tolerance is NULL
+  ## if so ... use seeded "max repeats" (most repeated values observed at location)
+  if(is.null(tolerance)) {
+    tolerance <- tmp_seed$max_repeats
+  }
+
+  print(tolerance)
+  ## k is used below to raise flag for repeats
+  ## define k as at least as many repeats for flag
+  ## i.e., 1 more than what is tolerated
+  k <- tolerance + 1
 
   # check the class of the input, must be forecast or observed as created by to_signal
   if(is_observed(input)) {

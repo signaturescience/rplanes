@@ -4,14 +4,14 @@
 \alias{plane_repeat}
 \title{Repeat component}
 \usage{
-plane_repeat(input, location, k = 3, seed)
+plane_repeat(input, location, tolerance = NULL, seed)
 }
 \arguments{
 \item{input}{Input signal data to be scored; object must be one of \link[=to_signal]{forecast}}
 
 \item{location}{Character vector with location code; the location must appear in input and seed}
 
-\item{k}{Threshold for the number of repeats to be flagged. Default is 3.}
+\item{tolerance}{Threshold for the number of allowed repeats before flag is raised. Default is 2.}
 
 \item{seed}{Prepared \link[=plane_seed]{seed}}
 }
