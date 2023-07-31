@@ -4,3 +4,4 @@ scratch.R
 ^LICENSE\.md$
 ^data-raw$
 ^README\.Rmd$
+scratch_dw.R

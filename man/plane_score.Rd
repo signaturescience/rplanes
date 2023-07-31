@@ -11,7 +11,7 @@ plane_score(input, seed, components = "all")
 
 \item{seed}{Prepared \link[=plane_seed]{seed}}
 
-\item{components}{Character vector specifying components; default is \code{'all'} and will use all available components for the given signal}
+\item{components}{Character vector specifying components; Any combination of "cover", "diff", "taper" and "repeats". Default is \code{'all'} and will use all available components for the given signal}
 }
 \value{
 A \code{list} with scoring results for all locations.

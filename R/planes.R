@@ -193,6 +193,113 @@ plane_taper <- function(location, input, seed) {
 
 }
 
+#' Repeat component
+#'
+#' @description
+#'
+#' This function evaluates whether consecutive values in observations or forecasts are repeated a k number of times. This function takes in a [forecast][to_signal()] object that is either from an observed dataset or forecast dataset.
+#'
+#'
+#' @param input Input signal data to be scored; object must be one of [forecast][to_signal()]
+#' @param location Character vector with location code; the location must appear in input and seed
+#' @param tolerance Integer value for the number of allowed repeats before flag is raised. Default is `NULL` and allowed repeats will be determined from seed.
+#' @param prepend Integer value for the number of values from seed to add before the evaluated signal. Default is `NULL` and the number of values will be determined from seed.
+#' @param seed Prepared [seed][plane_seed()]
+#'
+#' @return
+#'
+#' A `list` with the following values:
+#'
+#' - **indicator**: Logical as to whether or not the value is repeated sequentially k number of times.
+#' - **repeats**: A `tibble` with repeating values found. If there are no repeats (i.e., indicator is `FALSE`) then the `tibble` will have 0 rows.
+#'
+#' @export
+#'
+plane_repeat <- function(input, location, tolerance = NULL, prepend = NULL, seed){
+
+  ## double check that location is in seed before proceeding
+  if(!location %in% names(seed)) {
+    stop(sprintf("%s does not appear in the seed object. Check that the seed was prepared with the location specified.", location))
+  }
+  tmp_seed <- seed[[location]]
+
+  ## by default tolerance is NULL
+  ## if so ... use seeded "max repeats" (most repeated values observed at location)
+  if(is.null(tolerance)) {
+    tolerance <- tmp_seed$max_repeats
+  }
+
+  ## by default prepend is NULL
+  ## if so ... use seeded "max repeats" (most repeated values observed at location)
+  if(is.null(prepend)) {
+    prepend <- tmp_seed$max_repeats
+  }
+
+  ## get all the values to prepend
+  ## tail will get the last n values
+  ## note that if prepend is 0 then nothing will be prepended
+  prepend_vals <- utils::tail(tmp_seed$all_values,prepend)
+
+  ## k is used below to raise flag for repeats
+  ## define k as at least as many repeats for flag
+  ## i.e., 1 more than what is tolerated
+  k <- tolerance + 1
+
+  # check the class of the input, must be forecast or observed as created by to_signal
+  if(is_observed(input)) {
+    tmp_dat <- input$data %>%
+      dplyr::filter(.data$location == .env$location) %>%
+      dplyr::filter(.data$date > as.Date(tmp_seed$meta$cut_date, format = "%Y-%m-%d")) %>%
+      dplyr::arrange(date) %>%
+      ## add a column that we can filter on later ...
+      ## ... so we dont return data with prepend in list
+      dplyr::mutate(prepend_type = "evaluated") %>%
+      ## add prepend vals for repeat check
+      ## NOTE: have to do some machinations to get input$outcome as column name
+      dplyr::bind_rows(dplyr::tibble(x1 = prepend_vals, x2 = "prepend") %>% purrr::set_names(c(input$outcome, "prepend_type")), .) %>%
+      ## add an identifier for each set of repeating values
+      ## consecutive_id will start counting at first value ...
+      ## then keep the same id until it sees a new value ...
+      ## then will iterate on id ...
+      ## and repeat this procedure through the last row of the tibble
+      dplyr::mutate(repeat_id = dplyr::consecutive_id(.data[[input$outcome]])) %>%
+      ## using the ids created above we can count how many times each value repeats
+      dplyr::add_count(.data$repeat_id, name = "n_repeats")
+  } else if(is_forecast(input)) {
+    tmp_dat <- input$data %>%
+      dplyr::filter(.data$location == .env$location) %>%
+      dplyr::filter(.data$date > as.Date(tmp_seed$meta$cut_date, format = "%Y-%m-%d")) %>%
+      dplyr::arrange(date) %>%
+      ## add a column that we can filter on later ...
+      ## ... so we dont return data with prepend in list
+      dplyr::mutate(prepend_type = "evaluated") %>%
+      ## add prepend vals for repeat check
+      dplyr::bind_rows(dplyr::tibble(point = prepend_vals, prepend_type = "prepend"), .) %>%
+      ## add an identifier for each set of repeating values
+      ## consecutive_id will start counting at first value ...
+      ## then keep the same id until it sees a new value ...
+      ## then will iterate on id ...
+      ## and repeat this procedure through the last row of the tibble
+      dplyr::mutate(repeat_id = dplyr::consecutive_id(.data$point)) %>%
+      ## using the ids created above we can count how many times each value repeats
+      dplyr::add_count(.data$repeat_id, name = "n_repeats")
+  }
+
+  ## filter the data with repeat counts
+  ## only include any data that has *more* than allowed repeats
+  repeat_tbl <-
+    tmp_dat %>%
+    dplyr::filter(.data$prepend_type == "evaluated") %>%
+    dplyr::filter(.data$n_repeats >= k) %>%
+    dplyr::select(-"repeat_id", -"n_repeats", -"prepend_type")
+
+  ## indicator for whether or not the number of rows is > 0
+  ## this would indicate that there are repeats
+  ind <- nrow(repeat_tbl) > 0
+
+  ## return list with indicator and info
+  return(list(indicator = ind, repeats = repeat_tbl))
+}
 
 #' Score PLANES components
 #'
@@ -203,7 +310,7 @@ plane_taper <- function(location, input, seed) {
 #'
 #' @param input Input signal data to be scored; object must be one of [forecast][to_signal()] or [observed][to_signal()]
 #' @param seed Prepared [seed][plane_seed()]
-#' @param components Character vector specifying components; default is `'all'` and will use all available components for the given signal
+#' @param components Character vector specifying components; Any combination of "cover", "diff", "taper" and "repeats". Default is `'all'` and will use all available components for the given signal
 #'
 #'
 #'
@@ -220,10 +327,15 @@ plane_score <- function(input, seed, components = "all") {
   complist <-
     list(cover = list(.function = plane_cover),
          diff = list(.function = plane_diff),
-         taper = list(.function = plane_taper)
+         taper = list(.function = plane_taper),
+         repeats = list(.function = plane_repeat)
     )
 
   ## TODO: verify components for signal type ... some won't apply to observed
+  if(is_observed(input) & any(components %in% c("cover", "taper", "all"))) {
+    stop("Input must be a forecast when component contains 'cover' or 'taper'.")
+  }
+
   if(components == "all") {
     components <- names(complist)
   }
