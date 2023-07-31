@@ -64,7 +64,9 @@ read_forecast <- function(file, pi_width=95) {
   quant_list <- round(c(0.010, 0.025, 0.050, 0.100, 0.150, 0.200, 0.250, 0.300, 0.350, 0.400, 0.450, 0.500, 0.550, 0.600, 0.650, 0.700, 0.750, 0.800, 0.850, 0.900, 0.950, 0.975, 0.990), 3)
   stopifnot("Quantiles unavailable for width specified." = width %in% quant_list)
 
-  df <- readr::read_csv(file)
+  ## read in csv with probabilistic forecast
+  ## suppress message about readr guessing column types
+  df <- readr::read_csv(file, show_col_types = FALSE)
 
   tmp_data <- df %>%
     dplyr::mutate(quantile = ifelse(is.na(.data$quantile), 0.5, .data$quantile))  %>%
