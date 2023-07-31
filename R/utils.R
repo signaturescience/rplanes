@@ -101,6 +101,8 @@ read_forecast <- function(file, pi_width=95) {
       tidyr::spread(.data$quantile, .data$value) %>%
       purrr::set_names(c("location","date","horizon","point"))
   }
+
+  return(tmp_data2)
 }
 
 
