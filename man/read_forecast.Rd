@@ -17,9 +17,9 @@ A \code{tibble} with the following columns:
 \item \strong{location}: Geographic unit such as FIPS code
 \item \strong{date}: Date corresponding the forecast horizon
 \item \strong{horizon}: Forecast horizon
-\item \strong{lower}: Lower limit of the prediction interval for the forecast
+\item \strong{lower}: Lower limit of the prediction interval for the forecast. If forecast contains quantile predictions.
 \item \strong{point}: Point estimate for the forecast
-\item \strong{upper}: Upper limit of the prediction interval for the forecast
+\item \strong{upper}: Upper limit of the prediction interval for the forecast. If forecast contains quantile predictions.
 }
 }
 \description{
