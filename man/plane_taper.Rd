@@ -17,7 +17,7 @@ plane_taper(location, input, seed)
 A \code{list} with the following values:
 \itemize{
 \item \strong{indicator}: Logical as to whether or not the prediction interval width tapers with advancing horizons
-\item \strong{widths}: Consecutive interval widths for
+\item \strong{widths}: Consecutive interval widths for forecasted data
 }
 }
 \description{

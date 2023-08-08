@@ -162,7 +162,7 @@ plane_cover <- function(location, input, seed) {
 #' A `list` with the following values:
 #'
 #' - **indicator**: Logical as to whether or not the prediction interval width tapers with advancing horizons
-#' - **widths**: Consecutive interval widths for
+#' - **widths**: Consecutive interval widths for forecasted data
 #'
 #' @export
 #'
