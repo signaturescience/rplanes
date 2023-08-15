@@ -82,3 +82,42 @@ test_that("plane_taper detects narrowing PI", {
   expect_false(plane_taper("01", prepped_forecast, prepped_seed)$indicator)
 
 })
+
+test_that("plane_cover identifies 1 week-ahead PI miss", {
+
+  ## create some data to test
+  ## make the 1 week-ahead point estimate and PI (below) miss the last reported obs
+  point_est <- c(100,120,140,160)
+  prepped_forecast <-
+    dplyr::tibble(
+      location = "01",
+      date = seq(as.Date("2022-05-14"), as.Date("2022-06-04"), by = 7),
+      horizon = 1:4,
+      lower = point_est - 5,
+      ## make a large jump in hospitalizations to trigger diff component
+      point = point_est,
+      upper = point_est + 5
+    ) %>%
+    to_signal(outcome = "flu.admits", type = "forecast", horizon = 4)
+
+  expect_true(plane_cover("01", prepped_forecast, prepped_seed)$indicator)
+
+  ## create some data to test
+  ## make the 1 week-ahead point estimate and PI (below) cover the last reported obs
+  point_est <- c(28,31,34,37)
+  prepped_forecast <-
+    dplyr::tibble(
+      location = "01",
+      date = seq(as.Date("2022-05-14"), as.Date("2022-06-04"), by = 7),
+      horizon = 1:4,
+      lower = point_est - 28,
+      ## make a large jump in hospitalizations to trigger diff component
+      point = point_est,
+      upper = point_est + 28
+    ) %>%
+    to_signal(outcome = "flu.admits", type = "forecast", horizon = 4)
+
+  expect_false(plane_cover("01", prepped_forecast, prepped_seed)$indicator)
+
+})
+
