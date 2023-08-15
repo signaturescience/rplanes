@@ -4,18 +4,18 @@
 \alias{plane_repeat}
 \title{Repeat component}
 \usage{
-plane_repeat(input, location, tolerance = NULL, prepend = NULL, seed)
+plane_repeat(location, input, seed, tolerance = NULL, prepend = NULL)
 }
 \arguments{
+\item{location}{Character vector with location code; the location must appear in input and seed}
+
 \item{input}{Input signal data to be scored; object must be one of \link[=to_signal]{forecast}}
 
-\item{location}{Character vector with location code; the location must appear in input and seed}
+\item{seed}{Prepared \link[=plane_seed]{seed}}
 
 \item{tolerance}{Integer value for the number of allowed repeats before flag is raised. Default is \code{NULL} and allowed repeats will be determined from seed.}
 
 \item{prepend}{Integer value for the number of values from seed to add before the evaluated signal. Default is \code{NULL} and the number of values will be determined from seed.}
-
-\item{seed}{Prepared \link[=plane_seed]{seed}}
 }
 \value{
 A \code{list} with the following values:
