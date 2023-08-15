@@ -335,7 +335,7 @@ plane_score <- function(input, seed, components = "all") {
     stop("Input must be a forecast when component contains 'cover' or 'taper'.")
   }
 
-  if(components == "all") {
+  if(length(components) == 1 && components == "all") {
     components <- names(complist)
   }
 
