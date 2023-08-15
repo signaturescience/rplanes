@@ -202,6 +202,16 @@ test_that("plane_score returns summary based on components specified", {
 
   expect_equal(scored_comps, "taper")
 
+  ## check that the score function can be filtered to certain components
+  res <- plane_score(prepped_forecast, prepped_seed, components = c("cover", "diff", "taper"))
+
+  scored_comps <-
+    res$scores_raw$component %>%
+    unique(.) %>%
+    sort(.)
+
+  expect_equal(scored_comps, c("cover", "diff", "taper"))
+
 })
 
 
