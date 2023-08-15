@@ -9,9 +9,10 @@ plane_seed(input, cut_date = NULL)
 \arguments{
 \item{input}{Input signal data used for seeding; must be an observed signal object}
 
-\item{cut_date}{Maximum date (inclusive) for which seeding should be performed; default is \code{NULL} and the entire input will be used for seeding
-
-@return A named \code{list} of length \emph{n}, where multiple elements corresponding to seed characteristics and metadata for each of the \emph{n} locations are nested in independent lists.}
+\item{cut_date}{Maximum date (inclusive) for which seeding should be performed; default is \code{NULL} and the entire input will be used for seeding}
+}
+\value{
+A named \code{list} of length \emph{n}, where multiple elements corresponding to seed characteristics and metadata for each of the \emph{n} locations are nested in independent lists.
 }
 \description{
 This function wraps the \link{seed_engine} to operate across all locations in the input signal.

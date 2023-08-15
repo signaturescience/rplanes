@@ -97,7 +97,7 @@ seed_engine <- function(input, location, cut_date=NULL) {
 #' @param input Input signal data used for seeding; must be an observed signal object
 #' @param cut_date Maximum date (inclusive) for which seeding should be performed; default is `NULL` and the entire input will be used for seeding
 #'
-#'  @return A named `list` of length *n*, where multiple elements corresponding to seed characteristics and metadata for each of the *n* locations are nested in independent lists.
+#' @return A named `list` of length *n*, where multiple elements corresponding to seed characteristics and metadata for each of the *n* locations are nested in independent lists.
 #' @export
 #'
 plane_seed <- function(input, cut_date=NULL) {
