@@ -11,7 +11,7 @@ prepped_observed <- to_signal(tmp_hosp, outcome = "flu.admits", type = "observed
 prepped_seed <- plane_seed(prepped_observed, cut_date = "2022-05-07")
 
 
-test_that("plane_diff works", {
+test_that("plane_diff flags large jump", {
 
   ## create some data to test
   ## make large point estimates to ensure a big jump => trigger diff flag
@@ -45,5 +45,40 @@ test_that("plane_diff works", {
     to_signal(outcome = "flu.admits", type = "forecast", horizon = 4)
 
   expect_false(plane_diff("01", prepped_forecast, prepped_seed)$indicator)
+
+})
+
+test_that("plane_taper detects narrowing PI", {
+
+  ## create some data to test
+  point_est <- c(100,100,100,100)
+  prepped_forecast <-
+    dplyr::tibble(
+      location = "01",
+      date = seq(as.Date("2022-05-14"), as.Date("2022-06-04"), by = 7),
+      horizon = 1:4,
+      ## make the lower and upper bounds get narrower as horizon increases
+      lower = point_est - c(20,15,10,5),
+      point = point_est,
+      upper = point_est + c(20,15,10,5)
+    ) %>%
+    to_signal(outcome = "flu.admits", type = "forecast", horizon = 4)
+
+  expect_true(plane_taper("01", prepped_forecast, prepped_seed)$indicator)
+
+  point_est <- c(100,100,100,100)
+  prepped_forecast <-
+    dplyr::tibble(
+      location = "01",
+      date = seq(as.Date("2022-05-14"), as.Date("2022-06-04"), by = 7),
+      horizon = 1:4,
+      ## make the lower and upper bounds get wider as horizon increases
+      lower = point_est - 20,
+      point = point_est,
+      upper = point_est + 20
+    ) %>%
+    to_signal(outcome = "flu.admits", type = "forecast", horizon = 4)
+
+  expect_false(plane_taper("01", prepped_forecast, prepped_seed)$indicator)
 
 })
