@@ -177,3 +177,33 @@ test_that("plane_repeat detects too many repeating values", {
 
 })
 
+
+test_that("plane_score returns summary based on components specified", {
+
+  prepped_forecast <-
+    read_forecast(system.file("extdata/forecast/2022-10-31-SigSci-TSENS.csv", package = "rplanes")) %>%
+    to_signal(., outcome = "flu.admits", type = "forecast", horizon = 4)
+
+  prepped_seed <- plane_seed(prepped_observed, cut_date = "2022-10-29")
+
+  ## check that the score function returns an overall object and that all locs are present
+  res <- plane_score(prepped_forecast, prepped_seed)
+  expect_s3_class(res$scores_raw, "data.frame")
+  expect_type(res$scores_raw$indicator, "logical")
+  expect_equal(length(unique(res$scores_raw$location)), length(unique(prepped_forecast$data$location)))
+
+  ## check that the score function can be filtered to certain components
+  res <- plane_score(prepped_forecast, prepped_seed, components = c("taper"))
+
+  scored_comps <-
+    res$scores_raw$component %>%
+    unique(.) %>%
+    sort(.)
+
+  expect_equal(scored_comps, "taper")
+
+})
+
+
+
+
