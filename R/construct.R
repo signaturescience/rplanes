@@ -43,7 +43,7 @@ to_signal <- function(input,
                       location = unique(input$location))
 
     ## join to see if there are any gaps in data by resolution
-    tmp_joined <- dplyr::left_join(tmp_expanded, input)
+    tmp_joined <- dplyr::left_join(tmp_expanded, input, by = c("date","location"))
 
     check_gaps <- any(is.na(tmp_joined[,outcome]))
 
