@@ -35,15 +35,10 @@ ui <- tagList(
                 shinyjs::hidden(div(id = "choice_custom",
                                     fileInput("upload_1", label = tooltip(trigger = list("Upload Observed Data", bsicons::bs_icon("info-circle")), "Upload only a .csv file"), multiple = F, accept = ".csv"),
                                     fileInput("upload_2", label = tooltip(trigger = list("Upload Forecast", bsicons::bs_icon("info-circle")), "Upload only a .csv file"), multiple = F, accept = ".csv"))),
-                awesomeRadio("rez", "Resolution", choices = c("Daily" = "days", "Weekly" = "weeks", "Monthly" = "months"), selected = "Weekly", inline = T, status = "info"),
-                pickerInput("horizon", "Forecast Horizon", choices = c(1,2,3,4), selected = 4),
-                radioGroupButtons("score", "Choice of scoring", choices = c("All", "Coverage", "Difference", "Repeat", "Taper"), individual = F, direction = "vertical", justified = F, width = '200px',
-                                  checkIcon = list(
-                                    yes = icon("square-check"),
-                                    no = icon("square")))
+                tableUI("tab2")
               ),
-              nav_panel("Help",
-                        helpUI("tab1")),
+              nav_panel("Data",
+                        dataUI("tab1")),
               nav_panel("Table"),
               nav_panel("plot",
                         plotOutput("plot"))
@@ -103,25 +98,8 @@ server <- function(input, output, session) {
     }
   })
 
-
-
-  prepped_seed <- reactive({
-    signal <- to_signal(data_1(), outcome = "flu.admits", type = "observed", resolution = input$rez)
-    plane_seed(signal, cut_date = "2022-10-29")
-  })
-
-  prepped_forecast <- reactive({
-    if (input$choice == "Example"){
-      read_forecast(system.file("extdata/forecast", "2023-02-06-SigSci-TSENS.csv", package = "rplanes"), pi_width = 95) %>%
-        to_signal(., outcome = "flu.admits", type = "forecast", horizon = input$horizon, resolution = input$rez)
-    } else {
-      read_forecast(input$upload_2$datapath, pi_width = 95) %>%
-        to_signal(., outcome = "flu.admits", type = "forecast", horizon = input$horizon, resolution = input$rez)
-    }
-
-  })
-
-  helpServer("tab1", data_1 = data_1, data_2 = data_2)
+  dataServer("tab1", data_1 = data_1, data_2 = data_2)
+  tableServer("tab2", data_1 = data_1, data_2 = data_2)
 
 }
 

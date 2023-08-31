@@ -2,7 +2,7 @@
 # UI Side ####
 #~~~~~~~~~~~~~~~~~~~~~~~~
 
-helpUI <- function(id){
+dataUI <- function(id){
   ns <- NS(id)
   tagList(
     card(
@@ -22,7 +22,7 @@ helpUI <- function(id){
 # Server Side ####
 #~~~~~~~~~~~~~~~~~~~~~~~~
 
-helpServer <- function(id, data_1, data_2) {
+dataServer <- function(id, data_1, data_2) {
   moduleServer(id, function(input, output, session) {
 
     output$observed <- DT::renderDT({
