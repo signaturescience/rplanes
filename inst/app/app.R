@@ -35,13 +35,14 @@ ui <- tagList(
                 shinyjs::hidden(div(id = "choice_custom",
                                     fileInput("upload_1", label = tooltip(trigger = list("Upload Observed Data", bsicons::bs_icon("info-circle")), "Upload only a .csv file"), multiple = F, accept = ".csv"),
                                     fileInput("upload_2", label = tooltip(trigger = list("Upload Forecast", bsicons::bs_icon("info-circle")), "Upload only a .csv file"), multiple = F, accept = ".csv"))),
-                tableUI("tab2")
+                plotUI("tab2")
               ),
               nav_panel("Data",
                         dataUI("tab1")),
-              nav_panel("Table"),
-              nav_panel("plot",
-                        plotOutput("plot"))
+              nav_panel("Plots",
+                        plotOutput("plot")),
+              nav_panel("Help",
+                        htmltools::includeMarkdown("help_tab.md"))
               )
 
 
@@ -99,7 +100,7 @@ server <- function(input, output, session) {
   })
 
   dataServer("tab1", data_1 = data_1, data_2 = data_2)
-  tableServer("tab2", data_1 = data_1, data_2 = data_2)
+  plotServer("tab2", data_1 = data_1, data_2 = data_2)
 
 }
 

@@ -2,7 +2,7 @@
 # UI Side ####
 #~~~~~~~~~~~~~~~~~~~~~~~~
 
-tableUI <- function(id){
+plotUI <- function(id){
   ns <- NS(id)
   tagList(
     awesomeRadio(ns("rez"), "Resolution", choices = c("Daily" = "days", "Weekly" = "weeks", "Monthly" = "months"), selected = "Weekly", inline = T, status = "info"),
@@ -21,7 +21,7 @@ tableUI <- function(id){
 # Server Side ####
 #~~~~~~~~~~~~~~~~~~~~~~~~
 
-tableServer <- function(id, data_1, data_2) {
+plotServer <- function(id, data_1, data_2) {
   moduleServer(id, function(input, output, session) {
 
     observe({
@@ -42,7 +42,6 @@ tableServer <- function(id, data_1, data_2) {
         read_forecast(input$upload_2$datapath, pi_width = as.numeric(input$width)) %>%
           to_signal(., outcome = "flu.admits", type = "forecast", horizon = input$horizon, resolution = input$rez)
       }
-
     })
 
 

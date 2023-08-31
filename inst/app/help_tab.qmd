@@ -1,0 +1,58 @@
+---
+title: "How to use the app"
+format: markdown_github
+editor: visual
+---
+
+```{r}
+#| label: load-packages
+#| include: false
+#| message: false
+library(dplyr)
+```
+
+## Data
+
+The **observed data** uploaded must be in a .csv format.
+
+The columns contain:
+
+-   date: Is the date of the reported value in date class format.
+
+-   The epiyear and epiweek is optional but can be obtained from the date column using `lubridate::epiyear()` for the epiyear and `MMWRweek::MMWRweek()` for the epiweek.
+
+-   location must be in geographic unit such as [FIPS code](https://www.bls.gov/respondents/mwr/electronic-data-interchange/appendix-d-usps-state-abbreviations-and-fips-codes.htm).
+
+-   An outcome column, in this example is called flu.admits, representing hospital flu admissions.
+
+```{r}
+#| echo: false
+data_1 = read.csv(system.file("extdata/observed", "hdgov_hosp_weekly.csv", package = "rplanes")) %>% 
+  slice_sample(n=5)
+
+knitr::kable(data_1, align = c("lllll"))
+```
+
+The **forecast data** must also be a .csv file with the following columns labeled explicitly as:
+
+-   forecast_date: The date the forecast was generated.
+
+-   target: The horizon for the forecast, in the example it is a weekly horizon with a number for 1, 2, 3 and 4 weeks ahead.
+
+-   target_end_date: The date of the expected forecast horizon in date class format.
+
+-   location: In geographic unit such as [FIPS code](https://www.bls.gov/respondents/mwr/electronic-data-interchange/appendix-d-usps-state-abbreviations-and-fips-codes.htm), in character format.
+
+-   type: The type of predicted value as a point value or quantile value. Can contain quantile only but not point only.
+
+-   quantile: The quantile in numeric format.
+
+-   value: The predicted outcome value for the forecast in numeric format.
+
+```{r}
+#| echo: false
+set.seed(100)
+data_2 = read.csv(system.file("extdata/forecast", "2023-02-06-SigSci-TSENS.csv", package = "rplanes")) %>%
+  slice_sample(n=10)
+knitr::kable(data_2, align = c("lllllll"))
+```
