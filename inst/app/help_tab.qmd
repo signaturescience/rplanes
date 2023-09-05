@@ -21,7 +21,7 @@ The columns contain:
 
 -   The epiyear and epiweek is optional but can be obtained from the date column using `lubridate::epiyear()` for the epiyear and `MMWRweek::MMWRweek()` for the epiweek.
 
--   location must be in geographic unit such as [FIPS code](https://www.bls.gov/respondents/mwr/electronic-data-interchange/appendix-d-usps-state-abbreviations-and-fips-codes.htm).
+-   location: Can be any type like geographic unit such as [FIPS code](https://www.bls.gov/respondents/mwr/electronic-data-interchange/appendix-d-usps-state-abbreviations-and-fips-codes.htm) as in the example below, but must match the location type in the forecast dataset.
 
 -   An outcome column, in this example is called flu.admits, representing hospital flu admissions.
 
@@ -41,7 +41,7 @@ The **forecast data** must also be a .csv file with the following columns labele
 
 -   target_end_date: The date of the expected forecast horizon in date class format.
 
--   location: In geographic unit such as [FIPS code](https://www.bls.gov/respondents/mwr/electronic-data-interchange/appendix-d-usps-state-abbreviations-and-fips-codes.htm), in character format.
+-   location: Can be any type like geographic unit such as [FIPS code](https://www.bls.gov/respondents/mwr/electronic-data-interchange/appendix-d-usps-state-abbreviations-and-fips-codes.htm), or any other but must match the type in the observed dataset.
 
 -   type: The type of predicted value as a point value or quantile value. Can contain quantile only but not point only.
 

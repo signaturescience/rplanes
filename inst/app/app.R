@@ -27,20 +27,28 @@ ui <- tagList(
   waiterOnBusy(html = spin_terminal(), color = transparent(0)),
   page_navbar(title = "Rplanes Explorer",
               theme = bs_theme(bootswatch = "solar"),
+              fillable = FALSE,
               sidebar = sidebar(
                 width = 300,
                 bg = '#6c757d',
                 position = "left",
                 prettyRadioButtons("choice", "Choose Dataset", choices = c("Example", "Custom"), status = "warning", inline = TRUE, icon = icon("check"), bigger = TRUE),
                 shinyjs::hidden(div(id = "choice_custom",
-                                    fileInput("upload_1", label = tooltip(trigger = list("Upload Observed Data", bsicons::bs_icon("info-circle")), "Upload only a .csv file"), multiple = F, accept = ".csv"),
-                                    fileInput("upload_2", label = tooltip(trigger = list("Upload Forecast", bsicons::bs_icon("info-circle")), "Upload only a .csv file"), multiple = F, accept = ".csv"))),
-                plotUI("tab2")
+                                    fileInput("upload_1", label = tooltip(trigger = list("Upload Observed Data", icon("circle-info")), "Upload only a .csv file"), multiple = F, accept = ".csv"),
+                                    fileInput("upload_2", label = tooltip(trigger = list("Upload Forecast", icon("circle-info")), "Upload only a .csv file"), multiple = F, accept = ".csv"))),
+                awesomeRadio("rez", "Resolution", choices = c("Daily" = "days", "Weekly" = "weeks", "Monthly" = "months"), selected = "Weekly", inline = T, status = "info"),
+                pickerInput("date", label = tooltip(trigger = list("Seed Date", icon("circle-info")), "Choose a cut-off date for observed data."), choices = "", options = list(`live-search` = TRUE)),
+                pickerInput("horizon", "Forecast Horizon", choices = c(1,2,3,4), selected = 4),
+                textInput("width", label = tooltip(trigger = list("Prediction Interval", icon("circle-info")), "Choose prediction interval (95 is default corresponding to a 95% interval) for the forecast data."), value = "95"),
+
+                inputsUI("tab2")
+
               ),
               nav_panel("Data",
                         dataUI("tab1")),
               nav_panel("Plots",
-                        plotOutput("plot")),
+                        #plotOutput("plot"),
+                        plotUI("tab2")),
               nav_panel("Help",
                         htmltools::includeMarkdown("help_tab.md"))
               )
@@ -57,6 +65,12 @@ server <- function(input, output, session) {
   # unhide the upload custom dataset when choosing "Custom" radiobutton
   observe({
     shinyjs::toggle(id = "choice_custom", condition = {input$choice %in% "Custom"})
+    # must make the date a character to pass into choices it was outputting the date as a numeric
+    updatePickerInput(session = session, inputId = "date", choices = unique(as.character(data_1()$date)))
+  })
+  observe({
+
+    updatePickerInput(session = session, inputId = "loc", choices = unique(data_1()$location))
   })
 
   output$plot <- renderPlot({
@@ -69,17 +83,16 @@ server <- function(input, output, session) {
     if (input$choice == "Example") {
       # example observed data
       df <- read.csv(system.file("extdata/observed", "hdgov_hosp_weekly.csv", package = "rplanes"))
-      df$date = as.Date(df$date)
-      df
     } else {
       # Uploading observed data
       req(input$upload_1)
       ext <- tools::file_ext(input$upload_1$name)
       switch(ext,
-             csv = vroom::vroom(input$upload_1$datapath, delim = ","),
+             df= read.csv(input$upload_1$datapath),
              validate("Invalid file; Please upload a .csv file"))
-      csv
     }
+    df$date = as.Date(df$date)
+    df
   })
 
 
@@ -93,14 +106,30 @@ server <- function(input, output, session) {
       req(input$upload_2)
       ext <- tools::file_ext(input$upload_2$name)
       switch(ext,
-             csv = vroom::vroom(input$upload_2$datapath, delim = ","),
+             csv = read.csv(input$upload_2$datapath),
              validate("Invalid file; Please upload a .csv file"))
       csv
     }
   })
 
-  dataServer("tab1", data_1 = data_1, data_2 = data_2)
-  plotServer("tab2", data_1 = data_1, data_2 = data_2)
+  prepped_seed <- reactive({
+    signal <- to_signal(data_1(), outcome = "flu.admits", type = "observed", resolution = input$rez)
+    plane_seed(signal, cut_date = input$date)
+  })
+
+  prepped_forecast <- reactive({
+    if (input$choice == "Example"){
+      forc <- read_forecast(system.file("extdata/forecast", "2023-02-06-SigSci-TSENS.csv", package = "rplanes"), pi_width = as.numeric(input$width)) %>%
+        to_signal(., outcome = "flu.admits", type = "forecast", horizon = as.numeric(input$horizon), resolution = input$rez)
+    } else {
+      forc <- read_forecast(input$upload_2$datapath, pi_width = as.numeric(input$width)) %>%
+        to_signal(., outcome = "flu.admits", type = "forecast", horizon = input$horizon, resolution = input$rez)
+    }
+    forc
+  })
+
+  dataServer("tab1", data_1 = data_1, data_2 = data_2 )
+  plotServer("tab2", data_1 = data_1, data_2 = data_2, seed = prepped_seed, forecast = prepped_forecast)
 
 }
 

@@ -12,19 +12,21 @@ The columns contain:
     date column using `lubridate::epiyear()` for the epiyear and
     `MMWRweek::MMWRweek()` for the epiweek.
 
--   location must be in geographic unit such as [FIPS
-    code](https://www.bls.gov/respondents/mwr/electronic-data-interchange/appendix-d-usps-state-abbreviations-and-fips-codes.htm).
+-   location: Can be any type like geographic unit such as [FIPS
+    code](https://www.bls.gov/respondents/mwr/electronic-data-interchange/appendix-d-usps-state-abbreviations-and-fips-codes.htm)
+    as in the example below, but must match the location type in the
+    forecast dataset.
 
 -   An outcome column, in this example is called flu.admits,
     representing hospital flu admissions.
 
 | date       | epiyear | epiweek | location | flu.admits |
 |:-----------|:--------|:--------|:---------|:-----------|
-| 2023-04-08 | 2023    | 14      | 27       | 14         |
-| 2023-01-14 | 2023    | 2       | 09       | 72         |
-| 2022-07-09 | 2022    | 27      | 08       | 11         |
-| 2023-04-01 | 2023    | 13      | 40       | 22         |
-| 2022-10-22 | 2022    | 42      | 35       | 29         |
+| 2023-02-04 | 2023    | 5       | 39       | 63         |
+| 2022-08-27 | 2022    | 34      | 48       | 111        |
+| 2022-04-09 | 2022    | 14      | 09       | 44         |
+| 2022-06-25 | 2022    | 25      | 28       | 19         |
+| 2022-03-26 | 2022    | 12      | 28       | 38         |
 
 The **forecast data** must also be a .csv file with the following
 columns labeled explicitly as:
@@ -37,9 +39,9 @@ columns labeled explicitly as:
 -   target_end_date: The date of the expected forecast horizon in date
     class format.
 
--   location: In geographic unit such as [FIPS
+-   location: Can be any type like geographic unit such as [FIPS
     code](https://www.bls.gov/respondents/mwr/electronic-data-interchange/appendix-d-usps-state-abbreviations-and-fips-codes.htm),
-    in character format.
+    or any other but must match the type in the observed dataset.
 
 -   type: The type of predicted value as a point value or quantile
     value. Can contain quantile only but not point only.
