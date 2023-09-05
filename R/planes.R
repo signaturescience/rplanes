@@ -418,7 +418,7 @@ plane_score <- function(input, seed, components = "all") {
 #' | 6 | 75 |  0 |
 #' | 7 | 75 |  0 |
 #'
-#' Given this data, e.divisive(x) would identify index #5 (74) as the change point, because there was a jump of +37 between index 4 and 5. But e.divisive(diff(x)) would pick both index #3 (28) and #5 (1), because there was a jump of +28 and from index #s 2 and 3, and there was a jump of -36 between index #s 4 and 5. Ultimately, either way detects change points, but diff(x) seems to provide more information.
+#' Given this data, e.divisive(x) would identify index #5 (74) as the change point, because there was a jump of +37 between index 4 and 5. But e.divisive(diff(x)) would pick both index #3 (28) and #5 (1), because there was a jump of +28 from index 2 and 3, and there was a jump of -36 between index # 4 and 5. Ultimately, either way detects change points, but diff(x) seems to provide more information.
 #'
 #' Further, we specify min.size = 2, which means that we are forcing a gap of at least 2 points between detecting change points. In a roundabout way, this increases the significance level or at least decreases the number of change points identified. Should we decide to change the function so that we're not using diff(x), it probably makes sense to change min.size to 3.
 #'
