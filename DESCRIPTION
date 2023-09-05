@@ -27,7 +27,10 @@ Imports:
     tidyr,
     stringr,
     readr,
-    lubridate
+    lubridate,
+    ecp,
+    tibble,
+    utils
 Suggests:
     testthat (>= 3.0.0),
     MMWRweek

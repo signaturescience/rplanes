@@ -4,6 +4,7 @@
 ## usethis namespace: start
 #' @importFrom rlang .data
 #' @importFrom rlang .env
+#' @importFrom utils tail
 ## usethis namespace: end
 NULL
 

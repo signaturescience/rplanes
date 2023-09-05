@@ -379,3 +379,144 @@ plane_score <- function(input, seed, components = "all") {
   return(list(scores_summary = loc_list, scores_raw = loc_tbl))
 
 }
+
+#' Trend Component
+#' @description
+#'
+#' This function identifies any change points in the forecast data or in the final observed data point. Change points are identified by any significant change in magnitude or direction of the slope of the time series.
+#'
+#' @param location Character vector with location code; the location must appear in input and seed
+#' @param input Input signal data to be scored; object must be one of [forecast][to_signal()] or [observed][to_signal()]
+#' @param seed Prepared [seed][plane_seed()]
+#' @param sig_lvl The significance level at which to identify change points (between zero and one)
+#'
+#' @return
+#' A `list` with the following values:
+#'
+#' - **indicator**: Logical as to whether or not the any forecast data or the final observed data point are a significant change point
+#' - **output**: An n x 7 tibble. The length of the forecast plus the observed data determine the length of n. The columns are:
+#'     - **Location**: A character vector with the location code
+#'     - **Index**: An integer index of all observed and forecast data
+#'     - **Date**: The dates corresponding to all observed and forecast data (formatted as date)
+#'     - **Value**: The incidence of all observed and forecast data (e.g., hospitalization rates)
+#'     - **Type**: Indicates whether the data row is observed or forecast data
+#'     - **Changepoint**: Logical identifying any change point (whether in observed or forecast data)
+#'     - **Flagged**: Logical indicating whether or not the change point was flagged. Change points are only flagged if they are in the forecast data or are the final observed data point
+#' - **flagged_dates**: The date of any flagged change point(s). If there are none, NA is returned
+#'
+#' @details
+#'
+#' This function uses ecp::e.divisive(). Within e.divisive(), we use diff(x) instead of the raw data (x), which is a preference and slightly changes the way the points are identified. When we use diff(x), the index aligns with the gap between points rather than the points themselves. Instead of identifying a change point based on the change in size between two points, it identifies change points based on the change in the change itself. For example, the dataframe below shows an example of x and diff(x):
+#'
+#' |**Index**|**x**| **diff(x)**|
+#' | - |:--:| --:|
+#' | 1 | 3  |  6 |
+#' | 2 | 9  |  0 |
+#' | 3 | 9  | 28 |
+#' | 4 | 37 | 37 |
+#' | 5 | 74 |  1 |
+#' | 6 | 75 |  0 |
+#' | 7 | 75 |  0 |
+#'
+#' Given this data, e.divisive(x) would identify index #5 (74) as the change point, because there was a jump of +37 between index 4 and 5. But e.divisive(diff(x)) would pick both index #3 (28) and #5 (1), because there was a jump of +28 and from index #s 2 and 3, and there was a jump of -36 between index #s 4 and 5. Ultimately, either way detects change points, but diff(x) seems to provide more information.
+#'
+#' Further, we specify min.size = 2, which means that we are forcing a gap of at least 2 points between detecting change points. In a roundabout way, this increases the significance level or at least decreases the number of change points identified. Should we decide to change the function so that we're not using diff(x), it probably makes sense to change min.size to 3.
+#'
+#' @export
+#'
+#' @examples # will get there eventually
+#'
+plane_trend <- function(location, input, seed, sig_lvl) {
+
+  ## double check that location is in seed before proceeding
+  if(!location %in% names(seed)) {
+    stop(sprintf("%s does not appear in the seed object. Check that the seed was prepared with the location specified.", location))
+  }
+
+  tmp_seed <- seed[[location]]
+
+  ## return the forecast data (with the filter on cut date)
+  tmp_dat <-
+    input$data %>%
+    dplyr::filter(.data$location == .env$location) %>%
+    dplyr::filter(.data$date > as.Date(tmp_seed$meta$cut_date, format = "%Y-%m-%d"))
+
+  ## check that dates are valid (i.e., no observed data overlaps with seed
+  valid_dates(seed_date = tmp_seed$meta$date_range$max, signal_date = min(tmp_dat$date), resolution = tmp_seed$meta$resolution)
+
+  # Pull forecast point estimate:
+  forepoint <-
+    tmp_dat %>%
+    dplyr::pull("point")
+
+  ## how many observed points to "prepend" to forecasts?
+  ## NOTE: this is set to 4 times as many observations as there are forecasted horizons. This number is also the index of the first relevant changepoint (i.e., the last observed data point)
+  prepend_length <- 4 * length(forepoint)
+
+  # Get dates for identifying change points
+  dates <- c(tail(seq(tmp_seed$meta$date_range$min, tmp_seed$meta$date_range$max, by = tmp_seed$meta$resolution), prepend_length), tmp_dat$date)
+
+  ## If there are fewer than 2 time stamps in forecast, abort
+  if(length(forepoint) < 2) {
+    stop(sprintf("%s forecast must be of length greater than one.", location))
+  }
+
+  # Pull observed points:
+  obspoint <- tmp_seed$all_values
+
+  ## If the observed/training data is not at least 4x as long as the forecast, abort
+  if(length(obspoint) < prepend_length) {
+    stop(sprintf("%s observed training data must be at least 4x the length of the forecast data.", location))
+  }
+
+  # Pull the last 4n observed points and concatenate with the forecasted points. Currently this only works with a 4 week horizon
+  ex <- as.matrix(structure(c(tail(obspoint, prepend_length), forepoint))) # We want 4x as much training data as forecast data
+
+  # Get break points. When k = NULL, all significant points are picked. Need to play around with the sig.lvl
+  ecp_output <- ecp::e.divisive(diff(ex), sig.lvl = sig_lvl, k = NULL, min.size = 2)
+  # We use diff(ex) instead of the raw data, which is a preference and slightly changes the way the points are identified. When we use diff(ex), the index aligns with the gap between points rather than the points themselves. Instead of identifying a change point based on the change in size between two points, it identifies change points based on the change in the change itself. For example, the dataframe below shows an example of ex and diff(ex):
+  # ex diff.ex.
+  # 1  3        6
+  # 2  9        0
+  # 3  9       28
+  # 4 37       37
+  # 5 74        1
+  # 6 75        0
+  # 7 75        0
+
+  # Given this data, e.divisive(ex) would identify index #5 (74) as the change point, because there was a jump of +37 between index 4 and 5. But e.divisive(diff(ex)) would pick both index #3 (28) and #5 (1), because there was a jump of +28 and from index #s 2 and 3, and there was a jump of -36 between index #s 4 and 5. Ultimately, either way detects change points, but diff(ex) seems to provide more information.
+
+  # Further, we specify min.size = 2, which means that we are forcing a gap of at least 2 points between detecting change points. In a roundabout way, this increases the significance level or at least decreases the number of change points identified. Should we decide to change the function so that we're not using diff(ex), it probably makes sense to change min.size to 3.
+
+  ecp_clean <- subset(ecp_output$estimates, subset = ecp_output$estimates > 1 & ecp_output$estimates < length(ex)) # Pulls all changepoints
+
+  ## build tibble with all values and dates
+  ## include logic to check for inflection points detected
+  ## also check for "Flagged" as inflection points in the window of window of interest ...
+  ## i.e., during forecast or last observed value
+  output <- tibble::tibble(
+    Location = location,
+    Index = 1:length(ex),
+    Date = dates,
+    Value = ex[,1]) %>%
+    dplyr::mutate(Type = dplyr::if_else(Index > prepend_length, "Forecast", "Observed"),
+                  Changepoint = dplyr::if_else(Index %in% ecp_clean, TRUE, FALSE),
+                  ## check for ind >= prepend len to ensure the last observation before forecast can be flagged
+                  Flagged = dplyr::if_else(Changepoint & Index >= prepend_length, TRUE, FALSE))
+
+  ## get the dates for flags
+  flagged_dates <-
+    output %>%
+    dplyr::filter(Flagged) %>%
+    dplyr::pull(Date)
+
+  ## if there are none return NA
+  if(length(flagged_dates) == 0) {
+    flagged_dates <- NA
+  }
+
+
+  return(list(indicator = any(output$Flagged), output = output, flagged_dates = flagged_dates))
+
+}
+
