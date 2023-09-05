@@ -23,3 +23,22 @@ A \code{list} with the following values:
 \description{
 This function evaluates whether or not the evaluated signal interval tapers (i.e., decreases in width) as horizons progress. The interval used in this plausbility component is drawn from the upper and lower bounds of the forecasted prediction interval. As such, the only accepted signal format is \link[=to_signal]{forecast}, which will include upper and lower bounds.
 }
+\examples{
+
+## read in example observed data and prep observed signal
+hosp <- read.csv(system.file("extdata/observed/hdgov_hosp_weekly.csv", package = "rplanes"))
+hosp$date <- as.Date(hosp$date, format = "\%Y-\%m-\%d")
+prepped_observed <- to_signal(hosp, outcome = "flu.admits", type = "observed", resolution = "weeks")
+
+## read in example forecast and prep forecast signal
+fp <- system.file("extdata/forecast/2022-10-31-SigSci-TSENS.csv", package = "rplanes")
+prepped_forecast <- read_forecast(fp) \%>\%
+  to_signal(., outcome = "flu.admits", type = "forecast", horizon = 4)
+
+## prepare seed with cut date
+prepped_seed <- plane_seed(prepped_observed, cut_date = "2022-10-29")
+
+## run plane component
+plane_taper(location = "19", input = prepped_forecast, seed = prepped_seed)
+plane_taper(location = "44", input = prepped_forecast, seed = prepped_seed)
+}

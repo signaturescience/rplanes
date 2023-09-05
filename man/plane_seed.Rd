@@ -17,3 +17,16 @@ A named \code{list} of length \emph{n}, where multiple elements corresponding to
 \description{
 This function wraps the \link{seed_engine} to operate across all locations in the input signal.
 }
+\examples{
+## read in example observed data and prep observed signal
+hosp <- read.csv(system.file("extdata/observed/hdgov_hosp_weekly.csv", package = "rplanes"))
+hosp$date <- as.Date(hosp$date, format = "\%Y-\%m-\%d")
+prepped_observed <- to_signal(hosp, outcome = "flu.admits", type = "observed", resolution = "weeks")
+
+## prepare seed with no cut date
+plane_seed(prepped_observed)
+
+## prepare seed with cut date
+plane_seed(prepped_observed, cut_date = "2022-10-29")
+
+}

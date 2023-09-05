@@ -15,3 +15,11 @@ Logical as to whether or not the input object inherits the "signal" and "forecas
 \description{
 This function checks if the object is of class \code{signal} and \code{forecast}.
 }
+\examples{
+
+## get path to example forecast file
+fp <- system.file("extdata/forecast/2022-10-31-SigSci-TSENS.csv", package = "rplanes")
+ex_forecast <- read_forecast(fp)
+sig <- to_signal(ex_forecast, outcome="flu.admits", type="forecast", horizon=4, resolution="weeks")
+is_forecast(sig)
+}
