@@ -19,6 +19,24 @@
 #'
 #' @export
 #'
+#' @examples
+#' ## read in example observed data and prep observed signal
+#' hosp <- read.csv(system.file("extdata/observed/hdgov_hosp_weekly.csv", package = "rplanes"))
+#' hosp$date <- as.Date(hosp$date, format = "%Y-%m-%d")
+#' prepped_observed <- to_signal(hosp, outcome = "flu.admits", type = "observed", resolution = "weeks")
+#'
+#' ## read in example forecast and prep forecast signal
+#' fp <- system.file("extdata/forecast/2022-10-31-SigSci-TSENS.csv", package = "rplanes")
+#' prepped_forecast <- read_forecast(fp) %>%
+#'   to_signal(., outcome = "flu.admits", type = "forecast", horizon = 4)
+#'
+#' ## prepare seed with cut date
+#' prepped_seed <- plane_seed(prepped_observed, cut_date = "2022-10-29")
+#'
+#' ## run plane component
+#' plane_diff(location = "10", input = prepped_forecast, seed = prepped_seed)
+#' plane_diff(location = "51", input = prepped_forecast, seed = prepped_seed)
+#'
 plane_diff <- function(location, input, seed) {
 
   ## double check that location is in seed before proceeding
@@ -95,7 +113,24 @@ plane_diff <- function(location, input, seed) {
 #'
 #' @export
 #'
+#' @examples
 #'
+#' ## read in example observed data and prep observed signal
+#' hosp <- read.csv(system.file("extdata/observed/hdgov_hosp_weekly.csv", package = "rplanes"))
+#' hosp$date <- as.Date(hosp$date, format = "%Y-%m-%d")
+#' prepped_observed <- to_signal(hosp, outcome = "flu.admits", type = "observed", resolution = "weeks")
+#'
+#' ## read in example forecast and prep forecast signal
+#' fp <- system.file("extdata/forecast/2022-10-31-SigSci-TSENS.csv", package = "rplanes")
+#' prepped_forecast <- read_forecast(fp) %>%
+#'   to_signal(., outcome = "flu.admits", type = "forecast", horizon = 4)
+#'
+#' ## prepare seed with cut date
+#' prepped_seed <- plane_seed(prepped_observed, cut_date = "2022-10-29")
+#'
+#' ## run plane component
+#' plane_cover(location = "08", input = prepped_forecast, seed = prepped_seed)
+#' plane_cover(location = "47", input = prepped_forecast, seed = prepped_seed)
 plane_cover <- function(location, input, seed) {
 
   ## double check that location is in seed before proceeding
@@ -166,7 +201,24 @@ plane_cover <- function(location, input, seed) {
 #'
 #' @export
 #'
+#' @examples
 #'
+#' ## read in example observed data and prep observed signal
+#' hosp <- read.csv(system.file("extdata/observed/hdgov_hosp_weekly.csv", package = "rplanes"))
+#' hosp$date <- as.Date(hosp$date, format = "%Y-%m-%d")
+#' prepped_observed <- to_signal(hosp, outcome = "flu.admits", type = "observed", resolution = "weeks")
+#'
+#' ## read in example forecast and prep forecast signal
+#' fp <- system.file("extdata/forecast/2022-10-31-SigSci-TSENS.csv", package = "rplanes")
+#' prepped_forecast <- read_forecast(fp) %>%
+#'   to_signal(., outcome = "flu.admits", type = "forecast", horizon = 4)
+#'
+#' ## prepare seed with cut date
+#' prepped_seed <- plane_seed(prepped_observed, cut_date = "2022-10-29")
+#'
+#' ## run plane component
+#' plane_taper(location = "19", input = prepped_forecast, seed = prepped_seed)
+#' plane_taper(location = "44", input = prepped_forecast, seed = prepped_seed)
 plane_taper <- function(location, input, seed) {
 
   ## NOTE: do we need seed here? maybe not?
@@ -213,6 +265,31 @@ plane_taper <- function(location, input, seed) {
 #' - **repeats**: A `tibble` with repeating values found. If there are no repeats (i.e., indicator is `FALSE`) then the `tibble` will have 0 rows.
 #'
 #' @export
+#'
+#' @examples
+#' ## read in example observed data and prep observed signal
+#' hosp <- read.csv(system.file("extdata/observed/hdgov_hosp_weekly.csv", package = "rplanes"))
+#' hosp$date <- as.Date(hosp$date, format = "%Y-%m-%d")
+#' prepped_observed <- to_signal(hosp, outcome = "flu.admits", type = "observed", resolution = "weeks")
+#'
+#' ## read in example forecast and prep forecast signal
+#' fp <- system.file("extdata/forecast/2022-10-31-SigSci-TSENS.csv", package = "rplanes")
+#' prepped_forecast <- read_forecast(fp) %>%
+#'   to_signal(., outcome = "flu.admits", type = "forecast", horizon = 4)
+#'
+#' ## prepare seed with cut date
+#' prepped_seed <- plane_seed(prepped_observed, cut_date = "2022-10-29")
+#'
+#' ## run plane component
+#' ## use defaults
+#' plane_repeat(location = "12", input = prepped_forecast, seed = prepped_seed)
+#' ## set tolerated repeats to 2
+#' plane_repeat(location = "12", input = prepped_forecast, seed = prepped_seed, tolerance = 2)
+#'
+#' ## use defaults
+#' plane_repeat(location = "49", input = prepped_forecast, seed = prepped_seed)
+#' ## set number of values prepended for evaluation to 4
+#' plane_repeat(location = "49", input = prepped_forecast, seed = prepped_seed, prepend = 4)
 #'
 plane_repeat <- function(location, input, seed, tolerance = NULL, prepend = NULL){
 
@@ -318,6 +395,26 @@ plane_repeat <- function(location, input, seed, tolerance = NULL, prepend = NULL
 #' A `list` with scoring results for all locations.
 #'
 #' @export
+#'
+#' @examples
+#' ## read in example observed data and prep observed signal
+#' hosp <- read.csv(system.file("extdata/observed/hdgov_hosp_weekly.csv", package = "rplanes"))
+#' hosp$date <- as.Date(hosp$date, format = "%Y-%m-%d")
+#' prepped_observed <- to_signal(hosp, outcome = "flu.admits", type = "observed", resolution = "weeks")
+#'
+#' ## read in example forecast and prep forecast signal
+#' fp <- system.file("extdata/forecast/2022-10-31-SigSci-TSENS.csv", package = "rplanes")
+#' prepped_forecast <- read_forecast(fp) %>%
+#'   to_signal(., outcome = "flu.admits", type = "forecast", horizon = 4)
+#'
+#' ## prepare seed with cut date
+#' prepped_seed <- plane_seed(prepped_observed, cut_date = "2022-10-29")
+#'
+#' ## run plane scoring with all components
+#' plane_score(input = prepped_forecast, seed = prepped_seed)
+#'
+#' ## run plane scoring with select components
+#' plane_score(input = prepped_forecast, seed = prepped_seed, components = c("cover","taper"))
 #'
 plane_score <- function(input, seed, components = "all") {
 

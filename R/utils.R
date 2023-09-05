@@ -30,7 +30,13 @@ is_observed <- function(x) {
 #'
 #' @return Logical as to whether or not the input object inherits the "signal" and "forecast" classes.
 #' @export
+#' @examples
 #'
+#' ## get path to example forecast file
+#' fp <- system.file("extdata/forecast/2022-10-31-SigSci-TSENS.csv", package = "rplanes")
+#' ex_forecast <- read_forecast(fp)
+#' sig <- to_signal(ex_forecast, outcome="flu.admits", type="forecast", horizon=4, resolution="weeks")
+#' is_forecast(sig)
 is_forecast <- function(x) {
   all(class(x) == c("signal","forecast"))
 }
@@ -56,6 +62,10 @@ is_forecast <- function(x) {
 #'
 #' @export
 #'
+#' @examples
+#' ## read in example forecast and prep forecast signal
+#' fp <- system.file("extdata/forecast/2022-10-31-SigSci-TSENS.csv", package = "rplanes")
+#' read_forecast(fp)
 #'
 read_forecast <- function(file, pi_width=95) {
   ## use .pi_width argument to construct vector of quantiles. If quantiles not in quant_list, stop.

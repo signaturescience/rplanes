@@ -17,5 +17,5 @@ seed_engine(input, location, cut_date = NULL)
 A \code{list} of length 1 with multiple elements corresponding to seed characteristics and metadata for the given location.
 }
 \description{
-This helper function is used inside of \link{plane_seed} to evaluate characteristics of observed data to use for downstream plausibility analysis. The function
+This helper function is used inside of \link{plane_seed} to evaluate characteristics of observed data to use for downstream plausibility analysis.
 }

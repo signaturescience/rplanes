@@ -4,12 +4,18 @@
 \name{rplanes-package}
 \alias{rplanes}
 \alias{rplanes-package}
-\title{rplanes: What the Package Does (One Line, Title Case)}
+\title{rplanes: Plausibility Analysis of Epidemiological Signals in 'R'}
 \description{
-What the package does (one paragraph).
+The 'rplanes' package provides functionality to prepare data and and analyze plausibility of both forecasted and reported epidemiological signals. The functions implement a set of plausbility algorithms that are agnostic to geographic and time resolutions and are calculated independently then presented as a combined score.
 }
 \author{
-\strong{Maintainer}: First Last \email{first.last@example.com} (\href{https://orcid.org/YOUR-ORCID-ID}{ORCID})
+\strong{Maintainer}: VP Nagraj \email{pnagraj@signaturescience.com} (\href{https://orcid.org/0000-0003-0060-566X}{ORCID})
+
+Authors:
+\itemize{
+  \item Desiree Williams
+  \item Amy Benefield
+}
 
 }
 \keyword{internal}
