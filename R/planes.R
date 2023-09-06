@@ -499,16 +499,16 @@ plane_trend <- function(location, input, seed, sig_lvl) {
     Index = 1:length(ex),
     Date = dates,
     Value = ex[,1]) %>%
-    dplyr::mutate(Type = dplyr::if_else(Index > prepend_length, "Forecast", "Observed"),
-                  Changepoint = dplyr::if_else(Index %in% ecp_clean, TRUE, FALSE),
+    dplyr::mutate(Type = dplyr::if_else(.data$Index > prepend_length, "Forecast", "Observed"),
+                  Changepoint = dplyr::if_else(.data$Index %in% ecp_clean, TRUE, FALSE),
                   ## check for ind >= prepend len to ensure the last observation before forecast can be flagged
-                  Flagged = dplyr::if_else(Changepoint & Index >= prepend_length, TRUE, FALSE))
+                  Flagged = dplyr::if_else(.data$Changepoint & .data$Index >= prepend_length, TRUE, FALSE))
 
   ## get the dates for flags
   flagged_dates <-
     output %>%
-    dplyr::filter(Flagged) %>%
-    dplyr::pull(Date)
+    dplyr::filter(.data$Flagged) %>%
+    dplyr::pull(.data$Date)
 
   ## if there are none return NA
   if(length(flagged_dates) == 0) {
