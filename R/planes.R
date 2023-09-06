@@ -327,7 +327,8 @@ plane_score <- function(input, seed, components = "all") {
     list(cover = list(.function = plane_cover),
          diff = list(.function = plane_diff),
          taper = list(.function = plane_taper),
-         repeats = list(.function = plane_repeat)
+         repeats = list(.function = plane_repeat),
+         trend = list(.function = plane_trend)
     )
 
   ## TODO: verify components for signal type ... some won't apply to observed
@@ -388,7 +389,7 @@ plane_score <- function(input, seed, components = "all") {
 #' @param location Character vector with location code; the location must appear in input and seed
 #' @param input Input signal data to be scored; object must be one of [forecast][to_signal()] or [observed][to_signal()]
 #' @param seed Prepared [seed][plane_seed()]
-#' @param sig_lvl The significance level at which to identify change points (between zero and one)
+#' @param sig_lvl The significance level at which to identify change points (between zero and one); default is 0.1
 #'
 #' @return
 #' A `list` with the following values:
@@ -450,7 +451,7 @@ plane_score <- function(input, seed, components = "all") {
 #' ## Change sig_lvl:
 #' plane_trend(location = "06", input = prepped_forecast, seed = prepped_seed, sig_lvl = .05)
 #'
-plane_trend <- function(location, input, seed, sig_lvl) {
+plane_trend <- function(location, input, seed, sig_lvl = 0.1) {
 
   ## double check that location is in seed before proceeding
   if(!location %in% names(seed)) {

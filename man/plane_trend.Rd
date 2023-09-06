@@ -4,7 +4,7 @@
 \alias{plane_trend}
 \title{Trend Component}
 \usage{
-plane_trend(location, input, seed, sig_lvl)
+plane_trend(location, input, seed, sig_lvl = 0.1)
 }
 \arguments{
 \item{location}{Character vector with location code; the location must appear in input and seed}
@@ -13,7 +13,7 @@ plane_trend(location, input, seed, sig_lvl)
 
 \item{seed}{Prepared \link[=plane_seed]{seed}}
 
-\item{sig_lvl}{The significance level at which to identify change points (between zero and one)}
+\item{sig_lvl}{The significance level at which to identify change points (between zero and one); default is 0.1}
 }
 \value{
 A \code{list} with the following values:
