@@ -424,7 +424,31 @@ plane_score <- function(input, seed, components = "all") {
 #'
 #' @export
 #'
-#' @examples # will get there eventually
+#' @examples
+#'  ## read in example observed data and prep observed signal:
+#' hosp <- read.csv(system.file("extdata/observed/hdgov_hosp_weekly.csv", package = "rplanes"))
+#' tmp_hosp <-
+#'   hosp %>%
+#'   dplyr::select(date, location, flu.admits) %>%
+#'   dplyr::mutate(date = as.Date(date))
+#'
+#' prepped_observed <- to_signal(tmp_hosp, outcome = "flu.admits",
+#'                              type = "observed", resolution = "weeks")
+#'
+#' ## read in example forecast and prep forecast signal:
+#' prepped_forecast <- read_forecast(system.file("extdata/forecast/2022-10-31-SigSci-TSENS.csv",
+#'                                                package = "rplanes")) %>%
+#'    to_signal(., outcome = "flu.admits", type = "forecast", horizon = 4)
+#'
+#' ## prepare seed with cut date
+#' prepped_seed <- plane_seed(prepped_observed, cut_date = "2022-10-29")
+#'
+#' ## Run plane trend component:
+#' plane_trend(location = "05", input = prepped_forecast, seed = prepped_seed, sig_lvl = .2)
+#' ## Change location:
+#' plane_trend(location = "09", input = prepped_forecast, seed = prepped_seed, sig_lvl = .2)
+#' ## Change sig_lvl:
+#' plane_trend(location = "06", input = prepped_forecast, seed = prepped_seed, sig_lvl = .05)
 #'
 plane_trend <- function(location, input, seed, sig_lvl) {
 
