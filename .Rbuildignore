@@ -6,3 +6,6 @@ scratch.R
 ^README\.Rmd$
 scratch_dw.R
 ^\.github$
+^_pkgdown\.yml$
+^docs$
+^pkgdown$
