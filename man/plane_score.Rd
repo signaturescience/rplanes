@@ -11,7 +11,9 @@ plane_score(input, seed, components = "all")
 
 \item{seed}{Prepared \link[=plane_seed]{seed}}
 
-\item{components}{Character vector specifying components; Any combination of "cover", "diff", "taper" and "repeats". Default is \code{'all'} and will use all available components for the given signal}
+\item{components}{Character vector specifying components. Must be either "all" or any combination of "cover", "diff", "taper", "trend", and "repeats". Default is \code{'all'} and will use all available components for the given signal}
+
+\item{args}{Named list of arguments for component functions. List elements must be named to match the given component and arguments passed as a nested list (e.g., \code{args = list(trend = list(sig_level = 0.05))}). Default is \code{NULL} and defaults for all components will be used}
 }
 \value{
 A \code{list} with scoring results for all locations.
@@ -39,4 +41,6 @@ plane_score(input = prepped_forecast, seed = prepped_seed)
 ## run plane scoring with select components
 plane_score(input = prepped_forecast, seed = prepped_seed, components = c("cover","taper"))
 
+## run plane scoring with select components and additional args
+plane_score(input = prepped_forecast, seed = prepped_seed, components = c("cover", "trend", "repeats"), args = list(trend = list(sig_level = 0.05), repeats = list(prepend = 4, tolerance = 8)))
 }
