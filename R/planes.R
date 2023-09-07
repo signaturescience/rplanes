@@ -453,16 +453,16 @@ plane_score <- function(input, seed, components = "all", args = NULL) {
   ## ... if it is not there (e.g., args = NULL) then the function will proceed with no additional args ...
   ## ... if it is there then the !!! will splice the named arguments passed in a list and apply them
   retl <-
-    purrr::map2(to_map$comps, to_map$locs, ~ purrr::exec(complist[[.x]]$.function, location = .y, input = input, seed = seed, !!!args[[.x]])) %>%
-    purrr::set_names(paste0(to_map$comps, "-", to_map$locs))
+    purrr::map2(to_map$locs, to_map$comps, ~ purrr::exec(complist[[.y]]$.function, location = .x, input = input, seed = seed, !!!args[[.y]])) %>%
+    purrr::set_names(paste0(to_map$locs, "-", to_map$comps))
 
   ## grab full list of component results
   full_results <- purrr::map(retl, purrr::pluck)
 
   ## pull out summary tibble components and locations from the returned list above
   loc_tbl <-
-    dplyr::tibble(component_loc = names(retl), indicator = purrr::map_lgl(retl, "indicator")) %>%
-    tidyr::separate(.data$component_loc, into = c("component", "location"), sep = "-")
+    dplyr::tibble(loc_component = names(retl), indicator = purrr::map_lgl(retl, "indicator")) %>%
+    tidyr::separate(.data$loc_component, into = c("location", "component"), sep = "-")
 
   which_flags <-
     loc_tbl %>%
