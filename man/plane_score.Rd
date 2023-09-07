@@ -4,7 +4,7 @@
 \alias{plane_score}
 \title{Score PLANES components}
 \usage{
-plane_score(input, seed, components = "all")
+plane_score(input, seed, components = "all", args = NULL)
 }
 \arguments{
 \item{input}{Input signal data to be scored; object must be one of \link[=to_signal]{forecast} or \link[=to_signal]{observed}}
@@ -13,7 +13,7 @@ plane_score(input, seed, components = "all")
 
 \item{components}{Character vector specifying components. Must be either "all" or any combination of "cover", "diff", "taper", "trend", and "repeats". Default is \code{'all'} and will use all available components for the given signal}
 
-\item{args}{Named list of arguments for component functions. List elements must be named to match the given component and arguments passed as a nested list (e.g., \code{args = list(trend = list(sig_level = 0.05))}). Default is \code{NULL} and defaults for all components will be used}
+\item{args}{Named list of arguments for component functions. List elements must be named to match the given component and arguments passed as a nested list (e.g., \code{args = list(trend = list(sig_lvl = 0.05))}). Default is \code{NULL} and defaults for all components will be used}
 }
 \value{
 A \code{list} with scoring results for all locations.
@@ -42,5 +42,5 @@ plane_score(input = prepped_forecast, seed = prepped_seed)
 plane_score(input = prepped_forecast, seed = prepped_seed, components = c("cover","taper"))
 
 ## run plane scoring with select components and additional args
-plane_score(input = prepped_forecast, seed = prepped_seed, components = c("cover", "trend", "repeats"), args = list(trend = list(sig_level = 0.05), repeats = list(prepend = 4, tolerance = 8)))
+plane_score(input = prepped_forecast, seed = prepped_seed, components = c("cover", "trend", "repeats"), args = list(trend = list(sig_lvl = 0.05), repeats = list(prepend = 4, tolerance = 8)))
 }

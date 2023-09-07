@@ -387,7 +387,7 @@ plane_repeat <- function(location, input, seed, tolerance = NULL, prepend = NULL
 #' @param input Input signal data to be scored; object must be one of [forecast][to_signal()] or [observed][to_signal()]
 #' @param seed Prepared [seed][plane_seed()]
 #' @param components Character vector specifying components. Must be either "all" or any combination of "cover", "diff", "taper", "trend", and "repeats". Default is `'all'` and will use all available components for the given signal
-#' @param args Named list of arguments for component functions. List elements must be named to match the given component and arguments passed as a nested list (e.g., `args = list(trend = list(sig_level = 0.05))`). Default is `NULL` and defaults for all components will be used
+#' @param args Named list of arguments for component functions. List elements must be named to match the given component and arguments passed as a nested list (e.g., `args = list(trend = list(sig_lvl = 0.05))`). Default is `NULL` and defaults for all components will be used
 #'
 #'
 #'
@@ -418,8 +418,8 @@ plane_repeat <- function(location, input, seed, tolerance = NULL, prepend = NULL
 #' plane_score(input = prepped_forecast, seed = prepped_seed, components = c("cover","taper"))
 #'
 #' ## run plane scoring with select components and additional args
-#' plane_score(input = prepped_forecast, seed = prepped_seed, components = c("cover", "trend", "repeats"), args = list(trend = list(sig_level = 0.05), repeats = list(prepend = 4, tolerance = 8)))
-plane_score <- function(input, seed, components = "all") {
+#' plane_score(input = prepped_forecast, seed = prepped_seed, components = c("cover", "trend", "repeats"), args = list(trend = list(sig_lvl = 0.05), repeats = list(prepend = 4, tolerance = 8)))
+plane_score <- function(input, seed, components = "all", args = NULL) {
 
   ## TODO: create this list as a built-in object?
   ## NOTE: consider using getFromNamespace to simplify this step
