@@ -386,7 +386,8 @@ plane_repeat <- function(location, input, seed, tolerance = NULL, prepend = NULL
 #'
 #' @param input Input signal data to be scored; object must be one of [forecast][to_signal()] or [observed][to_signal()]
 #' @param seed Prepared [seed][plane_seed()]
-#' @param components Character vector specifying components; Any combination of "cover", "diff", "taper" and "repeats". Default is `'all'` and will use all available components for the given signal
+#' @param components Character vector specifying components. Must be either "all" or any combination of "cover", "diff", "taper", "trend", and "repeats". Default is `'all'` and will use all available components for the given signal
+#' @param args Named list of arguments for component functions. List elements must be named to match the given component and arguments passed as a nested list (e.g., `args = list(trend = list(sig_lvl = 0.05))`). Default is `NULL` and defaults for all components will be used
 #'
 #'
 #'
@@ -416,7 +417,10 @@ plane_repeat <- function(location, input, seed, tolerance = NULL, prepend = NULL
 #' ## run plane scoring with select components
 #' plane_score(input = prepped_forecast, seed = prepped_seed, components = c("cover","taper"))
 #'
-plane_score <- function(input, seed, components = "all") {
+#' ## run plane scoring with all components and additional args
+#' comp_args <- list(trend = list(sig_lvl = 0.05), repeats = list(prepend = 4, tolerance = 8))
+#' plane_score(input = prepped_forecast, seed = prepped_seed, args = comp_args)
+plane_score <- function(input, seed, components = "all", args = NULL) {
 
   ## TODO: create this list as a built-in object?
   ## NOTE: consider using getFromNamespace to simplify this step
@@ -445,8 +449,11 @@ plane_score <- function(input, seed, components = "all") {
   to_map <- tidyr::crossing(locs = locs, comps = components)
 
   ## TODO: better way do this mapping and tracking of location / components by name
+  ## NOTE: the !!!args[[.x]] will look for the name of the component in the list of args ...
+  ## ... if it is not there (e.g., args = NULL) then the function will proceed with no additional args ...
+  ## ... if it is there then the !!! will splice the named arguments passed in a list and apply them
   retl <-
-    purrr::map2(to_map$comps, to_map$locs, ~ purrr::exec(complist[[.x]]$.function, location = .y, input = input, seed = seed)) %>%
+    purrr::map2(to_map$comps, to_map$locs, ~ purrr::exec(complist[[.x]]$.function, location = .y, input = input, seed = seed, !!!args[[.x]])) %>%
     purrr::set_names(paste0(to_map$comps, "-", to_map$locs))
 
   ## pull out summary tibble components and locations from the returned list above
