@@ -456,10 +456,19 @@ plane_score <- function(input, seed, components = "all", args = NULL) {
     purrr::map2(to_map$comps, to_map$locs, ~ purrr::exec(complist[[.x]]$.function, location = .y, input = input, seed = seed, !!!args[[.x]])) %>%
     purrr::set_names(paste0(to_map$comps, "-", to_map$locs))
 
+  ## grab full list of component results
+  full_results <- purrr::map(retl, purrr::pluck)
+
   ## pull out summary tibble components and locations from the returned list above
   loc_tbl <-
     dplyr::tibble(component_loc = names(retl), indicator = purrr::map_lgl(retl, "indicator")) %>%
     tidyr::separate(.data$component_loc, into = c("component", "location"), sep = "-")
+
+  which_flags <-
+    loc_tbl %>%
+    dplyr::group_by(.data$location) %>%
+    dplyr::filter(.data$indicator) %>%
+    dplyr::summarise(flagged = paste0(.data$component, collapse = ";"))
 
   ## convert the tibble into a list
   loc_list <-
@@ -474,6 +483,8 @@ plane_score <- function(input, seed, components = "all", args = NULL) {
                      score = .data$n_flags / .data$n_components,
                      components = paste0(.data$component, collapse = ";")
     ) %>%
+    ## join back to tibble that enumerates which components were flagged
+    dplyr::left_join(which_flags, by = "location") %>%
     ## split into a list by location
     dplyr::group_split(.data$location, .keep = TRUE) %>%
     ## use the location column from the tibble in each split list element as name
@@ -481,7 +492,7 @@ plane_score <- function(input, seed, components = "all", args = NULL) {
     ## make sure it is a list of lists (not a list of tibbles)
     purrr::map(., as.list)
 
-  return(list(scores_summary = loc_list, scores_raw = loc_tbl))
+  return(list(scores_summary = loc_list, scores_raw = loc_tbl, full_results = full_results))
 
 }
 
