@@ -567,7 +567,6 @@ plane_score <- function(input, seed, components = "all", args = NULL) {
 #' plane_trend(location = "06", input = prepped_forecast, seed = prepped_seed, sig_lvl = .05)
 #'
 plane_trend <- function(location, input, seed, sig_lvl = 0.1) {
-
   ## double check that location is in seed before proceeding
   if(!location %in% names(seed)) {
     stop(sprintf("%s does not appear in the seed object. Check that the seed was prepared with the location specified.", location))
@@ -613,6 +612,7 @@ plane_trend <- function(location, input, seed, sig_lvl = 0.1) {
   ex <- as.matrix(structure(c(tail(obspoint, prepend_length), forepoint))) # We want 4x as much training data as forecast data
 
   # Get break points. When k = NULL, all significant points are picked. Need to play around with the sig.lvl
+  set.seed(123)
   ecp_output <- ecp::e.divisive(diff(ex), sig.lvl = sig_lvl, k = NULL, min.size = 2)
   # We use diff(ex) instead of the raw data, which is a preference and slightly changes the way the points are identified. When we use diff(ex), the index aligns with the gap between points rather than the points themselves. Instead of identifying a change point based on the change in size between two points, it identifies change points based on the change in the change itself. For example, the dataframe below shows an example of ex and diff(ex):
   # ex diff.ex.
