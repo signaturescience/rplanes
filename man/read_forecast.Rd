@@ -25,3 +25,9 @@ A \code{tibble} with the following columns:
 \description{
 This function reads a probabilistic ("quantile") forecast csv file and prepares it for the \link{to_signal} function and downstream plausibility analysis. The object returned is a tibble with summarized forecast data (i.e., prediction interval) for each location and horizon in the original file.
 }
+\examples{
+## read in example forecast and prep forecast signal
+fp <- system.file("extdata/forecast/2022-10-31-SigSci-TSENS.csv", package = "rplanes")
+read_forecast(fp)
+
+}

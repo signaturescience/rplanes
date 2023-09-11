@@ -27,10 +27,14 @@ Imports:
     tidyr,
     stringr,
     readr,
-    lubridate
+    lubridate,
+    ecp,
+    tibble,
+    utils
 Suggests:
     testthat (>= 3.0.0),
     MMWRweek
 Depends: 
     R (>= 2.10)
 Config/testthat/edition: 3
+URL: https://signaturescience.github.io/rplanes/

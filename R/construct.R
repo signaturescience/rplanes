@@ -25,6 +25,10 @@
 #' hosp <- read.csv(system.file("extdata/observed/hdgov_hosp_weekly.csv", package = "rplanes"))
 #' hosp$date <- as.Date(hosp$date, format = "%Y-%m-%d")
 #' to_signal(hosp, outcome = "flu.admits", type = "observed", resolution = "weeks")
+#'
+#' fp <- system.file("extdata/forecast/2022-10-31-SigSci-TSENS.csv", package = "rplanes")
+#' ex_forecast <- read_forecast(fp)
+#' to_signal(ex_forecast, outcome = "flu.admits", type = "forecast", horizon = 4, resolution = "weeks")
 to_signal <- function(input,
                       outcome,
                       type="observed",

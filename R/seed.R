@@ -2,16 +2,14 @@
 #'
 #' @description
 #'
-#' This helper function is used inside of [plane_seed] to evaluate characteristics of observed data to use for downstream plausibility analysis. The function
-#'
-#'
+#' This helper function is used inside of [plane_seed] to evaluate characteristics of observed data to use for downstream plausibility analysis.
 #'
 #' @param input Input signal data used for seeding; must be an observed signal object
 #' @param location Character vector with location code
 #' @param cut_date Maximum date (inclusive) for which seeding should be performed; default is `NULL` and the entire input will be used for seeding
 #'
 #' @return A `list` of length 1 with multiple elements corresponding to seed characteristics and metadata for the given location.
-#' @export
+#'
 #'
 seed_engine <- function(input, location, cut_date=NULL) {
 
@@ -99,6 +97,18 @@ seed_engine <- function(input, location, cut_date=NULL) {
 #'
 #' @return A named `list` of length *n*, where multiple elements corresponding to seed characteristics and metadata for each of the *n* locations are nested in independent lists.
 #' @export
+#'
+#' @examples
+#' ## read in example observed data and prep observed signal
+#' hosp <- read.csv(system.file("extdata/observed/hdgov_hosp_weekly.csv", package = "rplanes"))
+#' hosp$date <- as.Date(hosp$date, format = "%Y-%m-%d")
+#' prepped_observed <- to_signal(hosp, outcome = "flu.admits", type = "observed", resolution = "weeks")
+#'
+#' ## prepare seed with no cut date
+#' plane_seed(prepped_observed)
+#'
+#' ## prepare seed with cut date
+#' plane_seed(prepped_observed, cut_date = "2022-10-29")
 #'
 plane_seed <- function(input, cut_date=NULL) {
   locs <- unique(input$data$location)
