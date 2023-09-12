@@ -1,13 +1,14 @@
 library(shiny)
 library(shinyWidgets)
 library(shinyjs)
+library(shinybusy)
 library(bslib)
-library(waiter)
 library(ggplot2)
 library(plotly)
 library(dplyr)
 library(ragg)
 library(rplanes)
+
 
 
 options(shiny.useragg = TRUE) # font rendering for auto/custom fonts
@@ -22,9 +23,9 @@ sapply(module_sources, source)
 ui <- tagList(
   # TODO: change includeCSS to system.file("app/stype.css", package = "rplanes")
   includeCSS(here::here("inst/app/style.css")),
-  useWaiter(),
+  add_busy_spinner(spin = "breeding-rhombus", color = '#073642', position = "full-page", onstart = TRUE),
+
   useShinyjs(),
-  waiterOnBusy(html = spin_terminal(), color = transparent(0)),
   page_navbar(title = "Rplanes Explorer",
               theme = bs_theme(bootswatch = "solar"),
               fillable = FALSE,
@@ -58,15 +59,16 @@ ui <- tagList(
 
 # Server Side ####
 server <- function(input, output, session) {
-  waiter_hide()
   # Turn on thematic for theme-matched plots
   thematic::thematic_shiny(font = "auto")
 
   # unhide the upload custom dataset when choosing "Custom" radiobutton
   observe({
     shinyjs::toggle(id = "choice_custom", condition = {input$choice %in% "Custom"})
+    # Dates must be before forecasting target end dates
     # must make the date a character to pass into choices it was outputting the date as a numeric
-    updatePickerInput(session = session, inputId = "date", choices = unique(as.character(data_1()$date)))
+    dates <- unique(data_1()$date)[unique(data_1()$date) < min(unique(data_2()$target_end_date))]
+    updatePickerInput(session = session, inputId = "date", choices = unique(as.character(dates)))
   })
   observe({
 
