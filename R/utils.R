@@ -111,7 +111,7 @@ read_forecast <- function(file, pi_width=95) {
       dplyr::arrange(.data$location, .data$date, .data$horizon, .data$quantile) %>%
       dplyr::distinct_all() %>%
       tidyr::spread(.data$quantile, .data$value) %>%
-      purrr::set_names(c("location","date","horizon","point"))
+      purrr::set_names(c("location","date","horizon","lower","point","upper"))
   }
 
   return(tmp_data2)
