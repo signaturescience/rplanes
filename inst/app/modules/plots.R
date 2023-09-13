@@ -28,8 +28,8 @@ plotUI <- function(id){
                                            awesomeRadio(ns("plot_type"), "Choice of Plot", choices = c("Coverage" = "cover", "Difference" = "diff", "Repeat" = "repeats", "Taper" = "taper", "Trend" = "trend"), selected = "cover", inline = TRUE, status = "warning"),
                                            actionButton(ns("plot"), "Plot", class = "btn-success")),
                         layout_column_wrap(width = 1/2,
-                                           card(full_screen = TRUE, card_header(textOutput(ns("label"))), height = "400px", plotOutput(ns("plot_cover"))),
-                                           card(full_screen = TRUE, card_header(textOutput(ns("label2"))), height = "400px", DT::DTOutput(ns("table_cover")))
+                                           card(full_screen = TRUE, card_header(textOutput(ns("label"))), height = "400px", plotOutput(ns("plane_plot"))),
+                                           card(full_screen = TRUE, card_header(textOutput(ns("label2"))), height = "400px", DT::DTOutput(ns("plane_table")))
                         )))
 
 
@@ -61,7 +61,9 @@ plotServer <- function(id, data_1, data_2, seed, forecast) {
     })
 
     output$score_table <- DT::renderDT({
-      scoring()$scores_raw %>% DT::datatable(rownames = F, filter = "none", escape = F, extensions =c("Buttons", "Scroller"), options = list(dom = 'Brtip',
+      df <- purrr::map_df(scoring()$scores_summary, as_tibble) %>%
+        tidyr::replace_na(list(flagged = "None"))
+      df %>% DT::datatable(rownames = F, filter = "none", escape = F, extensions =c("Buttons", "Scroller"), options = list(dom = 'Brtip',
                                                                                                                                              deferRender = TRUE,
                                                                                                                                              scrollY = 200,
                                                                                                                                              scroller = TRUE,
@@ -157,7 +159,7 @@ plotServer <- function(id, data_1, data_2, seed, forecast) {
 
     })
 
-    output$plot_cover <- renderPlot({
+    output$plane_plot <- renderPlot({
         plotting()
     })
 
@@ -178,7 +180,7 @@ plotServer <- function(id, data_1, data_2, seed, forecast) {
 
     })
 
-    output$table_cover <- DT::renderDT({
+    output$plane_table <- DT::renderDT({
       table_df() %>% DT::datatable(rownames = F, filter = "none", escape = F, extensions =c("Buttons"), options = list(dom = 'Brtip',
                                                                                                                columnDefs = list(list(className = 'dt-center', targets = "_all")),
                                                                                                                buttons = list('copy', list(extend = "collection", buttons = c("csv", "excel", "pdf"), text = "Download"))))
