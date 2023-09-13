@@ -9,8 +9,6 @@ library(dplyr)
 library(ragg)
 library(rplanes)
 
-
-
 options(shiny.useragg = TRUE) # font rendering for auto/custom fonts
 
 ## load global functions and iterate through module files to load in module functions

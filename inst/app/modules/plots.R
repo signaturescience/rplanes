@@ -22,14 +22,17 @@ plotUI <- function(id){
   ns <- NS(id)
   tagList(
     card(full_screen = TRUE, card_header("Scoring Table"), DT::DTOutput(ns("score_table"))),
-    layout_column_wrap(width = "100px", height = 100, fill = FALSE, fillable = FALSE,
-                       pickerInput(ns("loc"), "Choose a Location", choices = "", options =  list(`live-search` = TRUE)),
-                       awesomeRadio(ns("plot_type"), "Choice of Plot", choices = c("Coverage" = "cover", "Difference" = "diff", "Repeat" = "repeats", "Taper" = "taper", "Trend" = "trend"), selected = "cover", inline = TRUE, status = "warning"),
-                       actionButton(ns("plot"), "Plot", class = "btn-success")),
-    layout_column_wrap(width = 1/2,
-                       card(full_screen = TRUE, card_header(textOutput(ns("label"))), height = "400px", plotOutput(ns("plot_cover"))),
-                       card(full_screen = TRUE, card_header(textOutput(ns("label2"))), height = "400px", DT::DTOutput(ns("table_cover")))
-                       )
+    shinyjs::hidden(div(id = ns("args3"),
+                        layout_column_wrap(width = 1/3, height = 100, fill = FALSE, fillable = FALSE,
+                                           pickerInput(ns("loc"), "Choose a Location", choices = "", options =  list(`live-search` = TRUE)),
+                                           awesomeRadio(ns("plot_type"), "Choice of Plot", choices = c("Coverage" = "cover", "Difference" = "diff", "Repeat" = "repeats", "Taper" = "taper", "Trend" = "trend"), selected = "cover", inline = TRUE, status = "warning"),
+                                           actionButton(ns("plot"), "Plot", class = "btn-success")),
+                        layout_column_wrap(width = 1/2,
+                                           card(full_screen = TRUE, card_header(textOutput(ns("label"))), height = "400px", plotOutput(ns("plot_cover"))),
+                                           card(full_screen = TRUE, card_header(textOutput(ns("label2"))), height = "400px", DT::DTOutput(ns("table_cover")))
+                        )))
+
+
     )
 }
 
@@ -48,6 +51,7 @@ plotServer <- function(id, data_1, data_2, seed, forecast) {
     observe({
       shinyjs::toggle(id = "args1", condition = {input$score == "all" | input$score == "trend"})
       shinyjs::toggle(id = "args2", condition = {input$score == "all" | input$score == "repeats"})
+      shinyjs::toggle(id = "args3", condition = {input$run})
     })
 
     scoring <- eventReactive(input$run, {
@@ -94,7 +98,6 @@ plotServer <- function(id, data_1, data_2, seed, forecast) {
     })
 
     plot_df <- eventReactive(input$plot, {
-      validate(need(!is.null(scoring()), message = "Scoring needs to be run. See the above table."))
       cut_date <- seed()[[1]]$meta$cut_date
       dates = unique(as.character(data_1()$date))
       dates = dates[dates <= cut_date]
@@ -122,9 +125,13 @@ plotServer <- function(id, data_1, data_2, seed, forecast) {
       cover
     })
 
+    difference <- eventReactive(input$plot, {
+      item <- paste0(input$loc, "-diff")
+      diff <- scoring()$full_results[[item]]
+      diff
+    })
 
-
-    output$plot_cover <- renderPlot({
+    plotting <- eventReactive(input$plot, {
       date_min <- plot_df() %>% filter(type == "Forecast") %>% pull(date) %>% min()
       date_max <- plot_df() %>% filter(type == "Forecast") %>% pull(date) %>% max()
       if(input$plot_type == "cover"){
@@ -136,22 +143,22 @@ plotServer <- function(id, data_1, data_2, seed, forecast) {
           annotate("rect", xmin = date_min, xmax = date_max, ymin = coverage()$bounds$lower, ymax = coverage()$bounds$upper, alpha = 0.1, fill = "blue")
         p
       } else if(input$plot_type == "diff"){
-        df_plot2 = plot_df() %>%
-          mutate(diff = point - lag(point),
-                 mid = zoo::rollapply(date, 2, mean, by = 1, align = "left", partial = T),
-                 pos = zoo::rollapply(point, 2, mean, by = 1, align = "left", partial = T))
-
-        text_df = data.frame(text_x = df_plot2$mid,
-                             text_y = df_plot2$pos,
-                             text = c(df_plot2$diff[-1], NA))
+        df_plot2 <- plot_df() %>%
+          dplyr::mutate(diff = point - dplyr::lag(point)) %>%
+          dplyr::mutate(flag = diff > difference()$maximum_difference)
         p <- df_plot2 %>%
           ggplot(aes(x = date, y = point, color = type)) +
           geom_point() +
-          geom_text(aes(x = text_x, y = text_y, label = text), data = text_df, size = 3, color = "black") +
-          geom_line(linetype = "dotted")
+          geom_point(data = df_plot2 %>% filter(flag == TRUE), pch=21, size=4, color="red") +
+          labs(title = "Plane Diff", x = "", y = "Value", caption = paste0("Point greater than ", difference()$maximum_difference, " is circled in red.")) +
+          theme(axis.text.x = element_text(angle = 90))
         p
       }
 
+    })
+
+    output$plot_cover <- renderPlot({
+        plotting()
     })
 
     table_df <- eventReactive(input$plot, {
@@ -160,6 +167,12 @@ plotServer <- function(id, data_1, data_2, seed, forecast) {
                          lower_bounds = coverage()$bounds$lower,
                          upper_bounds = coverage()$bounds$upper,
                          out_bounds = coverage()$indicator)
+        df
+      } else if(input$plot_type == "diff"){
+        df = data.frame(Values = difference()$values,
+                                Difference = c(NA, difference()$evaluated_differences),
+                                Max_difference = difference()$maximum_difference) %>%
+          dplyr::mutate(`Diff > Max` = Difference > Max_difference )
         df
       }
 
