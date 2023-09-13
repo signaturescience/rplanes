@@ -398,8 +398,10 @@ plane_repeat <- function(location, input, seed, tolerance = NULL, prepend = NULL
 #' @export
 #'
 #' @examples
+#' \dontrun{
 #' ## read in example observed data and prep observed signal
 #' hosp <- read.csv(system.file("extdata/observed/hdgov_hosp_weekly.csv", package = "rplanes"))
+#'
 #' hosp$date <- as.Date(hosp$date, format = "%Y-%m-%d")
 #' prepped_observed <- to_signal(hosp, outcome = "flu.admits", type = "observed", resolution = "weeks")
 #'
@@ -412,6 +414,7 @@ plane_repeat <- function(location, input, seed, tolerance = NULL, prepend = NULL
 #' prepped_seed <- plane_seed(prepped_observed, cut_date = "2022-10-29")
 #'
 #' ## run plane scoring with all components
+#'
 #' plane_score(input = prepped_forecast, seed = prepped_seed)
 #'
 #' ## run plane scoring with select components
@@ -420,6 +423,7 @@ plane_repeat <- function(location, input, seed, tolerance = NULL, prepend = NULL
 #' ## run plane scoring with all components and additional args
 #' comp_args <- list(trend = list(sig_lvl = 0.05), repeats = list(prepend = 4, tolerance = 8))
 #' plane_score(input = prepped_forecast, seed = prepped_seed, args = comp_args)
+#' }
 plane_score <- function(input, seed, components = "all", args = NULL) {
 
   ## TODO: create this list as a built-in object?
