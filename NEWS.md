@@ -1,3 +1,3 @@
 # rplanes (development version)
 
-Initial release!
+* Initial release.
