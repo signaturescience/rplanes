@@ -58,7 +58,7 @@ ui <- tagList(
 # Server Side ####
 server <- function(input, output, session) {
   # Turn on thematic for theme-matched plots
-  thematic::thematic_shiny(font = "auto")
+  thematic::thematic_shiny(font = thematic::font_spec(scale = 2))
 
   # unhide the upload custom dataset when choosing "Custom" radiobutton
   observe({

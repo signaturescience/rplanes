@@ -113,11 +113,12 @@ plotServer <- function(id, data_1, data_2, seed, forecast) {
       forecast_df <- forecast()$data
       forecast_df$date = as.character(forecast_df$date)
       forecast_df = forecast_df %>%
-        filter(location %in% input$loc) %>%
-        mutate(type = "Forecast") %>%
-        select(date, point, type)
+        dplyr::filter(location %in% input$loc) %>%
+        dplyr::mutate(type = "Forecast") %>%
+        dplyr::select(date, point, lower, upper, type)
 
-      df_plot = bind_rows(observed_df, forecast_df)
+      df_plot = bind_rows(observed_df, forecast_df) %>%
+        dplyr::mutate(date = as.Date(date, format = "%Y-%m-%d"))
       df_plot
     })
 
@@ -133,15 +134,28 @@ plotServer <- function(id, data_1, data_2, seed, forecast) {
       diff
     })
 
+    repeats <- eventReactive(input$plot, {
+      item <- paste0(input$loc, "-repeats")
+      df <- scoring()$full_results[[item]]
+      df
+    })
+
+    taper <- eventReactive(input$plot, {
+      item <- paste0(input$loc, "-taper")
+      df <- scoring()$full_results[[item]]
+      df
+    })
+
     plotting <- eventReactive(input$plot, {
-      date_min <- plot_df() %>% filter(type == "Forecast") %>% pull(date) %>% min()
-      date_max <- plot_df() %>% filter(type == "Forecast") %>% pull(date) %>% max()
+
       if(input$plot_type == "cover"){
+        date_min <- plot_df() %>% dplyr::filter(type == "Forecast") %>% pull(date) %>% min()
+        date_max <- plot_df() %>% dplyr::filter(type == "Forecast") %>% pull(date) %>% max()
         p <- plot_df() %>%
+          dplyr::mutate(date = as.Date(date, format = "%Y-%m-%d")) %>%
           ggplot(aes(x = date, y = point, color = type)) +
           geom_point() +
           labs(title = "Plane Cover", subtitle = paste0("For location: ", input$loc), x = "", y = "Value") +
-          theme(axis.text.x = element_text(angle = 90)) +
           annotate("rect", xmin = date_min, xmax = date_max, ymin = coverage()$bounds$lower, ymax = coverage()$bounds$upper, alpha = 0.1, fill = "blue")
         p
       } else if(input$plot_type == "diff"){
@@ -151,9 +165,23 @@ plotServer <- function(id, data_1, data_2, seed, forecast) {
         p <- df_plot2 %>%
           ggplot(aes(x = date, y = point, color = type)) +
           geom_point() +
-          geom_point(data = df_plot2 %>% filter(flag == TRUE), pch=21, size=4, color="red") +
-          labs(title = "Plane Diff", x = "", y = "Value", caption = paste0("Point greater than ", difference()$maximum_difference, " is circled in red.")) +
-          theme(axis.text.x = element_text(angle = 90))
+          geom_point(data = df_plot2 %>% dplyr::filter(flag == TRUE), pch=21, size=4, color="red") +
+          labs(title = "Plane Diff", x = "", y = "Value", subtitle = paste0("For location: ", input$loc), caption = paste0("Point greater than ", difference()$maximum_difference, " is circled in red."))
+        p
+      } else if(input$plot_type == "repeats"){
+        repeat_tbl <- repeats()$repeats
+        p <- ggplot() +
+          geom_point(data = plot_df(), aes(date, point, color = type)) +
+          geom_point(data = repeat_tbl, aes(date, point, alpha = "Repeat"), shape = 5, size = 4, stroke=2, color = 'red') +
+          labs(title = "Plane Repeat", x = "", y = "Value", subtitle = paste0("For location: ", input$loc)) +
+          theme(legend.title=element_blank())
+        p
+      } else if(input$plot_type == "taper"){
+        p <- plot_df() %>%
+          ggplot(aes(x = date, y = point, color = type)) +
+          geom_point() +
+          geom_ribbon(aes(date, ymin = lower, ymax = upper), alpha = 0.5) +
+          labs(title = "Plane Taper", x = "", y = "Value", subtitle = paste0("For location: ", input$loc))
         p
       }
 
@@ -175,6 +203,19 @@ plotServer <- function(id, data_1, data_2, seed, forecast) {
                                 Difference = c(NA, difference()$evaluated_differences),
                                 Max_difference = difference()$maximum_difference) %>%
           dplyr::mutate(`Diff > Max` = Difference > Max_difference )
+        df
+      } else if(input$plot_type == "repeats"){
+        df = repeats()$repeats %>% dplyr::select(location, date, point) %>%
+            dplyr::mutate(flagged = "Repeat")
+        df
+      } else if(input$plot_type == "taper"){
+        df = df_plot %>%
+          dplyr::filter(type == "Forecast") %>%
+          dplyr::mutate(widths = taper()$widths) %>%
+          dplyr::mutate(tapering = (widths - dplyr::lag(widths)) < 0) %>%
+          tidyr::replace_na(list(tapering = FALSE)) %>%
+          dplyr::select(date, lower, upper, widths, tapering) %>%
+          dplyr::mutate_if(is.numeric, round, 1)
         df
       }
 
