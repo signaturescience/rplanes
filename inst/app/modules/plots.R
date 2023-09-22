@@ -12,8 +12,8 @@ inputsUI <- function(id){
     shinyjs::hidden(div(id = ns("args1"),
                         sliderTextInput(ns("sig"), "Choice of Significance for Trend", choices = seq(from = 0.01, to = 0.2, by = 0.01), selected = 0.1, grid = TRUE))),
     shinyjs::hidden(div(id = ns("args2"),
-                        numericInput(ns("tol"), label = tooltip(trigger = list("Choice of Tolerance", icon("circle-info")), "Option to choose the number of allowed repeats before being flagged. Default is NULL and repeats will be determined from seed."), value = 2, min = 2, max = 50, step = 1),
-                        numericInput(ns("pre"), label = tooltip(trigger = list("Prepend Values", icon("circle-info")), "Option to choose the number of values from seed to evaluate against. Default is NULL and value will be determined from seed."),  value = 2, min = 1, max = 365, step = 1))),
+                        numericInput(ns("tol"), label = tooltip(trigger = list("Choice of Tolerance", icon("circle-info")), "Option to choose the number of allowed repeats before being flagged. Default is 0 (NULL) and repeats will be determined from seed."), value = 0, min = 0, max = 50, step = 1),
+                        numericInput(ns("pre"), label = tooltip(trigger = list("Prepend Values", icon("circle-info")), "Option to choose the number of values from seed to evaluate against. Default is 0 (NULL) and value will be determined from seed."),  value = 0, min = 0, max = 365, step = 1))),
     actionBttn(ns("run"), "Analyze", style = "unite", color = "danger")
   )
 }
@@ -55,7 +55,15 @@ plotServer <- function(id, data_1, data_2, seed, forecast) {
     })
 
     scoring <- eventReactive(input$run, {
-      comp_args <- list(trend = list(sig_lvl = input$sig), repeats = list(prepend = input$pre, tolerance = input$tol))
+      if (input$tol == 0 & input$pre == 0){
+        comp_args <- list(trend = list(sig_lvl = input$sig), repeats = list(prepend = NULL, tolerance = NULL))
+      } else if (input$tol == 0){
+        comp_args <- list(trend = list(sig_lvl = input$sig), repeats = list(prepend = input$pre, tolerance = NULL))
+      } else if (input$pre == 0){
+        comp_args <- list(trend = list(sig_lvl = input$sig), repeats = list(prepend = NULL, tolerance = input$tol))
+      } else {
+        comp_args <- list(trend = list(sig_lvl = input$sig), repeats = list(prepend = input$pre, tolerance = input$tol))
+      }
       scores <- plane_score(forecast(), seed(), components = input$score, args = comp_args)
       scores
     })
@@ -235,3 +243,5 @@ plotServer <- function(id, data_1, data_2, seed, forecast) {
 
   })
 }
+
+

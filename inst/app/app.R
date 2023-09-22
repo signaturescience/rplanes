@@ -32,11 +32,14 @@ ui <- tagList(
                 bg = '#6c757d',
                 position = "left",
                 prettyRadioButtons("choice", "Choose Dataset", choices = c("Example", "Custom"), status = "warning", inline = TRUE, icon = icon("check"), bigger = TRUE),
+
                 shinyjs::hidden(div(id = "choice_custom",
                                     fileInput("upload_1", label = tooltip(trigger = list("Upload Observed Data", icon("circle-info")), "Upload only a .csv file"), multiple = F, accept = ".csv"),
-                                    fileInput("upload_2", label = tooltip(trigger = list("Upload Forecast", icon("circle-info")), "Upload only a .csv file"), multiple = F, accept = ".csv"))),
+                                    fileInput("upload_2", label = tooltip(trigger = list("Upload Comparison", icon("circle-info")), "Upload data to compare to observed data in .csv format"), multiple = F, accept = ".csv"),
+                                    h6("Is the Comparison a Forecast"),
+                                    prettyToggle("status", label_on = "Yes", icon_on = icon("check"), status_on = "success", label_off = "No", icon_off = icon("remove"), status_off = "warning", value = TRUE))),
                 awesomeRadio("rez", "Resolution", choices = c("Daily" = "days", "Weekly" = "weeks", "Monthly" = "months"), selected = "Weekly", inline = T, status = "info"),
-                pickerInput("date", label = tooltip(trigger = list("Seed Date", icon("circle-info")), "Choose a cut-off date for observed data."), choices = "", options = list(`live-search` = TRUE)),
+                textInput("outcome", label = tooltip(trigger = list("Type of Outcome", icon("circle-info")), "Type the name of the observed outcome column."), value = "flu.admits"),
                 pickerInput("horizon", "Forecast Horizon", choices = c(1,2,3,4), selected = 4),
                 textInput("width", label = tooltip(trigger = list("Prediction Interval", icon("circle-info")), "Choose prediction interval (95 is default corresponding to a 95% interval) for the forecast data."), value = "95"),
 
@@ -65,19 +68,12 @@ server <- function(input, output, session) {
     shinyjs::toggle(id = "choice_custom", condition = {input$choice %in% "Custom"})
     # Dates must be before forecasting target end dates
     # must make the date a character to pass into choices it was outputting the date as a numeric
-    dates <- unique(data_1()$date)[unique(data_1()$date) < min(unique(data_2()$target_end_date))]
-    updatePickerInput(session = session, inputId = "date", choices = unique(as.character(dates)))
+    #dates <- unique(data_1()$date)[unique(data_1()$date) < min(unique(data_2()$target_end_date))]
+    #updatePickerInput(session = session, inputId = "date", choices = unique(as.character(dates)))
   })
   observe({
-
     updatePickerInput(session = session, inputId = "loc", choices = unique(data_1()$location))
   })
-
-  output$plot <- renderPlot({
-    ggplot(mtcars, aes(wt, mpg)) +
-      geom_point() +
-      geom_smooth()
-  }, res = 96)
 
   data_1 <- reactive({
     if (input$choice == "Example") {
@@ -91,7 +87,7 @@ server <- function(input, output, session) {
              df= read.csv(input$upload_1$datapath),
              validate("Invalid file; Please upload a .csv file"))
     }
-    df$date = as.Date(df$date)
+    df$date <-  as.Date(df$date)
     df
   })
 
@@ -100,30 +96,38 @@ server <- function(input, output, session) {
     if(input$choice == "Example") {
       # example forecast data
       df <- read.csv(system.file("extdata/forecast", "2023-02-06-SigSci-TSENS.csv", package = "rplanes"))
-      df
     } else {
       # Uploading forecast data
       req(input$upload_2)
       ext <- tools::file_ext(input$upload_2$name)
       switch(ext,
-             csv = read.csv(input$upload_2$datapath),
+             df = read.csv(input$upload_2$datapath),
              validate("Invalid file; Please upload a .csv file"))
-      csv
     }
+    df$forecast_date <- as.Date(df$forecast_date)
+    df$target_end_date <- as.Date(df$target_end_date)
+    df
   })
 
+
   prepped_seed <- reactive({
-    signal <- to_signal(data_1(), outcome = "flu.admits", type = "observed", resolution = input$rez)
-    plane_seed(signal, cut_date = input$date)
+    signal <- to_signal(data_1(), outcome = input$outcome, type = "observed", resolution = input$rez)
+    date = unique(data_1()$date)[unique(data_1()$date) < min(data_2()$target_end_date)]
+    date = tail(date, 1)
+    prepped_seed  <- plane_seed(signal, cut_date = date)
+    prepped_seed
   })
 
   prepped_forecast <- reactive({
     if (input$choice == "Example"){
       forc <- read_forecast(system.file("extdata/forecast", "2023-02-06-SigSci-TSENS.csv", package = "rplanes"), pi_width = as.numeric(input$width)) %>%
         to_signal(., outcome = "flu.admits", type = "forecast", horizon = as.numeric(input$horizon), resolution = input$rez)
+    } else if (input$status){
+      forc <- read_forecast(input$upload_2$datapath, pi_width = as.numeric(input$width)) %>%
+        to_signal(., outcome = input$outcome, type = "forecast", horizon = input$horizon, resolution = input$rez)
     } else {
       forc <- read_forecast(input$upload_2$datapath, pi_width = as.numeric(input$width)) %>%
-        to_signal(., outcome = "flu.admits", type = "forecast", horizon = input$horizon, resolution = input$rez)
+        to_signal(., outcome = input$outcome, type = "observed", horizon = input$horizon, resolution = input$rez)
     }
     forc
   })
