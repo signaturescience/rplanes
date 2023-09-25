@@ -1,7 +1,9 @@
 # ecp:::e.divisive
 
 set.seed(100)
-X = matrix(c(rnorm(100),rnorm(100,3),rnorm(100,0,2)))
+ X = matrix(c(rnorm(100),rnorm(100,3),rnorm(100,0,2)))
+#X = matrix(c(rnorm(10),rnorm(10,3),rnorm(10,0,2)))
+
 sig.lvl=0.05
 R=199
 k=NULL

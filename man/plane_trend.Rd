@@ -26,8 +26,8 @@ A \code{list} with the following values:
 \item \strong{Date}: The dates corresponding to all observed and forecast data (formatted as date)
 \item \strong{Value}: The incidence of all observed and forecast data (e.g., hospitalization rates)
 \item \strong{Type}: Indicates whether the data row is observed or forecast data
-\item \strong{Changepoint}: Logical identifying any change point (whether in observed or forecast data)
-\item \strong{Flagged}: Logical indicating whether or not the change point was flagged. Change points are only flagged if they are in the forecast data or are the final observed data point
+\item \strong{Changepoint}: Logical identifying any change point (whether in observed or forecast data). A TRUE is returned if any point is determined a change point based on the user defined significance level (sig_lvl).
+\item \strong{Flagged}: Logical indicating whether or not the change point was flagged. Change points are only flagged if they are in the forecast data or are the final observed data point. A TRUE is returned if the Changepoint is TRUE and is a final observed data point or any forecast point.
 }
 \item \strong{flagged_dates}: The date of any flagged change point(s). If there are none, NA is returned
 }

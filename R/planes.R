@@ -516,8 +516,8 @@ plane_score <- function(input, seed, components = "all", args = NULL) {
 #'     - **Date**: The dates corresponding to all observed and forecast data (formatted as date)
 #'     - **Value**: The incidence of all observed and forecast data (e.g., hospitalization rates)
 #'     - **Type**: Indicates whether the data row is observed or forecast data
-#'     - **Changepoint**: Logical identifying any change point (whether in observed or forecast data)
-#'     - **Flagged**: Logical indicating whether or not the change point was flagged. Change points are only flagged if they are in the forecast data or are the final observed data point
+#'     - **Changepoint**: Logical identifying any change point (whether in observed or forecast data). A TRUE is returned if any point is determined a change point based on the user defined significance level (sig_lvl).
+#'     - **Flagged**: Logical indicating whether or not the change point was flagged. Change points are only flagged if they are in the forecast data or are the final observed data point. A TRUE is returned if the Changepoint is TRUE and is a final observed data point or any forecast point.
 #' - **flagged_dates**: The date of any flagged change point(s). If there are none, NA is returned
 #'
 #' @details
