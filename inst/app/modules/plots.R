@@ -21,15 +21,15 @@ inputsUI <- function(id){
 plotUI <- function(id){
   ns <- NS(id)
   tagList(
-    card(full_screen = TRUE, card_header("Scoring Table"), DT::DTOutput(ns("score_table"))),
+    card(full_screen = TRUE, card_header("Scoring Table"), height = "500px", DT::DTOutput(ns("score_table"))),
     shinyjs::hidden(div(id = ns("args3"),
                         layout_column_wrap(width = 1/3, height = 100, fill = FALSE, fillable = FALSE,
                                            pickerInput(ns("loc"), "Choose a Location", choices = "", options =  list(`live-search` = TRUE)),
                                            awesomeRadio(ns("plot_type"), "Choice of Plot", choices = c("Coverage" = "cover", "Difference" = "diff", "Repeat" = "repeats", "Taper" = "taper", "Trend" = "trend"), selected = "cover", inline = TRUE, status = "warning"),
                                            actionButton(ns("plot"), "Plot", class = "btn-success")),
                         layout_column_wrap(width = 1/2,
-                                           card(full_screen = TRUE, card_header(textOutput(ns("label"))), height = "400px", plotOutput(ns("plane_plot"))),
-                                           card(full_screen = TRUE, card_header(textOutput(ns("label2"))), height = "400px", DT::DTOutput(ns("plane_table")))
+                                           card(full_screen = TRUE, card_header(textOutput(ns("label"))), height = "500px", plotOutput(ns("plane_plot"))),
+                                           card(full_screen = TRUE, card_header(textOutput(ns("label2"))), height = "500px", DT::DTOutput(ns("plane_table")))
                         )))
 
 
@@ -71,14 +71,15 @@ plotServer <- function(id, data_1, data_2, seed, forecast) {
     output$score_table <- DT::renderDT({
       df <- purrr::map_df(scoring()$scores_summary, as_tibble) %>%
         tidyr::replace_na(list(flagged = "None"))
-      df %>% DT::datatable(rownames = F, filter = "none", escape = F, extensions =c("Buttons", "Scroller"), options = list(dom = 'Brtip',
-                                                                                                                                             deferRender = TRUE,
-                                                                                                                                             scrollY = 200,
-                                                                                                                                             scroller = TRUE,
-                                                                                                                                             columnDefs = list(list(className = 'dt-center', targets = "_all")),
-                                                                                                                                             buttons = list('copy', list(extend = "collection", buttons = c("csv", "excel", "pdf"), text = "Download"))))
+      df %>% DT::datatable(rownames = F, filter = "top", escape = F, height = "100%", fillContainer = T, extensions =c("Buttons"), options = list(dom = 'lBrtip',
+                                                                                                              pageLength = 10,
+                                                                                                              lengthMenu = list(c(10, 20, 50, -1), c("10", "20", "50", "All")),
+                                                                                                              columnDefs = list(list(className = 'dt-center', targets = "_all")),
+                                                                                                              buttons = list('copy', list(extend = "collection", buttons = c("csv", "excel", "pdf"), text = "Download"))
+                                                                                                              ))
     })
 
+    # label-header for plotting card
     output$label <- renderText({
       if(input$plot_type == "cover"){
         "Coverage Plot"
@@ -93,6 +94,7 @@ plotServer <- function(id, data_1, data_2, seed, forecast) {
       }
     })
 
+    # label-header for table card
     output$label2 <- renderText({
       if(input$plot_type == "cover"){
         "Coverage Table"
@@ -154,6 +156,12 @@ plotServer <- function(id, data_1, data_2, seed, forecast) {
       df
     })
 
+    trend <- eventReactive(input$plot, {
+      item <- paste0(input$loc, "-trend")
+      df <- scoring()$full_results[[item]]$output
+      df
+    })
+
     plotting <- eventReactive(input$plot, {
 
       if(input$plot_type == "cover"){
@@ -161,38 +169,51 @@ plotServer <- function(id, data_1, data_2, seed, forecast) {
         date_max <- plot_df() %>% dplyr::filter(type == "Forecast") %>% pull(date) %>% max()
         p <- plot_df() %>%
           dplyr::mutate(date = as.Date(date, format = "%Y-%m-%d")) %>%
-          ggplot(aes(x = date, y = point, color = type)) +
-          geom_point() +
+          ggplot(aes(x = date, y = point)) +
+          geom_point(aes(color = type), size = 3) +
+          geom_line(alpha = 0.3) +
           labs(title = "Plane Cover", subtitle = paste0("For location: ", input$loc), x = "", y = "Value") +
-          annotate("rect", xmin = date_min, xmax = date_max, ymin = coverage()$bounds$lower, ymax = coverage()$bounds$upper, alpha = 0.1, fill = "blue")
-        p
+          annotate("rect", xmin = date_min, xmax = date_max, ymin = coverage()$bounds$lower, ymax = coverage()$bounds$upper, alpha = 0.1, fill = "blue") +
+          theme(legend.title=element_blank())
       } else if(input$plot_type == "diff"){
         df_plot2 <- plot_df() %>%
           dplyr::mutate(diff = point - dplyr::lag(point)) %>%
           dplyr::mutate(flag = diff > difference()$maximum_difference)
         p <- df_plot2 %>%
-          ggplot(aes(x = date, y = point, color = type)) +
-          geom_point() +
-          geom_point(data = df_plot2 %>% dplyr::filter(flag == TRUE), pch=21, size=4, color="red") +
-          labs(title = "Plane Diff", x = "", y = "Value", subtitle = paste0("For location: ", input$loc), caption = paste0("Point greater than ", difference()$maximum_difference, " is circled in red."))
-        p
+          ggplot(aes(x = date, y = point)) +
+          geom_point(aes(color = type), size = 4) +
+          geom_point(data = df_plot2 %>% dplyr::filter(flag == TRUE), pch=21, size=7, color="red") +
+          labs(title = "Plane Diff", x = "", y = "Value", subtitle = paste0("For location: ", input$loc), caption = paste0("Point greater than ", difference()$maximum_difference, " is circled in red.")) +
+          geom_line(alpha = 0.3) +
+          theme(legend.title=element_blank())
       } else if(input$plot_type == "repeats"){
         repeat_tbl <- repeats()$repeats
         p <- ggplot() +
-          geom_point(data = plot_df(), aes(date, point, color = type)) +
-          geom_point(data = repeat_tbl, aes(date, point, alpha = "Repeat"), shape = 5, size = 4, stroke=2, color = 'red') +
+          geom_point(data = plot_df(), aes(date, point, color = type), size = 4) +
+          geom_point(data = repeat_tbl, aes(date, point, alpha = "Repeat"), shape = 5, size = 6, stroke=2, color = 'darkred') +
+          geom_line(data = plot_df(), aes(date, point), alpha = 0.3) +
           labs(title = "Plane Repeat", x = "", y = "Value", subtitle = paste0("For location: ", input$loc)) +
           theme(legend.title=element_blank())
-        p
       } else if(input$plot_type == "taper"){
         p <- plot_df() %>%
-          ggplot(aes(x = date, y = point, color = type)) +
-          geom_point() +
+          ggplot(aes(x = date, y = point)) +
+          geom_point(aes(color = type), size = 4) +
           geom_ribbon(aes(date, ymin = lower, ymax = upper), alpha = 0.5) +
-          labs(title = "Plane Taper", x = "", y = "Value", subtitle = paste0("For location: ", input$loc))
-        p
+          geom_line(alpha = 0.3) +
+          labs(title = "Plane Taper", x = "", y = "Value", subtitle = paste0("For location: ", input$loc)) +
+          theme(legend.title=element_blank())
+      } else {
+        p <- trend() %>%
+          dplyr::mutate(label = dplyr::case_when(Flagged == TRUE ~ "Flagged Change Point",
+                                          TRUE ~ NA)) %>%
+          ggplot(aes(x = Date, y = Value)) +
+          geom_point(aes(color = Type), size = 4) +
+          geom_line(alpha = 0.3) +
+          ggrepel::geom_label_repel(aes(label=label, size = 10), color = "black", fill= NA, box.padding = 1, nudge_y = 1.2, segment.linetype = 1, arrow = arrow(length = unit(0.015, "npc"), type = "closed"), na.rm = T, show.legend = F) +
+          labs(title = "Plane Trend", x = "", y = "Value", subtitle = paste0("For location: ", input$loc), caption = paste0("Using a significance of ", input$sig)) +
+          theme(legend.title=element_blank())
       }
-
+      p
     })
 
     output$plane_plot <- renderPlot({
@@ -205,41 +226,37 @@ plotServer <- function(id, data_1, data_2, seed, forecast) {
                          lower_bounds = coverage()$bounds$lower,
                          upper_bounds = coverage()$bounds$upper,
                          out_bounds = coverage()$indicator)
-        df
       } else if(input$plot_type == "diff"){
-        df = data.frame(Values = difference()$values,
+        df <- data.frame(Values = difference()$values,
                                 Difference = c(NA, difference()$evaluated_differences),
                                 Max_difference = difference()$maximum_difference) %>%
           dplyr::mutate(`Diff > Max` = Difference > Max_difference )
-        df
       } else if(input$plot_type == "repeats"){
-        df = repeats()$repeats %>% dplyr::select(location, date, point) %>%
+        df <- repeats()$repeats %>% dplyr::select(location, date, point) %>%
             dplyr::mutate(flagged = "Repeat")
-        df
       } else if(input$plot_type == "taper"){
-        df = df_plot %>%
+        df <-  plot_df() %>%
           dplyr::filter(type == "Forecast") %>%
           dplyr::mutate(widths = taper()$widths) %>%
           dplyr::mutate(tapering = (widths - dplyr::lag(widths)) < 0) %>%
           tidyr::replace_na(list(tapering = FALSE)) %>%
           dplyr::select(date, lower, upper, widths, tapering) %>%
           dplyr::mutate_if(is.numeric, round, 1)
-        df
+      } else if(input$plot_type == "trend"){
+        df <- trend()
       }
+      df
 
     })
 
     output$plane_table <- DT::renderDT({
-      table_df() %>% DT::datatable(rownames = F, filter = "none", escape = F, extensions =c("Buttons"), options = list(dom = 'Brtip',
-                                                                                                               columnDefs = list(list(className = 'dt-center', targets = "_all")),
-                                                                                                               buttons = list('copy', list(extend = "collection", buttons = c("csv", "excel", "pdf"), text = "Download"))))
-
+      table_df() %>% DT::datatable(rownames = F, filter = "none", escape = F, extensions =c("Buttons", 'Scroller'), options = list(dom = 'Brtip',
+                                                                                                                                   deferRender = TRUE,
+                                                                                                                                   scrollY = 200,
+                                                                                                                                   scroller = TRUE,
+                                                                                                                                   columnDefs = list(list(className = 'dt-center', targets = "_all")),
+                                                                                                                                   buttons = list('copy', list(extend = "collection", buttons = c("csv", "excel", "pdf"), text = "Download"))))
     })
-
-
-
-
-
 
   })
 }

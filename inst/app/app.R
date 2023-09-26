@@ -4,17 +4,15 @@ library(shinyjs)
 library(shinybusy)
 library(bslib)
 library(ggplot2)
-library(plotly)
+#library(plotly)
 library(dplyr)
 library(ragg)
 library(rplanes)
 
 options(shiny.useragg = TRUE) # font rendering for auto/custom fonts
 
-## load global functions and iterate through module files to load in module functions
-#source(system.file("app/global_functions.R", package = "rplanes"))
 module_sources <- list.files(path = here::here("inst/app/modules/"), full.names = TRUE)
-#module_sources <- list.files(path = system.file("app/modules", package = "rplanes"), full.names = TRUE)
+#module_sources <- list.files(path = system.file("inst/app/modules/", package = "rplanes"), full.names = TRUE)
 sapply(module_sources, source)
 
 # UI Side ####
@@ -83,8 +81,8 @@ server <- function(input, output, session) {
       # Uploading observed data
       req(input$upload_1)
       ext <- tools::file_ext(input$upload_1$name)
-      switch(ext,
-             df= read.csv(input$upload_1$datapath),
+      df <- switch(ext,
+             csv = read.csv(input$upload_1$datapath),
              validate("Invalid file; Please upload a .csv file"))
     }
     df$date <-  as.Date(df$date)
@@ -95,13 +93,13 @@ server <- function(input, output, session) {
   data_2 <- reactive({
     if(input$choice == "Example") {
       # example forecast data
-      df <- read.csv(system.file("extdata/forecast", "2023-02-06-SigSci-TSENS.csv", package = "rplanes"))
+      df <- read.csv(system.file("extdata/forecast", "2022-10-31-SigSci-TSENS.csv", package = "rplanes"))
     } else {
       # Uploading forecast data
       req(input$upload_2)
       ext <- tools::file_ext(input$upload_2$name)
-      switch(ext,
-             df = read.csv(input$upload_2$datapath),
+      df <- switch(ext,
+             csv = read.csv(input$upload_2$datapath),
              validate("Invalid file; Please upload a .csv file"))
     }
     df$forecast_date <- as.Date(df$forecast_date)
@@ -120,7 +118,7 @@ server <- function(input, output, session) {
 
   prepped_forecast <- reactive({
     if (input$choice == "Example"){
-      forc <- read_forecast(system.file("extdata/forecast", "2023-02-06-SigSci-TSENS.csv", package = "rplanes"), pi_width = as.numeric(input$width)) %>%
+      forc <- read_forecast(system.file("extdata/forecast", "2022-10-31-SigSci-TSENS.csv", package = "rplanes"), pi_width = as.numeric(input$width)) %>%
         to_signal(., outcome = "flu.admits", type = "forecast", horizon = as.numeric(input$horizon), resolution = input$rez)
     } else if (input$status){
       forc <- read_forecast(input$upload_2$datapath, pi_width = as.numeric(input$width)) %>%
