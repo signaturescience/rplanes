@@ -36,7 +36,7 @@ A \code{list} with the following values:
 This function identifies any change points in the forecast data or in the final observed data point. Change points are identified by any significant change in magnitude or direction of the slope of the time series.
 }
 \details{
-This function uses \link[ecp:e.divisive]{e.divisive()}, which implements a hierarchical divisive algorithm to identify change points based on distances between segments (calculated using equation 3 in Matteson and James, 2013; the larger the distance, the more likely a change point). Then a permutation test is used to calculate an approximate p-value.
+This function uses \link[ecp:e.divisive]{e.divisive()}, which implements a hierarchical divisive algorithm to identify change points based on distances between segments (calculated using equations 3 and 5 in Matteson and James, 2014; the larger the distance, the more likely a change point). Then a permutation test is used to calculate an approximate p-value.
 
 Within e.divisive(), we use diff(x) instead of x (the raw data). This is a preference and slightly changes the way that change points are identified. When we use diff(x), the index aligns with the gap between points rather than the points themselves. Instead of identifying a change point based on the change in size between two points, it identifies change points based on the change in the change itself. For example, the dataframe below shows an example of x and diff(x):\tabular{lcr}{
    \strong{Index} \tab \strong{x} \tab \strong{diff(x)} \cr
@@ -82,6 +82,8 @@ plane_trend(location = "06", input = prepped_forecast, seed = prepped_seed, sig_
 
 }
 \references{
+Matteson, D. S., & James, N. A. (2014). A nonparametric approach for multiple change point analysis of multivariate data. Journal of the American Statistical Association, 109(505), 334–345. https://doi.org/10.1080/01621459.2013.849605
+
 Matteson DS, James NA (2013). “A Nonparametric Approach for Multiple Change Point Analysis of Multivariate Data.” ArXiv e-prints. To appear in the Journal of the American Statistical Association, 1306.4933.
 
 Gandy, A. (2009) "Sequential implementation of Monte Carlo tests with uniformly bounded resampling risk." Journal of the American Statistical Association.
