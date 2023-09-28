@@ -540,7 +540,7 @@ plane_score <- function(input, seed, components = "all", args = NULL) {
 #'
 #' Further, we specify min.size = 2, which means that we are forcing a gap of at least 2 points between detecting change points. In a roundabout way, this increases the significance level or at least decreases the number of change points identified. Should we decide to change the function so that we're not using diff(x), it probably makes sense to change min.size to 3.
 #'
-#'#' @seealso
+#' @references
 #'
 #' Matteson DS, James NA (2013). “A Nonparametric Approach for Multiple Change Point Analysis of Multivariate Data.” ArXiv e-prints. To appear in the Journal of the American Statistical Association, 1306.4933.
 #'
