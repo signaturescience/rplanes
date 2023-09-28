@@ -520,13 +520,15 @@ plane_score <- function(input, seed, components = "all", args = NULL) {
 #'     - **Date**: The dates corresponding to all observed and forecast data (formatted as date)
 #'     - **Value**: The incidence of all observed and forecast data (e.g., hospitalization rates)
 #'     - **Type**: Indicates whether the data row is observed or forecast data
-#'     - **Changepoint**: Logical identifying any change point (whether in observed or forecast data)
-#'     - **Flagged**: Logical indicating whether or not the change point was flagged. Change points are only flagged if they are in the forecast data or are the final observed data point
+#'     - **Changepoint**: Logical identifying any change point (whether in observed or forecast data). A TRUE is returned if any point is determined a change point based on the user defined significance level (sig_lvl).
+#'     - **Flagged**: Logical indicating whether or not the change point was flagged. Change points are only flagged if they are in the forecast data or are the final observed data point. A TRUE is returned if the Changepoint is TRUE and is a final observed data point or any forecast point.
 #' - **flagged_dates**: The date of any flagged change point(s). If there are none, NA is returned
 #'
 #' @details
 #'
-#' This function uses ecp::e.divisive(). Within e.divisive(), we use diff(x) instead of the raw data (x), which is a preference and slightly changes the way the points are identified. When we use diff(x), the index aligns with the gap between points rather than the points themselves. Instead of identifying a change point based on the change in size between two points, it identifies change points based on the change in the change itself. For example, the dataframe below shows an example of x and diff(x):
+#' This function uses [e.divisive()][ecp::e.divisive()], which implements a hierarchical divisive algorithm to identify change points based on distances between segments (calculated using equations 3 and 5 in Matteson and James, 2014; the larger the distance, the more likely a change point). Then a permutation test is used to calculate an approximate p-value.
+#'
+#' Within e.divisive(), we use diff(x) instead of x (the raw data). This is a preference and slightly changes the way that change points are identified. When we use diff(x), the index aligns with the gap between points rather than the points themselves. Instead of identifying a change point based on the change in size between two points, it identifies change points based on the change in the change itself. For example, the dataframe below shows an example of x and diff(x):
 #'
 #' |**Index**|**x**| **diff(x)**|
 #' | - |:--:| --:|
@@ -538,9 +540,17 @@ plane_score <- function(input, seed, components = "all", args = NULL) {
 #' | 6 | 75 |  0 |
 #' | 7 | 75 |  0 |
 #'
-#' Given this data, e.divisive(x) would identify index #5 (74) as the change point, because there was a jump of +37 between index 4 and 5. But e.divisive(diff(x)) would pick both index #3 (28) and #5 (1), because there was a jump of +28 from index 2 and 3, and there was a jump of -36 between index # 4 and 5. Ultimately, either way detects change points, but diff(x) seems to provide more information.
+#' Given this data, e.divisive(x) would identify index #5 (74) as the change point, because there was a jump of +37 between index 4 and 5. But e.divisive(diff(x)) would pick both index #3 (28) and #5 (1), because there was a jump of +28 from index 2 and 3, and there was a jump of -36 between index # 4 and 5. Ultimately, either way detects change points, but in this application (forecasting), diff(ex) is more discerning and less likely to identify change points haphazardly.
 #'
 #' Further, we specify min.size = 2, which means that we are forcing a gap of at least 2 points between detecting change points. In a roundabout way, this increases the significance level or at least decreases the number of change points identified. Should we decide to change the function so that we're not using diff(x), it probably makes sense to change min.size to 3.
+#'
+#' @references
+#'
+#'Matteson, D. S., & James, N. A. (2014). A nonparametric approach for multiple change point analysis of multivariate data. Journal of the American Statistical Association, 109(505), 334–345. https://doi.org/10.1080/01621459.2013.849605
+#'
+#' Matteson DS, James NA (2013). “A Nonparametric Approach for Multiple Change Point Analysis of Multivariate Data.” ArXiv e-prints. To appear in the Journal of the American Statistical Association, 1306.4933.
+#'
+#' Gandy, A. (2009) "Sequential implementation of Monte Carlo tests with uniformly bounded resampling risk." Journal of the American Statistical Association.
 #'
 #' @export
 #'
