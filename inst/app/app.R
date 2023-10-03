@@ -4,7 +4,6 @@ library(shinyjs)
 library(shinybusy)
 library(bslib)
 library(ggplot2)
-#library(plotly)
 library(dplyr)
 library(ragg)
 library(rplanes)
@@ -22,7 +21,8 @@ ui <- tagList(
   add_busy_spinner(spin = "breeding-rhombus", color = '#073642', position = "full-page", onstart = TRUE),
 
   useShinyjs(),
-  page_navbar(title = "Rplanes Explorer",
+  page_navbar(id = "nav_page",
+              title = "Rplanes Explorer",
               theme = bs_theme(bootswatch = "solar"),
               fillable = FALSE,
               sidebar = sidebar(
@@ -39,15 +39,17 @@ ui <- tagList(
                 awesomeRadio("rez", "Resolution", choices = c("Daily" = "days", "Weekly" = "weeks", "Monthly" = "months"), selected = "Weekly", inline = T, status = "info"),
                 textInput("outcome", label = tooltip(trigger = list("Type of Outcome", icon("circle-info")), "Type the name of the observed outcome column."), value = "flu.admits"),
                 pickerInput("horizon", "Forecast Horizon", choices = c(1,2,3,4), selected = 4),
-                textInput("width", label = tooltip(trigger = list("Prediction Interval", icon("circle-info")), "Choose prediction interval (95 is default corresponding to a 95% interval) for the forecast data."), value = "95"),
+                materialSwitch("opts", label = "Modify Defaults", value = FALSE, status = "success"),
+                shinyjs::hidden(div(id = "add_options",
+                                    textInput("width", label = tooltip(trigger = list("Prediction Interval", icon("circle-info")), "Choose prediction interval (95 is default corresponding to a 95% interval) for the forecast data."), value = "95"),
 
-                inputsUI("tab2")
+                                    inputsUI("tab2"))),
+                actionBttn("run", "Analyze", style = "unite", color = "danger")
 
               ),
               nav_panel("Data",
                         dataUI("tab1")),
               nav_panel("Plots",
-                        #plotOutput("plot"),
                         plotUI("tab2")),
               nav_panel("Help",
                         htmltools::includeMarkdown("help_tab.md"))
@@ -61,17 +63,32 @@ server <- function(input, output, session) {
   # Turn on thematic for theme-matched plots
   thematic::thematic_shiny(font = thematic::font_spec(scale = 2))
 
-  # unhide the upload custom dataset when choosing "Custom" radiobutton
   observe({
+    # unhide the upload custom dataset when choosing "Custom" radiobutton
     shinyjs::toggle(id = "choice_custom", condition = {input$choice %in% "Custom"})
+    # unhide additional options upon switch
+    shinyjs::toggle(id = "add_options", condition = {input$opts == TRUE})
     # Dates must be before forecasting target end dates
     # must make the date a character to pass into choices it was outputting the date as a numeric
     #dates <- unique(data_1()$date)[unique(data_1()$date) < min(unique(data_2()$target_end_date))]
     #updatePickerInput(session = session, inputId = "date", choices = unique(as.character(dates)))
   })
+
   observe({
     updatePickerInput(session = session, inputId = "loc", choices = unique(data_1()$location))
   })
+
+  # when actionBttn is selected automatically go to the plot tab
+  observeEvent(input$run, {
+    nav_select(id = "nav_page", selected = "Plots")
+  })
+
+  # pass in actionBttn to module plots
+  btn1 <- reactive({ input$run })
+
+  # pass input$status and input$outcome to module plots
+  status <- reactive({ input$status })
+  outcome <- reactive({ input$outcome })
 
   data_1 <- reactive({
     if (input$choice == "Example") {
@@ -102,16 +119,26 @@ server <- function(input, output, session) {
              csv = read.csv(input$upload_2$datapath),
              validate("Invalid file; Please upload a .csv file"))
     }
-    df$forecast_date <- as.Date(df$forecast_date)
-    df$target_end_date <- as.Date(df$target_end_date)
+    if(input$status){
+      df$forecast_date <- as.Date(df$forecast_date)
+      df$target_end_date <- as.Date(df$target_end_date)
+    } else {
+      df$date <- as.Date(df$date)
+    }
     df
   })
 
 
   prepped_seed <- reactive({
-    signal <- to_signal(data_1(), outcome = input$outcome, type = "observed", resolution = input$rez)
-    date = unique(data_1()$date)[unique(data_1()$date) < min(data_2()$target_end_date)]
-    date = tail(date, 1)
+    df = data_1() %>% dplyr::filter(location %in% unique(data_2()$location))
+    if(input$status){
+      date = unique(df$date)[unique(df$date) < min(data_2()$target_end_date)]
+      date = tail(date, 1)
+    } else {
+      date = unique(df$date)[unique(df$date) < min(data_2()$date)]
+      date = tail(date, 1)
+    }
+    signal <- to_signal(df, outcome = input$outcome, type = "observed", resolution = input$rez)
     prepped_seed  <- plane_seed(signal, cut_date = date)
     prepped_seed
   })
@@ -121,17 +148,21 @@ server <- function(input, output, session) {
       forc <- read_forecast(system.file("extdata/forecast", "2022-10-31-SigSci-TSENS.csv", package = "rplanes"), pi_width = as.numeric(input$width)) %>%
         to_signal(., outcome = "flu.admits", type = "forecast", horizon = as.numeric(input$horizon), resolution = input$rez)
     } else if (input$status){
+      validate(need(all(unique(data_2()$location) %in% unique(data_1()$location)), message = "Locations in the comparison dataset are not the same."))
       forc <- read_forecast(input$upload_2$datapath, pi_width = as.numeric(input$width)) %>%
         to_signal(., outcome = input$outcome, type = "forecast", horizon = input$horizon, resolution = input$rez)
     } else {
-      forc <- read_forecast(input$upload_2$datapath, pi_width = as.numeric(input$width)) %>%
+      validate(need(all(unique(data_2()$location) %in% unique(data_1()$location)), message = "Locations in the comparison dataset are not the same."))
+      df <- read.csv(input$upload_2$datapath)
+      df$date <- as.Date(df$date)
+      forc <- df %>%
         to_signal(., outcome = input$outcome, type = "observed", horizon = input$horizon, resolution = input$rez)
     }
     forc
   })
 
   dataServer("tab1", data_1 = data_1, data_2 = data_2 )
-  plotServer("tab2", data_1 = data_1, data_2 = data_2, seed = prepped_seed, forecast = prepped_forecast)
+  plotServer("tab2", data_1 = data_1, seed = prepped_seed, forecast = prepped_forecast, btn1 = btn1, status = status, outcome = outcome)
 
 }
 

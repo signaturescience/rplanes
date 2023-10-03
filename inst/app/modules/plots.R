@@ -13,8 +13,7 @@ inputsUI <- function(id){
                         sliderTextInput(ns("sig"), "Choice of Significance for Trend", choices = seq(from = 0.01, to = 0.2, by = 0.01), selected = 0.1, grid = TRUE))),
     shinyjs::hidden(div(id = ns("args2"),
                         numericInput(ns("tol"), label = tooltip(trigger = list("Choice of Tolerance", icon("circle-info")), "Option to choose the number of allowed repeats before being flagged. Default is 0 (NULL) and repeats will be determined from seed."), value = 0, min = 0, max = 50, step = 1),
-                        numericInput(ns("pre"), label = tooltip(trigger = list("Prepend Values", icon("circle-info")), "Option to choose the number of values from seed to evaluate against. Default is 0 (NULL) and value will be determined from seed."),  value = 0, min = 0, max = 365, step = 1))),
-    actionBttn(ns("run"), "Analyze", style = "unite", color = "danger")
+                        numericInput(ns("pre"), label = tooltip(trigger = list("Prepend Values", icon("circle-info")), "Option to choose the number of values from seed to evaluate against. Default is 0 (NULL) and value will be determined from seed."),  value = 0, min = 0, max = 365, step = 1)))
   )
 }
 
@@ -40,7 +39,7 @@ plotUI <- function(id){
 # Server Side ####
 #~~~~~~~~~~~~~~~~~~~~~~~~
 
-plotServer <- function(id, data_1, data_2, seed, forecast) {
+plotServer <- function(id, data_1, seed, forecast, btn1, status, outcome) {
   moduleServer(id, function(input, output, session) {
 
     observe({
@@ -51,10 +50,11 @@ plotServer <- function(id, data_1, data_2, seed, forecast) {
     observe({
       shinyjs::toggle(id = "args1", condition = {input$score == "all" | input$score == "trend"})
       shinyjs::toggle(id = "args2", condition = {input$score == "all" | input$score == "repeats"})
-      shinyjs::toggle(id = "args3", condition = {input$run})
+      shinyjs::toggle(id = "args3", condition = {btn1()})
     })
 
-    scoring <- eventReactive(input$run, {
+
+    scoring <- eventReactive(btn1(), {
       if (input$tol == 0 & input$pre == 0){
         comp_args <- list(trend = list(sig_lvl = input$sig), repeats = list(prepend = NULL, tolerance = NULL))
       } else if (input$tol == 0){
@@ -64,7 +64,11 @@ plotServer <- function(id, data_1, data_2, seed, forecast) {
       } else {
         comp_args <- list(trend = list(sig_lvl = input$sig), repeats = list(prepend = input$pre, tolerance = input$tol))
       }
-      scores <- plane_score(forecast(), seed(), components = input$score, args = comp_args)
+      if (status()){
+        scores <- plane_score(forecast(), seed(), components = input$score, args = comp_args)
+      } else {
+        scores <- plane_score(forecast(), seed(), components = c("diff", "repeats"), args = comp_args)
+      }
       scores
     })
 
@@ -122,11 +126,18 @@ plotServer <- function(id, data_1, data_2, seed, forecast) {
 
       forecast_df <- forecast()$data
       forecast_df$date = as.character(forecast_df$date)
-      forecast_df = forecast_df %>%
-        dplyr::filter(location %in% input$loc) %>%
-        dplyr::mutate(type = "Forecast") %>%
-        dplyr::select(date, point, lower, upper, type)
-
+      if (status()){
+        forecast_df = forecast_df %>%
+          dplyr::filter(location %in% input$loc) %>%
+          dplyr::mutate(type = "Forecast") %>%
+          dplyr::select(date, point, lower, upper, type)
+      } else {
+        forecast_df = forecast_df %>%
+          dplyr::filter(location %in% input$loc) %>%
+          dplyr::mutate(type = "Observed") %>%
+          dplyr::rename(point = outcome()) %>%
+          dplyr::select(date, point, type)
+      }
       df_plot = bind_rows(observed_df, forecast_df) %>%
         dplyr::mutate(date = as.Date(date, format = "%Y-%m-%d"))
       df_plot
@@ -232,7 +243,7 @@ plotServer <- function(id, data_1, data_2, seed, forecast) {
                                 Max_difference = difference()$maximum_difference) %>%
           dplyr::mutate(`Diff > Max` = Difference > Max_difference )
       } else if(input$plot_type == "repeats"){
-        df <- repeats()$repeats %>% dplyr::select(location, date, point) %>%
+        df <- repeats()$repeats %>%
             dplyr::mutate(flagged = "Repeat")
       } else if(input$plot_type == "taper"){
         df <-  plot_df() %>%
