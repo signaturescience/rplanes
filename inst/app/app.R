@@ -150,14 +150,14 @@ server <- function(input, output, session) {
       forc <- read_forecast(system.file("extdata/forecast", "2022-10-31-SigSci-TSENS.csv", package = "rplanes"), pi_width = as.numeric(input$width)) %>%
         to_signal(., outcome = "flu.admits", type = "forecast", horizon = as.numeric(input$horizon), resolution = input$rez)
     } else if (input$status){
-      validate(need(all(unique(data_2()$location) %in% unique(data_1()$location)), message = "Locations in the comparison dataset are not the same."))
       forc <- read_forecast(input$upload_2$datapath, pi_width = as.numeric(input$width)) %>%
+        filter(location %in% unique(data_1()$location)) %>%
         to_signal(., outcome = input$outcome, type = "forecast", horizon = input$horizon, resolution = input$rez)
     } else {
-      validate(need(all(unique(data_2()$location) %in% unique(data_1()$location)), message = "Locations in the comparison dataset are not the same."))
       df <- read.csv(input$upload_2$datapath)
       df$date <- as.Date(df$date)
       forc <- df %>%
+        filter(location %in% unique(data_1()$location)) %>%
         to_signal(., outcome = input$outcome, type = "observed", horizon = input$horizon, resolution = input$rez)
     }
     forc

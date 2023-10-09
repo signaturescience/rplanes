@@ -1,3 +1,3 @@
-# rplanes 0.1.0
+# rplanes 0.0.1
 
 Initial release!
