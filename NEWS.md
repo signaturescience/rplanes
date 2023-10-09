@@ -1,3 +1,3 @@
-# rplanes (development version)
+# rplanes 0.1.0
 
 Initial release!

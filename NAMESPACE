@@ -2,6 +2,7 @@
 
 export("%>%")
 export("%m-%")
+export(app_launcher)
 export(is_forecast)
 export(is_observed)
 export(plane_cover)

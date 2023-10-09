@@ -1,6 +1,6 @@
 ---
 title: "How to use the app"
-format: html
+format: gfm
 editor: visual
 ---
 

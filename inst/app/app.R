@@ -10,14 +10,15 @@ library(rplanes)
 
 options(shiny.useragg = TRUE) # font rendering for auto/custom fonts
 
-module_sources <- list.files(path = here::here("inst/app/modules/"), full.names = TRUE)
-#module_sources <- list.files(path = system.file("inst/app/modules/", package = "rplanes"), full.names = TRUE)
+#module_sources <- list.files(path = here::here("inst/app/modules/"), full.names = TRUE)
+module_sources <- list.files(path = system.file("app/modules/", package = "rplanes"), full.names = TRUE)
 sapply(module_sources, source)
 
 # UI Side ####
 ui <- tagList(
-  # TODO: change includeCSS to system.file("app/stype.css", package = "rplanes")
-  includeCSS(here::here("inst/app/style.css")),
+  # TODO: change includeCSS to system.file("app/style.css", package = "rplanes")
+  includeCSS(system.file("app/style.css", package = "rplanes")),
+  #includeCSS(here::here("inst/app/style.css")),
   add_busy_spinner(spin = "breeding-rhombus", color = '#073642', position = "full-page", onstart = TRUE),
 
   useShinyjs(),
@@ -53,7 +54,8 @@ ui <- tagList(
               nav_panel("Plots",
                         plotUI("tab2")),
               nav_panel("Help",
-                        htmltools::includeHTML("help_tab.html"))
+                        htmltools::includeHTML(system.file("app/help_tab.html", package = "rplanes")))
+                        #htmltools::includeHTML("help_tab.html"))
                         #htmltools::includeMarkdown("help_tab.md"))
               )
 
