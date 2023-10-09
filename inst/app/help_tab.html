@@ -1,0 +1,528 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.3.353">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+
+<title>How to use the app</title>
+<style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+</style>
+
+
+<script src="help_tab_files/libs/clipboard/clipboard.min.js"></script>
+<script src="help_tab_files/libs/quarto-html/quarto.js"></script>
+<script src="help_tab_files/libs/quarto-html/popper.min.js"></script>
+<script src="help_tab_files/libs/quarto-html/tippy.umd.min.js"></script>
+<script src="help_tab_files/libs/quarto-html/anchor.min.js"></script>
+<link href="help_tab_files/libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="help_tab_files/libs/quarto-html/quarto-syntax-highlighting.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="help_tab_files/libs/bootstrap/bootstrap.min.js"></script>
+<link href="help_tab_files/libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="help_tab_files/libs/bootstrap/bootstrap.min.css" rel="stylesheet" id="quarto-bootstrap" data-mode="light">
+
+
+</head>
+
+<body class="fullcontent">
+
+<div id="quarto-content" class="page-columns page-rows-contents page-layout-article">
+
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title">How to use the app</h1>
+</div>
+
+
+
+<div class="quarto-title-meta">
+
+    
+  
+    
+  </div>
+  
+
+</header>
+
+<section id="introduction" class="level2">
+<h2 class="anchored" data-anchor-id="introduction">Introduction</h2>
+<p>This app helps to facilitate the use of the R package <a href="https://signaturescience.github.io/rplanes/">PLANES</a> (Plausibility Analysis of Epidemiological Signals). This open-source package contains tools/components to assess the uncertainty of near-term forecasts. Some infectious disease forecasting signals may exhibit implausible values. Our aim is to develop a set of tools to pick up such occurrences and provide a scoring mechanism to flag any such values for further evaluation.</p>
+<p>The accepted forecasts can be daily, weekly or monthly forecasts. There are two inputs that can be supplied, first is the observed data and second a comparison. This comparison is either a forecast or another observed data set containing signals whose dates do not overlap with the first data set.</p>
+</section>
+<section id="data" class="level2">
+<h2 class="anchored" data-anchor-id="data">Data</h2>
+<p>The format of these two uploads is outlined below. If both uploads are observed data they must be formatted according to the observed data format below.</p>
+<p>The <strong>observed data</strong> uploaded must be in a .csv format.</p>
+<p>The columns contain:</p>
+<ul>
+<li><p>date: Is the date of the reported value in date class format.</p></li>
+<li><p>The epiyear and epiweek is optional but can be obtained from the date column using lubridate::epiyear() for the epiyear and MMWRweek::MMWRweek() for the epiweek.</p></li>
+<li><p>location: Can be any type like geographic unit such as <a href="https://www.bls.gov/respondents/mwr/electronic-data-interchange/appendix-d-usps-state-abbreviations-and-fips-codes.htm">FIPS code</a> as in the example below, but must match the location type in the forecast dataset.</p></li>
+<li><p>An outcome column, in this example is called flu.admits, representing hospital flu admissions.</p></li>
+</ul>
+<div class="cell">
+<div class="cell-output-display">
+<table class="table table-sm table-striped small">
+<thead>
+<tr class="header">
+<th style="text-align: left;">date</th>
+<th style="text-align: center;">epiyear</th>
+<th style="text-align: center;">epiweek</th>
+<th style="text-align: center;">location</th>
+<th style="text-align: center;">flu.admits</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">2023-05-20</td>
+<td style="text-align: center;">2023</td>
+<td style="text-align: center;">20</td>
+<td style="text-align: center;">17</td>
+<td style="text-align: center;">29</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">2022-12-03</td>
+<td style="text-align: center;">2022</td>
+<td style="text-align: center;">48</td>
+<td style="text-align: center;">45</td>
+<td style="text-align: center;">223</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">2022-07-16</td>
+<td style="text-align: center;">2022</td>
+<td style="text-align: center;">28</td>
+<td style="text-align: center;">45</td>
+<td style="text-align: center;">9</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">2022-09-17</td>
+<td style="text-align: center;">2022</td>
+<td style="text-align: center;">37</td>
+<td style="text-align: center;">50</td>
+<td style="text-align: center;">0</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">2022-08-27</td>
+<td style="text-align: center;">2022</td>
+<td style="text-align: center;">34</td>
+<td style="text-align: center;">26</td>
+<td style="text-align: center;">2</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<p>The <strong>forecast data</strong> must also be a .csv file with the following columns labeled explicitly as:</p>
+<ul>
+<li><p>forecast_date: The date the forecast was generated.</p></li>
+<li><p>target: The horizon for the forecast, in the example it is a weekly horizon with a number for 1, 2, 3 and 4 weeks ahead.</p></li>
+<li><p>target_end_date: The date of the expected forecast horizon in date class format.</p></li>
+<li><p>location: Can be any type like geographic unit such as <a href="https://www.bls.gov/respondents/mwr/electronic-data-interchange/appendix-d-usps-state-abbreviations-and-fips-codes.htm">FIPS code</a>, or any other but must match the type in the observed dataset.</p></li>
+<li><p>type: The type of predicted value as a point value or quantile value. Can contain quantile only but not point only.</p></li>
+<li><p>quantile: The quantile in numeric format.</p></li>
+<li><p>value: The predicted outcome value for the forecast in numeric format.</p></li>
+</ul>
+<div class="cell">
+<div class="cell-output-display">
+<table class="table table-sm table-striped small">
+<colgroup>
+<col style="width: 15%">
+<col style="width: 26%">
+<col style="width: 18%">
+<col style="width: 10%">
+<col style="width: 10%">
+<col style="width: 10%">
+<col style="width: 7%">
+</colgroup>
+<thead>
+<tr class="header">
+<th style="text-align: left;">forecast_date</th>
+<th style="text-align: center;">target</th>
+<th style="text-align: center;">target_end_date</th>
+<th style="text-align: center;">location</th>
+<th style="text-align: center;">type</th>
+<th style="text-align: center;">quantile</th>
+<th style="text-align: center;">value</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">2023-02-06</td>
+<td style="text-align: center;">2 wk ahead inc flu hosp</td>
+<td style="text-align: center;">2023-02-18</td>
+<td style="text-align: center;">45</td>
+<td style="text-align: center;">quantile</td>
+<td style="text-align: center;">0.40</td>
+<td style="text-align: center;">31</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">2023-02-06</td>
+<td style="text-align: center;">3 wk ahead inc flu hosp</td>
+<td style="text-align: center;">2023-02-25</td>
+<td style="text-align: center;">08</td>
+<td style="text-align: center;">quantile</td>
+<td style="text-align: center;">0.15</td>
+<td style="text-align: center;">0</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">2023-02-06</td>
+<td style="text-align: center;">2 wk ahead inc flu hosp</td>
+<td style="text-align: center;">2023-02-18</td>
+<td style="text-align: center;">40</td>
+<td style="text-align: center;">quantile</td>
+<td style="text-align: center;">0.75</td>
+<td style="text-align: center;">126</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">2023-02-06</td>
+<td style="text-align: center;">4 wk ahead inc flu hosp</td>
+<td style="text-align: center;">2023-03-04</td>
+<td style="text-align: center;">44</td>
+<td style="text-align: center;">quantile</td>
+<td style="text-align: center;">0.45</td>
+<td style="text-align: center;">0</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">2023-02-06</td>
+<td style="text-align: center;">2 wk ahead inc flu hosp</td>
+<td style="text-align: center;">2023-02-18</td>
+<td style="text-align: center;">48</td>
+<td style="text-align: center;">quantile</td>
+<td style="text-align: center;">0.60</td>
+<td style="text-align: center;">311</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">2023-02-06</td>
+<td style="text-align: center;">4 wk ahead inc flu hosp</td>
+<td style="text-align: center;">2023-03-04</td>
+<td style="text-align: center;">36</td>
+<td style="text-align: center;">quantile</td>
+<td style="text-align: center;">0.80</td>
+<td style="text-align: center;">177</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">2023-02-06</td>
+<td style="text-align: center;">3 wk ahead inc flu hosp</td>
+<td style="text-align: center;">2023-02-25</td>
+<td style="text-align: center;">35</td>
+<td style="text-align: center;">quantile</td>
+<td style="text-align: center;">0.95</td>
+<td style="text-align: center;">86</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">2023-02-06</td>
+<td style="text-align: center;">2 wk ahead inc flu hosp</td>
+<td style="text-align: center;">2023-02-18</td>
+<td style="text-align: center;">06</td>
+<td style="text-align: center;">quantile</td>
+<td style="text-align: center;">0.95</td>
+<td style="text-align: center;">444</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">2023-02-06</td>
+<td style="text-align: center;">2 wk ahead inc flu hosp</td>
+<td style="text-align: center;">2023-02-18</td>
+<td style="text-align: center;">25</td>
+<td style="text-align: center;">quantile</td>
+<td style="text-align: center;">0.75</td>
+<td style="text-align: center;">82</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">2023-02-06</td>
+<td style="text-align: center;">4 wk ahead inc flu hosp</td>
+<td style="text-align: center;">2023-03-04</td>
+<td style="text-align: center;">21</td>
+<td style="text-align: center;">point</td>
+<td style="text-align: center;">NA</td>
+<td style="text-align: center;">0</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</section>
+<section id="analysis-steps" class="level2">
+<h2 class="anchored" data-anchor-id="analysis-steps">Analysis Steps</h2>
+<p>After the two files have been uploaded, by default, the comparison data set is marked as a forecast. Deselect “Is the Comparison a Forecast” if it is not.</p>
+<p>The resolution, depending on the signal, must be indicated as Daily, Weekly or Monthly.</p>
+<p>The type of outcome is the type of signal, in the example it is flu.admits. This field must match the outcome column of the first upload (Observed Data).</p>
+<p>If the comparison is a forecast, the horizon drop down will appear and this is to indicate how far the signal is forecasted. The example data contains 4 week ahead forecasts so the horizon is 4.</p>
+<p>The default components are run, which is all of them, with their corresponding default parameters. Toggle “Modify Defaults” to select individual components or modify any of the component parameters.</p>
+<p>Press “Analyze” which will bring you to the Plots tab displaying the scoring table and options to plot the individual components.</p>
+</section>
+<section id="components" class="level2">
+<h2 class="anchored" data-anchor-id="components">Components</h2>
+<p>The scoring component <code>Coverage</code> assessed by rplanes::plane_cover evaluates whether the signal covers the last observed value. Currently set to work on forecast data sets.</p>
+<p><code>Difference</code> assessed by rplanes::plane_diff, evaluates the point-to-point difference and whether the comparison exceeds the maximum difference in observed data. Works on observed or forecast data sets.</p>
+<p><code>Repeat</code> assessed by rplanes::plane_repeat evaluates whether consecutive values in observations or forecasts are repeated a k number of times. Additional arguments tolerance is the number (k) of allowed repeats, and prepend indicates the number of values from the observed data set to be evaluated against. Both arguments default to NULL and the values are determined from the observed data.</p>
+<p><code>Taper</code> assessed by rplanes::plane_taper evaluates whether or not the forecast signal interval tapers (i.e., decreases in width) as horizons progress. Currently set to work on forecast data sets.</p>
+<p><code>Trend</code> assessed by rplanes::plane_trend identifies any change points in forecast data or in the final observed data point. Currently set to work on forecast data sets. The additional argument significance, is the significance level at which to identify change points (between zero and one); default is 0.1.</p>
+<p><u>When</u> the comparison is <u>not a forecast</u> only the difference and repeat components are run.</p>
+</section>
+<section id="scoring-table" class="level2">
+<h2 class="anchored" data-anchor-id="scoring-table">Scoring Table</h2>
+<p>The table displays all the components run on each location and any flags that may have occurred by each component. Currently, we have implemented five components and the score column reflects the number of components over five.</p>
+<hr>
+<section id="developed-by" class="level3">
+<h3 class="anchored" data-anchor-id="developed-by">Developed by</h3>
+<p>Pete Nagraj, Desiree Williams &amp; Amy Benefield</p>
+<p>Signature Science, LLC</p>
+</section>
+</section>
+
+</main>
+<!-- /main column -->
+<script id="quarto-html-after-body" type="application/javascript">
+window.document.addEventListener("DOMContentLoaded", function (event) {
+  const toggleBodyColorMode = (bsSheetEl) => {
+    const mode = bsSheetEl.getAttribute("data-mode");
+    const bodyEl = window.document.querySelector("body");
+    if (mode === "dark") {
+      bodyEl.classList.add("quarto-dark");
+      bodyEl.classList.remove("quarto-light");
+    } else {
+      bodyEl.classList.add("quarto-light");
+      bodyEl.classList.remove("quarto-dark");
+    }
+  }
+  const toggleBodyColorPrimary = () => {
+    const bsSheetEl = window.document.querySelector("link#quarto-bootstrap");
+    if (bsSheetEl) {
+      toggleBodyColorMode(bsSheetEl);
+    }
+  }
+  toggleBodyColorPrimary();  
+  const icon = "";
+  const anchorJS = new window.AnchorJS();
+  anchorJS.options = {
+    placement: 'right',
+    icon: icon
+  };
+  anchorJS.add('.anchored');
+  const isCodeAnnotation = (el) => {
+    for (const clz of el.classList) {
+      if (clz.startsWith('code-annotation-')) {                     
+        return true;
+      }
+    }
+    return false;
+  }
+  const clipboard = new window.ClipboardJS('.code-copy-button', {
+    text: function(trigger) {
+      const codeEl = trigger.previousElementSibling.cloneNode(true);
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+  });
+  clipboard.on('success', function(e) {
+    // button target
+    const button = e.trigger;
+    // don't keep focus
+    button.blur();
+    // flash "checked"
+    button.classList.add('code-copy-button-checked');
+    var currentTitle = button.getAttribute("title");
+    button.setAttribute("title", "Copied!");
+    let tooltip;
+    if (window.bootstrap) {
+      button.setAttribute("data-bs-toggle", "tooltip");
+      button.setAttribute("data-bs-placement", "left");
+      button.setAttribute("data-bs-title", "Copied!");
+      tooltip = new bootstrap.Tooltip(button, 
+        { trigger: "manual", 
+          customClass: "code-copy-button-tooltip",
+          offset: [0, -8]});
+      tooltip.show();    
+    }
+    setTimeout(function() {
+      if (tooltip) {
+        tooltip.hide();
+        button.removeAttribute("data-bs-title");
+        button.removeAttribute("data-bs-toggle");
+        button.removeAttribute("data-bs-placement");
+      }
+      button.setAttribute("title", currentTitle);
+      button.classList.remove('code-copy-button-checked');
+    }, 1000);
+    // clear code selection
+    e.clearSelection();
+  });
+  function tippyHover(el, contentFn) {
+    const config = {
+      allowHTML: true,
+      content: contentFn,
+      maxWidth: 500,
+      delay: 100,
+      arrow: false,
+      appendTo: function(el) {
+          return el.parentElement;
+      },
+      interactive: true,
+      interactiveBorder: 10,
+      theme: 'quarto',
+      placement: 'bottom-start'
+    };
+    window.tippy(el, config); 
+  }
+  const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+  for (var i=0; i<noterefs.length; i++) {
+    const ref = noterefs[i];
+    tippyHover(ref, function() {
+      // use id or data attribute instead here
+      let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+      try { href = new URL(href).hash; } catch {}
+      const id = href.replace(/^#\/?/, "");
+      const note = window.document.getElementById(id);
+      return note.innerHTML;
+    });
+  }
+      let selectedAnnoteEl;
+      const selectorForAnnotation = ( cell, annotation) => {
+        let cellAttr = 'data-code-cell="' + cell + '"';
+        let lineAttr = 'data-code-annotation="' +  annotation + '"';
+        const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+        return selector;
+      }
+      const selectCodeLines = (annoteEl) => {
+        const doc = window.document;
+        const targetCell = annoteEl.getAttribute("data-target-cell");
+        const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+        const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+        const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+        const lineIds = lines.map((line) => {
+          return targetCell + "-" + line;
+        })
+        let top = null;
+        let height = null;
+        let parent = null;
+        if (lineIds.length > 0) {
+            //compute the position of the single el (top and bottom and make a div)
+            const el = window.document.getElementById(lineIds[0]);
+            top = el.offsetTop;
+            height = el.offsetHeight;
+            parent = el.parentElement.parentElement;
+          if (lineIds.length > 1) {
+            const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+            const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+            height = bottom - top;
+          }
+          if (top !== null && height !== null && parent !== null) {
+            // cook up a div (if necessary) and position it 
+            let div = window.document.getElementById("code-annotation-line-highlight");
+            if (div === null) {
+              div = window.document.createElement("div");
+              div.setAttribute("id", "code-annotation-line-highlight");
+              div.style.position = 'absolute';
+              parent.appendChild(div);
+            }
+            div.style.top = top - 2 + "px";
+            div.style.height = height + 4 + "px";
+            let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+            if (gutterDiv === null) {
+              gutterDiv = window.document.createElement("div");
+              gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+              gutterDiv.style.position = 'absolute';
+              const codeCell = window.document.getElementById(targetCell);
+              const gutter = codeCell.querySelector('.code-annotation-gutter');
+              gutter.appendChild(gutterDiv);
+            }
+            gutterDiv.style.top = top - 2 + "px";
+            gutterDiv.style.height = height + 4 + "px";
+          }
+          selectedAnnoteEl = annoteEl;
+        }
+      };
+      const unselectCodeLines = () => {
+        const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+        elementsIds.forEach((elId) => {
+          const div = window.document.getElementById(elId);
+          if (div) {
+            div.remove();
+          }
+        });
+        selectedAnnoteEl = undefined;
+      };
+      // Attach click handler to the DT
+      const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+      for (const annoteDlNode of annoteDls) {
+        annoteDlNode.addEventListener('click', (event) => {
+          const clickedEl = event.target;
+          if (clickedEl !== selectedAnnoteEl) {
+            unselectCodeLines();
+            const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+            if (activeEl) {
+              activeEl.classList.remove('code-annotation-active');
+            }
+            selectCodeLines(clickedEl);
+            clickedEl.classList.add('code-annotation-active');
+          } else {
+            // Unselect the line
+            unselectCodeLines();
+            clickedEl.classList.remove('code-annotation-active');
+          }
+        });
+      }
+  const findCites = (el) => {
+    const parentEl = el.parentElement;
+    if (parentEl) {
+      const cites = parentEl.dataset.cites;
+      if (cites) {
+        return {
+          el,
+          cites: cites.split(' ')
+        };
+      } else {
+        return findCites(el.parentElement)
+      }
+    } else {
+      return undefined;
+    }
+  };
+  var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+  for (var i=0; i<bibliorefs.length; i++) {
+    const ref = bibliorefs[i];
+    const citeInfo = findCites(ref);
+    if (citeInfo) {
+      tippyHover(citeInfo.el, function() {
+        var popup = window.document.createElement('div');
+        citeInfo.cites.forEach(function(cite) {
+          var citeDiv = window.document.createElement('div');
+          citeDiv.classList.add('hanging-indent');
+          citeDiv.classList.add('csl-entry');
+          var biblioDiv = window.document.getElementById('ref-' + cite);
+          if (biblioDiv) {
+            citeDiv.innerHTML = biblioDiv.innerHTML;
+          }
+          popup.appendChild(citeDiv);
+        });
+        return popup.innerHTML;
+      });
+    }
+  }
+});
+</script>
+</div> <!-- /content -->
+
+
+
+</body></html>

@@ -38,7 +38,8 @@ ui <- tagList(
                                     prettyToggle("status", label_on = "Yes", icon_on = icon("check"), status_on = "success", label_off = "No", icon_off = icon("remove"), status_off = "warning", value = TRUE))),
                 awesomeRadio("rez", "Resolution", choices = c("Daily" = "days", "Weekly" = "weeks", "Monthly" = "months"), selected = "Weekly", inline = T, status = "info"),
                 textInput("outcome", label = tooltip(trigger = list("Type of Outcome", icon("circle-info")), "Type the name of the observed outcome column."), value = "flu.admits"),
-                pickerInput("horizon", "Forecast Horizon", choices = c(1,2,3,4), selected = 4),
+                shinyjs::hidden(div(id = "forc_opt",
+                                    autonumericInput("horizon", "Forecast Horizon", value = 4, maximumValue = 30, minimumValue = 1, decimalPlaces = 0, align = "center", modifyValueOnWheel = T))),
                 materialSwitch("opts", label = "Modify Defaults", value = FALSE, status = "success"),
                 shinyjs::hidden(div(id = "add_options",
                                     textInput("width", label = tooltip(trigger = list("Prediction Interval", icon("circle-info")), "Choose prediction interval (95 is default corresponding to a 95% interval) for the forecast data."), value = "95"),
@@ -52,7 +53,8 @@ ui <- tagList(
               nav_panel("Plots",
                         plotUI("tab2")),
               nav_panel("Help",
-                        htmltools::includeMarkdown("help_tab.md"))
+                        htmltools::includeHTML("help_tab.html"))
+                        #htmltools::includeMarkdown("help_tab.md"))
               )
 
 
@@ -68,10 +70,8 @@ server <- function(input, output, session) {
     shinyjs::toggle(id = "choice_custom", condition = {input$choice %in% "Custom"})
     # unhide additional options upon switch
     shinyjs::toggle(id = "add_options", condition = {input$opts == TRUE})
-    # Dates must be before forecasting target end dates
-    # must make the date a character to pass into choices it was outputting the date as a numeric
-    #dates <- unique(data_1()$date)[unique(data_1()$date) < min(unique(data_2()$target_end_date))]
-    #updatePickerInput(session = session, inputId = "date", choices = unique(as.character(dates)))
+    shinyjs::toggle(id = "forc_opt", condition = {input$status == TRUE})
+
   })
 
   observe({
