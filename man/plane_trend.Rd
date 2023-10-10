@@ -9,7 +9,7 @@ plane_trend(location, input, seed, sig_lvl = 0.1)
 \arguments{
 \item{location}{Character vector with location code; the location must appear in input and seed}
 
-\item{input}{Input signal data to be scored; object must be one of \link[=to_signal]{forecast} or \link[=to_signal]{observed}}
+\item{input}{Input signal data to be scored; object must be \link[=to_signal]{forecast}}
 
 \item{seed}{Prepared \link[=plane_seed]{seed}}
 
