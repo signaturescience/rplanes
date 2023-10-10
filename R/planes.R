@@ -506,7 +506,7 @@ plane_score <- function(input, seed, components = "all", args = NULL) {
 #' This function identifies any change points in the forecast data or in the final observed data point. Change points are identified by any significant change in magnitude or direction of the slope of the time series.
 #'
 #' @param location Character vector with location code; the location must appear in input and seed
-#' @param input Input signal data to be scored; object must be one of [forecast][to_signal()] or [observed][to_signal()]
+#' @param input Input signal data to be scored; object must be [forecast][to_signal()]
 #' @param seed Prepared [seed][plane_seed()]
 #' @param sig_lvl The significance level at which to identify change points (between zero and one); default is 0.1
 #'
