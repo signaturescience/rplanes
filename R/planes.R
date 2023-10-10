@@ -436,9 +436,9 @@ plane_score <- function(input, seed, components = "all", args = NULL) {
          trend = list(.function = plane_trend)
     )
 
-  ## TODO: verify components for signal type ... some won't apply to observed
-  if(is_observed(input) & any(components %in% c("cover", "taper", "all"))) {
-    stop("Input must be a forecast when component contains 'cover' or 'taper'.")
+  ## verify components for signal type ... some won't apply to observed
+  if(is_observed(input) & any(components %in% c("cover", "trend", "taper", "all"))) {
+    stop("Input must be a forecast when component contains 'cover', 'taper', or 'trend'.")
   }
 
   if(length(components) == 1 && components == "all") {
