@@ -1,0 +1,84 @@
+---
+title: "Basic Usage rplanes: Plausibility Analysis of Epidemiological Signals"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{my-vignette}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+<img src="logo.png" style="position:absolute;top:1px;right:1px;width:7.5%;" />
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+```{r setup}
+library(rplanes)
+```
+
+# Overview
+The 'rplanes' package (**pl**ausibility **an**alysis of **e**pidemiological **s**ignals) provides functionality to prepare data and and analyze plausibility of both forecasted and reported epidemiological signals. The functions implement a set of plausbility algorithms that are agnostic to geographic and time resolutions and are calculated independently and then presented as a combined score. 
+
+![**Figure 1**: Workflow of the rplanes package](workflow.png){#id .class width=90% height=100%}
+
+**Figure 1** provides a detailed description of the processes used in rplanes. Beginning with raw forecast or observed data, rplanes preps the data using read_forecast(). The prepped forecast or observed data is then converted to a signal object using to_signal(). For observed signals, we then use plane_seed() that applies a cut date to be used as a comparator in the final plausibility analyses. Currently, we have a set of five components that test for plausibility, and we will go into more detail on those in sections **###** below. However, those five components are then run on a set of forecasts or observed data using our wrapper function, plane_score() which outputs the total number of implausibility "flags" for each forecast. Note that some of our components can only be run on forecasts and not on observed data (more detail below).
+
+# Basic Usage
+Before we begin, load all packages required for this vignette:
+```{r message = FALSE}
+library(dplyr)
+library(purrr)
+```
+
+## Read in and format data using our built in functions:
+First, we read in [HHS Protect data](https://healthdata.gov/Hospital/COVID-19-Reported-Patient-Impact-and-Hospital-Capa/g62h-syeh). This dataset is internal to the rplanes package. We then select only the columns in which we're interested (here: date, location, and flu.admits) and make sure that the date field is formatted as a date:
+```{r}
+hosp <- read.csv(system.file("extdata/observed/hdgov_hosp_weekly.csv", package = "rplanes"))
+
+tmp_hosp <-
+  hosp %>%
+  dplyr::select(date, location, flu.admits) %>%
+  dplyr::mutate(date = as.Date(date))
+```
+
+Next, we convert our raw forecast into a prepped forecast using read_forecast():
+```{r}
+prepped_forecast <- read_forecast(system.file("extdata/forecast/2022-10-31-SigSci-TSENS.csv",
+                                              package = "rplanes"))
+```
+
+We then convert the prepped forecast and the observed data into signals using to_signal():
+```{r}
+forecast_signal <- 
+  prepped_forecast  %>%
+  to_signal(., outcome = "flu.admits", type = "forecast", horizon = 4)
+
+observed_signal <- to_signal(tmp_hosp, outcome = "flu.admits", type = "observed", resolution = "weeks")
+```
+
+Finally, the observed signal is converted to a seed object by using plane_seed() and defining a cut date:
+```{r}
+prepped_seed <- plane_seed(observed_signal, cut_date = "2022-10-29")
+```
+
+## Run formatted data through plane_score() and visualize results:
+```{r}
+scores <- plane_score(input = forecast_signal, seed = prepped_seed)
+
+res <-
+  scores$scores_summary %>%
+  map_df(., as_tibble)
+  
+head(res)
+hist(res$score)
+```
+
+
+
+
+
+
