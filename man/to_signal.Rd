@@ -34,11 +34,10 @@ The input signal data may be either "observed" or "forecast" data. Depending on 
 
 For "observed" data the data frame must at minimum include columns for \strong{location} (geographic unit such as FIPS code) and \strong{date} (date of reported value; must be \code{date} class). The data should also include a column that contains the outcome (e.g., case count).
 
-For "forecast" data the data frame must include columns for \strong{location} (geographic unit such as FIPS code), \strong{date} (date corresponding to forecast horizon; must be \code{date} class), \strong{horizon} (forecast horizon), \strong{lower} (the lower limit of the prediction interval for the forecast), \strong{point} (the point estimate for the forecast), and \strong{upper} (the upper limit of the prediction interval for the forecast). Note that the \link{read_forecast} function returns data in this format.
+For "forecast" data the data frame must include columns for \strong{location} (geographic unit such as FIPS code), \strong{date} (date corresponding to forecast horizon; must be \code{date} class or character formatted as 'YYYY-MM-DD'), \strong{horizon} (forecast horizon), \strong{lower} (the lower limit of the prediction interval for the forecast), \strong{point} (the point estimate for the forecast), and \strong{upper} (the upper limit of the prediction interval for the forecast). Note that the \link{read_forecast} function returns data in this format.
 }
 \examples{
 hosp <- read.csv(system.file("extdata/observed/hdgov_hosp_weekly.csv", package = "rplanes"))
-hosp$date <- as.Date(hosp$date, format = "\%Y-\%m-\%d")
 to_signal(hosp, outcome = "flu.admits", type = "observed", resolution = "weeks")
 
 fp <- system.file("extdata/forecast/2022-10-31-SigSci-TSENS.csv", package = "rplanes")

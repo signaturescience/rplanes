@@ -16,14 +16,13 @@
 #'
 #' For "observed" data the data frame must at minimum include columns for **location** (geographic unit such as FIPS code) and **date** (date of reported value; must be `date` class). The data should also include a column that contains the outcome (e.g., case count).
 #'
-#' For "forecast" data the data frame must include columns for **location** (geographic unit such as FIPS code), **date** (date corresponding to forecast horizon; must be `date` class), **horizon** (forecast horizon), **lower** (the lower limit of the prediction interval for the forecast), **point** (the point estimate for the forecast), and **upper** (the upper limit of the prediction interval for the forecast). Note that the [read_forecast] function returns data in this format.
+#' For "forecast" data the data frame must include columns for **location** (geographic unit such as FIPS code), **date** (date corresponding to forecast horizon; must be `date` class or character formatted as 'YYYY-MM-DD'), **horizon** (forecast horizon), **lower** (the lower limit of the prediction interval for the forecast), **point** (the point estimate for the forecast), and **upper** (the upper limit of the prediction interval for the forecast). Note that the [read_forecast] function returns data in this format.
 #'
 #' @return An object of the class `signal`. The object will have a second class of either `observed` or `forecast` depending on the value passed to the "type" argument.
 #' @export
 #'
 #' @examples
 #' hosp <- read.csv(system.file("extdata/observed/hdgov_hosp_weekly.csv", package = "rplanes"))
-#' hosp$date <- as.Date(hosp$date, format = "%Y-%m-%d")
 #' to_signal(hosp, outcome = "flu.admits", type = "observed", resolution = "weeks")
 #'
 #' fp <- system.file("extdata/forecast/2022-10-31-SigSci-TSENS.csv", package = "rplanes")
@@ -35,7 +34,9 @@ to_signal <- function(input,
                       resolution = "weeks",
                       horizon = NULL) {
 
-  ## arg match if we want
+  if(!lubridate::is.Date(input$date)) {
+    input$date <- as.Date(input$date, format = "%Y-%m-%d")
+  }
 
   if(type == "observed") {
     ## return special signal, observed list
