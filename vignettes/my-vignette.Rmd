@@ -1,6 +1,8 @@
 ---
 title: "Basic Usage rplanes: Plausibility Analysis of Epidemiological Signals"
-output: rmarkdown::html_vignette
+output: 
+  rmarkdown::html_vignette:
+    toc: TRUE
 vignette: >
   %\VignetteIndexEntry{my-vignette}
   %\VignetteEngine{knitr::rmarkdown}
@@ -182,6 +184,40 @@ ggplot(data = diff_dat_flag, mapping = aes(x = date, y = flu.admits)) +
 ### A. Description:
 This function evaluates whether or not the evaluated signal interval covers the last observed value. The interval used in this plausibility component is drawn from the upper and lower bounds of the forecasted prediction interval. As such, the only accepted signal format is forecast, which will include upper and lower bounds.
 
+### B. An example where a flag is NOT raised and the data is plausible:
+
+### C. An example where a flag IS raised and the data is implausible:
 
 
+
+## 3.  Taper component, plane_taper():
+
+### A. Description:
+This function evaluates whether or not the evaluated signal interval tapers (i.e., decreases in width) as horizons progress. The interval used in this plausbility component is drawn from the upper and lower bounds of the forecasted prediction interval. As such, the only accepted signal format is forecast, which will include upper and lower bounds.
+
+### B. An example where a flag is NOT raised and the data is plausible:
+
+### C. An example where a flag IS raised and the data is implausible:
+
+
+
+## 4. Repeat component, plane_repeat():
+
+### A. Description:
+This function evaluates whether consecutive values in observations or forecasts are repeated a k number of times. This function takes in a forecast object that is either from an observed dataset or forecast dataset.
+
+### B. An example where a flag is NOT raised and the data is plausible:
+
+### C. An example where a flag IS raised and the data is implausible:
+
+
+
+## 5. Trend component, plane_trend():
+
+### A. Description:
+This function identifies any change points in the forecast data or in the final observed data point. Change points are identified by any significant change in magnitude or direction of the slope of the time series.
+
+### B. An example where a flag is NOT raised and the data is plausible:
+
+### C. An example where a flag IS raised and the data is implausible:
 
