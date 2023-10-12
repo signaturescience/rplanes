@@ -19,14 +19,14 @@ ui <- tagList(
   # TODO: change includeCSS to system.file("app/style.css", package = "rplanes")
   includeCSS(system.file("app/style.css", package = "rplanes")),
   #includeCSS(here::here("inst/app/style.css")),
-  add_busy_spinner(spin = "breeding-rhombus", color = '#073642', position = "full-page", onstart = TRUE),
+  shinybusy::add_busy_spinner(spin = "breeding-rhombus", color = '#073642', position = "full-page", onstart = TRUE),
 
-  useShinyjs(),
-  page_navbar(id = "nav_page",
+  shinyjs::useShinyjs(),
+  bslib::page_navbar(id = "nav_page",
               title = "Rplanes Explorer",
-              theme = bs_theme(bootswatch = "solar"),
+              theme = bslib::bs_theme(bootswatch = "solar"),
               fillable = FALSE,
-              sidebar = sidebar(
+              sidebar = bslib::sidebar(
                 width = 300,
                 bg = '#6c757d',
                 position = "left",
@@ -49,11 +49,11 @@ ui <- tagList(
                 actionBttn("run", "Analyze", style = "unite", color = "danger")
 
               ),
-              nav_panel("Data",
+              bslib::nav_panel("Data",
                         dataUI("tab1")),
-              nav_panel("Plots",
+              bslib::nav_panel("Plots",
                         plotUI("tab2")),
-              nav_panel("Help",
+              bslib::nav_panel("Help",
                         htmltools::includeHTML(system.file("app/help_tab.html", package = "rplanes")))
                         #htmltools::includeHTML("help_tab.html"))
                         #htmltools::includeMarkdown("help_tab.md"))

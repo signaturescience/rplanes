@@ -1,56 +1,55 @@
 Package: rplanes
 Title: Plausibility Analysis of Epidemiological Signals in 'R'
 Version: 0.0.1
-Authors@R: 
-    c(person(given = "VP",
-             family = "Nagraj",
-             role = c("aut", "cre"),
-             email = "pnagraj@signaturescience.com",
-             comment = c(ORCID = "0000-0003-0060-566X")),
-      person(given = "Desiree",
-             family = "Williams",
-             role = "aut",
-             comment = c(ORCID = "0000-0002-0524-2055")),
-      person(given = "Amy",
-             family = "Benefield",
-             role = "aut"))
-Description: The 'rplanes' package provides functionality to prepare data and and analyze plausibility of both forecasted and reported epidemiological signals. The functions implement a set of plausbility algorithms that are agnostic to geographic and time resolutions and are calculated independently then presented as a combined score. 
+Authors@R: c(
+    person("VP", "Nagraj", , "pnagraj@signaturescience.com", role = c("aut", "cre"),
+           comment = c(ORCID = "0000-0003-0060-566X")),
+    person("Desiree", "Williams", role = "aut",
+           comment = c(ORCID = "0000-0002-0524-2055")),
+    person("Amy", "Benefield", role = "aut")
+  )
+Description: The 'rplanes' package provides functionality to prepare data
+    and and analyze plausibility of both forecasted and reported
+    epidemiological signals. The functions implement a set of plausbility
+    algorithms that are agnostic to geographic and time resolutions and
+    are calculated independently then presented as a combined score.
 License: MIT + file LICENSE
+URL: https://signaturescience.github.io/rplanes/
+Depends: 
+    R (>= 2.10)
+Imports: 
+    dplyr,
+    ecp,
+    lubridate,
+    magrittr,
+    purrr,
+    readr,
+    rlang,
+    stringr,
+    tibble,
+    tidyr,
+    utils
+Suggests:
+    bslib,
+    DT,
+    ggplot2,
+    ggrepel,
+    htmltools,
+    knitr,
+    MMWRweek,
+    ragg,
+    rmarkdown,
+    shiny,
+    shinybusy,
+    shinyjs,
+    shinyWidgets,
+    testthat (>= 3.0.0),
+    thematic,
+    tools
+VignetteBuilder: 
+    knitr
+Config/testthat/edition: 3
 Encoding: UTF-8
 LazyData: true
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.2.3
-Imports: 
-    dplyr,
-    magrittr,
-    purrr,
-    rlang,
-    tidyr,
-    stringr,
-    readr,
-    lubridate,
-    ecp,
-    tibble,
-    utils
-Suggests:
-    testthat (>= 3.0.0),
-    MMWRweek,
-    shiny,
-    shinyWidgets,
-    shinyjs,
-    shinybusy,
-    bslib,
-    ggplot2,
-    ggrepel,
-    ragg,
-    htmltools,
-    thematic,
-    tools,
-    DT,
-    knitr,
-    rmarkdown
-Depends: 
-    R (>= 2.10)
-Config/testthat/edition: 3
-URL: https://signaturescience.github.io/rplanes/
-VignetteBuilder: knitr
