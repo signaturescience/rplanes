@@ -30,7 +30,7 @@ Imports:
     tidyr,
     utils
 Suggests:
-    bslib,
+    bslib (>= 0.5.1),
     DT,
     ggplot2,
     ggrepel,
