@@ -372,7 +372,7 @@ As you can see, the prediction intervals (translucent red interval around foreca
 This function evaluates whether consecutive values in observations or forecasts are repeated a k number of times. This function takes in a forecast object that is **either from an observed dataset or forecast dataset**. This function uses the 3 arguments that all rplanes component functions use, and it has two additional arguments:
 
 * `tolerance`: Integer value for the number of allowed repeats before flag is raised. Default is NULL and allowed repeats will be determined from seed by finding the "max repeats" (most repeated values in observed data at location)
-* `prepend`: Integer value for the number of values from seed to add before the evaluated signal. Default is NULL and the number of values will be determined from seed also by using the maximum number of repeats. **LOGIC HERE NEEDS TO BE EXPLAINED A BIT**
+* `prepend`: Integer value for the number of values from seed to add before the evaluated signal. Default is NULL and the number of values will be determined from seed also by using the maximum number of repeats. For example, let's say our seed data is c(1, 2, 3, 3, 3), our forecast is c(3, 3, 5, 6), and our tolerance threshold is set at 4. With a prepend length of 2, the sequence c(3, 3, 3, 3, 5, 6) would be checked for any set of more than 4 consecutive, repeating numbers. In that case, no flag would be raised, because there were only 4 repeating 3's. However, if we change the prepend length to 3, the evaluated sequence would be c(3, 3, 3, 3, 3, 5, 6), and a flag would be raised, because there were more repeats than the tolerance threshold.
 
 #### B. An example where a flag is NOT raised and the data is plausible using default arguments:
 ```{r}
@@ -386,7 +386,6 @@ ggplot(data = repeat_dat, mapping = aes(x = date, y = flu.admits)) +
   geom_line() +
   geom_line(aes(colour = type)) +
   geom_point(aes(colour = type)) +
-  geom_ribbon(aes(ymin = lower, ymax = upper, colour = type, fill = type), alpha = 0.2) +
   xlab("Date") +
   ylab("Flu Hospital Admissions") +
   ggtitle(paste("Repeat Component where Flag Was Not Raised under Default Arguments"))
@@ -405,7 +404,6 @@ ggplot(data = repeat_dat_flag, mapping = aes(x = date, y = flu.admits)) +
   geom_line() +
   geom_line(aes(colour = type)) +
   geom_point(aes(colour = type)) +
-  geom_ribbon(aes(ymin = lower, ymax = upper, colour = type, fill = type), alpha = 0.2) +
   geom_vline(xintercept = as.numeric(as.Date("2022-10-29")), linetype = 4, colour = "red") +
   xlab("Date") +
   ylab("Flu Hospital Admissions") +
@@ -414,18 +412,16 @@ ggplot(data = repeat_dat_flag, mapping = aes(x = date, y = flu.admits)) +
 You can see that there are four consecutive repeats in the forecast. This is considered implausible.
 
 #### D. Sensitivity and the tolerance argument:
-**ADD PLOTS WITH BARS IN PLOT HELPERS**
 We will use the same location as above ("32") where a flag was raised when we used the default tolerance. If we increase the tolerance to 4, you will notice that the flag is no longer raised. Increasing the tolerance reduces the sensitivity of the test.
 ```{r}
 plane_repeat(location = "32", input = forecast_signal, seed = prepped_seed, tolerance = 4, prepend = NULL)
 ```
-The black horizontal line in the plot below is the tolerance length, and you can see that it is the same length as the repeats in the forecast; therefore, no flags have been raised:
+
 ```{r fig.align = 'center'}
 ggplot(data = repeat_dat_flag, mapping = aes(x = date, y = flu.admits)) +
   geom_line() +
   geom_line(aes(colour = type)) +
   geom_point(aes(colour = type)) +
-  geom_ribbon(aes(ymin = lower, ymax = upper, colour = type, fill = type), alpha = 0.2) +
   geom_segment(aes(x =  as.Date("2022-11-05"), 
                    y = 60, 
                    xend = as.Date("2022-11-26"), 
@@ -434,18 +430,16 @@ ggplot(data = repeat_dat_flag, mapping = aes(x = date, y = flu.admits)) +
   ylab("Flu Hospital Admissions") +
   ggtitle(paste("Repeat Component where Flag Was NOT Raised with Increased Tolerance"))
 ```
- 
-Note that the opposite is also true. If you reduce the tolerance, you increase the sensitivity, and a flag may be raised when it wasn't otherwise:
+The black horizontal line in the plot above is the tolerance length, and you can see that it is the same length as the repeats in the forecast; therefore, no flags have been raised. Note that the opposite is also true. If you reduce the tolerance, you increase the sensitivity, and a flag may be raised when it wasn't otherwise:
 ```{r}
 plane_repeat(location = "32", input = forecast_signal, seed = prepped_seed, tolerance = 3, prepend = NULL)
 ```
-The black horizontal line in the plot below is the tolerance length, and you can see that it is shorter than the repeats in the forecast; therefore, a flag has been raised:
+
 ```{r fig.align = 'center'}
 ggplot(data = repeat_dat_flag, mapping = aes(x = date, y = flu.admits)) +
   geom_line() +
   geom_line(aes(colour = type)) +
   geom_point(aes(colour = type)) +
-  geom_ribbon(aes(ymin = lower, ymax = upper, colour = type, fill = type), alpha = 0.2) +
   geom_segment(aes(x =  as.Date("2022-11-12"), 
                    y = 60, 
                    xend = as.Date("2022-11-26"), 
@@ -454,29 +448,85 @@ ggplot(data = repeat_dat_flag, mapping = aes(x = date, y = flu.admits)) +
   ylab("Flu Hospital Admissions") +
   ggtitle(paste("Repeat Component where Flag Was NOT Raised with Increased Tolerance"))
 ```
+The black horizontal line in the plot above is the tolerance length, and you can see that it is shorter than the repeats in the forecast; therefore, a flag has been raised.
 
 
-
-#### E. Sensitivity and the prepend argument:
+#### E. An example using this function to look at plausibility of observed data:
 ```{r}
-plane_repeat(location = "32", input = forecast_signal, seed = prepped_seed, tolerance = NULL, prepend = NULL)
+plane_repeat(location = "32", input = observed_signal, seed = prepped_seed)
 ```
- 
-#### F. An example where a flag IS NOT raised and the data is plausible when we change prepend default
-
-#### H. An example where a flag IS raised and the data is implausible when we change prepend default:
-
-#### I. An example using this function to look at plausibility of observed data:
-
-
+No flag is raised, which indicates that there are not an implausible number of repeats in the observed data.
 
 
 ## 5. Trend component, plane_trend():
 
 #### A. Description:
-This function identifies any change points in the forecast data or in the final observed data point. Change points are identified by any significant change in magnitude or direction of the slope of the time series.
+This function identifies any change points in the forecast data or in the final observed data point. Change points are identified by any significant change in magnitude or direction of the slope of the time series. This component can only be used to assess the plausibility of **forecast** data. This function uses the 3 arguments that all rplanes component functions use, and it has one additional argument:
+
+* `sig_lvl`: The significance level at which to identify change points (between zero and one); default is 0.1
+
+
 
 #### B. An example where a flag is NOT raised and the data is plausible:
+```{r}
+plane_trend(location = "17", input = forecast_signal, seed = prepped_seed)
+```
+The `indicator` is FALSE, so no flag is raised, and this forecast is considered plausible. No change points have been detected in the forecast or in the final observed data point. Because there are no flags, flagged_dates is NA. We will look at the "output" tibble in an example where there were change points, but first, let's observe location 17:
+```{r fig.align = 'center'}
+trend_dat <- get_data(Location = "17")
+
+ggplot(data = trend_dat, mapping = aes(x = date, y = flu.admits)) +
+  geom_line() +
+  geom_line(aes(colour = type)) +
+  geom_point(aes(colour = type)) +
+  xlab("Date") +
+  ylab("Flu Hospital Admissions") +
+  ggtitle(paste("Trend Component where Flag Was Not Raised under Default Arguments"))
+```
+As we can see, there is no significant change in the magnitude or direction of the slope in the forecast data. This is considered plausible.
 
 #### C. An example where a flag IS raised and the data is implausible:
+```{r}
+plane_trend(location = "54", input = forecast_signal, seed = prepped_seed)
+```
+The output of `plane_trend()` is a `list` of 3:
 
+- `indicator`: Logical as to whether or not the any forecast data or the final observed data point are a significant change point
+- `output`: An n x 7 tibble. The length of the forecast plus the observed data determine the length of n. The columns are:
+     - `Location`: A character vector with the location code
+     - `Index`: An integer index of all observed and forecast data
+     - `Date`: The dates corresponding to all observed and forecast data (formatted as date)
+     - `Value`: The incidence of all observed and forecast data (e.g., hospitalization rates)
+     - `Type`: Indicates whether the data row is observed or forecast data
+     - `Changepoint`: Logical identifying any change point (whether in observed or forecast data). A TRUE is returned if any point is determined a change point based on the user defined significance level (sig_lvl).
+     - `Flagged`: Logical indicating whether or not the change point was flagged. Change points are only flagged if they are in the forecast data or are the final observed data point. A TRUE is returned if the Changepoint is TRUE and is a final observed data point or any forecast point.
+ - `flagged_dates`: The date of any flagged change point(s). If there are none, NA is returned
+
+As we see, the indicator was TRUE, so a flag was raised; this forecast is implausible. Notice that two change points were identified (Index 13 and 16), but only one was flagged (Index 16). This is because we are only concerned with change points in the forecast and the last observed data point. Let's visualize this:
+```{r fig.align = 'center'}
+trend_dat_flag <- get_data(Location = "54")
+
+# Get flag info for change points:
+trend_flags <- 
+  plane_trend(location = "54", input = forecast_signal, seed = prepped_seed)[["output"]] %>%
+  dplyr::filter(Changepoint == TRUE)
+
+
+ggplot(data = trend_dat_flag, mapping = aes(x = date, y = flu.admits)) +
+  geom_line() +
+  geom_line(aes(colour = type)) +
+  geom_point(aes(colour = type)) +
+  geom_point(data = trend_flags, mapping = aes(x = Date, y = Value, fill=Flagged), shape=23, size=4) +
+  xlab("Date") +
+  ylab("Flu Hospital Admissions") +
+  ggtitle(paste("Trend Component where Flag Was Raised under Default Arguments"))
+```
+In this plot, both change points are shown with a diamond, but only the latter point is flagged. In this example, the last observed point (blue diamond) was considered the change point. This forecast is implausible.
+
+
+#### D. Sensitivity of the Significance Level:
+Let's continue looking at location "54." Under the default significance level (`sig_lvl` = 0.1), a flag is raised and the last observed data point is considered a change point. If we reduce the significance level to 0.05 (and therefore decrease the sensitivity of the test), we now see that no flags are raised:
+```{r}
+plane_trend(location = "54", input = forecast_signal, seed = prepped_seed, sig_lvl = 0.05)
+```
+Now the `indicator` is FALSE, and no flags are raised. We encourage you to perform some exploratory data analysis on your data to find the level of sensitivity required for your needs.
