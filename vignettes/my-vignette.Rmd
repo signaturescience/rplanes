@@ -444,9 +444,9 @@ ggplot(data = repeat_dat_flag, mapping = aes(x = date, y = flu.admits)) +
   geom_line(aes(colour = type)) +
   geom_point(aes(colour = type)) +
   geom_segment(aes(x =  as.Date("2022-11-05"), 
-                   y = 60, 
+                   y = 24, 
                    xend = as.Date("2022-11-26"), 
-                   yend = 60)) +
+                   yend = 24)) +
   xlab("Date") +
   ylab("Flu Hospital Admissions") +
   ggtitle(paste("Repeat Component where Flag Was NOT Raised with Increased Tolerance"))
@@ -462,9 +462,9 @@ ggplot(data = repeat_dat_flag, mapping = aes(x = date, y = flu.admits)) +
   geom_line(aes(colour = type)) +
   geom_point(aes(colour = type)) +
   geom_segment(aes(x =  as.Date("2022-11-12"), 
-                   y = 60, 
+                   y = 24, 
                    xend = as.Date("2022-11-26"), 
-                   yend = 60)) +
+                   yend = 24)) +
   xlab("Date") +
   ylab("Flu Hospital Admissions") +
   ggtitle(paste("Repeat Component where Flag Was NOT Raised with Increased Tolerance"))
@@ -482,7 +482,7 @@ No flag is raised, which indicates that there are not an implausible number of r
 ## 5. Trend component, plane_trend():
 
 #### A. Description:
-This function identifies any change points in the forecast data or in the final observed data point. Change points are identified by any significant change in magnitude or direction of the slope of the time series. This component can only be used to assess the plausibility of **forecast** data. This function uses the 3 arguments that all rplanes component functions use, and it has one additional argument:
+This function identifies any change points in the forecast data or in the final observed data point. Change points are identified by any significant change in magnitude or direction of the slope of the time series. This component can only be used to assess the plausibility of **forecast** data. This function uses the 3 arguments that all rplanes component functions use (location, input, seed), and it has one additional argument:
 
 * `sig_lvl`: The significance level at which to identify change points (between zero and one); default is 0.1
 
