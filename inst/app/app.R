@@ -108,6 +108,8 @@ server <- function(input, output, session) {
     df
   })
 
+  is.convertible.to.date <- function(x) !is.na(as.Date(as.character(x), format = '%Y-%m-%d'))
+
 
   data_2 <- reactive({
     if(input$choice == "Example") {
@@ -122,10 +124,13 @@ server <- function(input, output, session) {
              validate("Invalid file; Please upload a .csv file"))
     }
     if(input$status){
-      df$forecast_date <- as.Date(df$forecast_date)
-      df$target_end_date <- as.Date(df$target_end_date)
+      validate(need(is.convertible.to.date(df$forecast_date[1]), message = "Columns containing dates need to be formatted like: 2022-10-31"))
+      df$forecast_date <- as.Date(df$forecast_date, format = "%Y-%m-%d")
+      df$target_end_date <- as.Date(df$target_end_date, format = "%Y-%m-%d")
+
     } else {
-      df$date <- as.Date(df$date)
+      validate(need(is.convertible.to.date(df$date[1]), message = "Columns containing dates need to be formatted like: 2022-10-31"))
+      df$date <- as.Date(df$date, format = "%Y-%m-%d")
     }
     df
   })
