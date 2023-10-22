@@ -1,6 +1,6 @@
 ---
 title: "How to use the app"
-format: gfm
+format: html
 editor: visual
 ---
 
@@ -74,6 +74,8 @@ The resolution, depending on the signal, must be indicated as Daily, Weekly or M
 The type of outcome is the type of signal, in the example it is flu.admits. This field must match the outcome column of the first upload (Observed Data).
 
 If the comparison is a forecast, the horizon drop down will appear and this is to indicate how far the signal is forecasted. The example data contains 4 week ahead forecasts so the horizon is 4.
+
+The Prediction Interval parameter applies to forecasts with quantile predictions. The width is defaulted at 95, this is the 95% prediction interval and corresponds to the quantiles 0.025, 0.5 and 0.975. A 80% prediction interval corresponds to quantiles 0.1, 0.5 and 0.9.
 
 The default components are run, which is all of them, with their corresponding default parameters. Toggle "Modify Defaults" to select individual components or modify any of the component parameters.
 

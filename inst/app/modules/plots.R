@@ -39,11 +39,13 @@ plotUI <- function(id){
 # Server Side ####
 #~~~~~~~~~~~~~~~~~~~~~~~~
 
-plotServer <- function(id, data_1, seed, forecast, btn1, status, outcome) {
+plotServer <- function(id, data_1, locations, seed, forecast, btn1, status, outcome) {
   moduleServer(id, function(input, output, session) {
 
     observe({
-      updatePickerInput(session = session, inputId = "loc", choices = unique(data_1()$location))
+      #locations <- generics::intersect(data_1()$location, forecast()$data$location)
+      #updatePickerInput(session = session, inputId = "loc", choices = locations)
+      updatePickerInput(session = session, inputId = "loc", choices = locations())
     })
 
     # unhide the locations options and function arguments depending on scoring selection
@@ -243,6 +245,7 @@ plotServer <- function(id, data_1, seed, forecast, btn1, status, outcome) {
                                 Max_difference = difference()$maximum_difference) %>%
           dplyr::mutate(`Diff > Max` = Difference > Max_difference )
       } else if(input$plot_type == "repeats"){
+        validate(need(!is.na(repeats()$repeats[1,1]), message = "No Repeats detected."))
         df <- repeats()$repeats %>%
             dplyr::mutate(flagged = "Repeat")
       } else if(input$plot_type == "taper"){

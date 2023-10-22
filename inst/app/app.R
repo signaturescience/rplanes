@@ -7,16 +7,16 @@ library(ggplot2)
 library(dplyr)
 library(ragg)
 library(rplanes)
+library(lubridate)dev
 
 options(shiny.useragg = TRUE) # font rendering for auto/custom fonts
 
-#module_sources <- list.files(path = here::here("inst/app/modules/"), full.names = TRUE)
+#module_sources <- list.files(path = here::here("inst/app/modules"), full.names = TRUE)
 module_sources <- list.files(path = system.file("app/modules/", package = "rplanes"), full.names = TRUE)
 sapply(module_sources, source)
 
 # UI Side ####
 ui <- tagList(
-  # TODO: change includeCSS to system.file("app/style.css", package = "rplanes")
   includeCSS(system.file("app/style.css", package = "rplanes")),
   #includeCSS(here::here("inst/app/style.css")),
   shinybusy::add_busy_spinner(spin = "breeding-rhombus", color = '#073642', position = "full-page", onstart = TRUE),
@@ -37,13 +37,13 @@ ui <- tagList(
                                     fileInput("upload_2", label = tooltip(trigger = list("Upload Comparison", icon("circle-info")), "Upload data to compare to observed data in .csv format"), multiple = F, accept = ".csv"),
                                     h6("Is the Comparison a Forecast"),
                                     prettyToggle("status", label_on = "Yes", icon_on = icon("check"), status_on = "success", label_off = "No", icon_off = icon("remove"), status_off = "warning", value = TRUE))),
-                awesomeRadio("rez", "Resolution", choices = c("Daily" = "days", "Weekly" = "weeks", "Monthly" = "months"), selected = "Weekly", inline = T, status = "info"),
+                awesomeRadio("rez", "Resolution", choices = "", inline = T, status = "info"),
                 textInput("outcome", label = tooltip(trigger = list("Type of Outcome", icon("circle-info")), "Type the name of the observed outcome column."), value = "flu.admits"),
                 shinyjs::hidden(div(id = "forc_opt",
                                     autonumericInput("horizon", "Forecast Horizon", value = 4, maximumValue = 30, minimumValue = 1, decimalPlaces = 0, align = "center", modifyValueOnWheel = T))),
                 materialSwitch("opts", label = "Modify Defaults", value = FALSE, status = "success"),
                 shinyjs::hidden(div(id = "add_options",
-                                    textInput("width", label = tooltip(trigger = list("Prediction Interval", icon("circle-info")), "Choose prediction interval (95 is default corresponding to a 95% interval) for the forecast data."), value = "95"),
+                                    textInput("width", label = tooltip(trigger = list("Prediction Interval", icon("circle-info")), "If quantile forecast, this is the width of the prediction interval. See Help section."), value = "95"),
 
                                     inputsUI("tab2"))),
                 actionBttn("run", "Analyze", style = "unite", color = "danger")
@@ -77,8 +77,31 @@ server <- function(input, output, session) {
   })
 
   observe({
-    updatePickerInput(session = session, inputId = "loc", choices = unique(data_1()$location))
+    if(input$choice %in% "Example"){
+      duration = lubridate::interval(start = ymd(data_1()$date[1]), end = ymd(data_1()$date[2])) %>% as.period(unit = "day")
+      x = duration@day
+      if(x == 7){
+        y = list("Weekly" = "weeks")
+      } else if(x < 7){
+        y = list("Daily" = "days")
+      } else {
+        y = list("Monthly" = "months")
+      }
+    } else if (input$choice %in% "Custom"){
+      req(input$upload_1)
+      duration = lubridate::interval(start = ymd(data_1()$date[1]), end = ymd(data_1()$date[2])) %>% as.period(unit = "day")
+      x = duration@day
+      if(x == 7){
+        y = list("Weekly" = "weeks")
+      } else if(x < 7){
+        y = list("Daily" = "days")
+      } else {
+        y = list("Monthly" = "months")
+      }
+    }
+    updateAwesomeRadio(session = session, inputId = "rez", choices = y)
   })
+
 
   # when actionBttn is selected automatically go to the plot tab
   observeEvent(input$run, {
@@ -108,6 +131,7 @@ server <- function(input, output, session) {
     df
   })
 
+  # function to check if date can be converted to the format yyyy-mm-dd
   is.convertible.to.date <- function(x) !is.na(as.Date(as.character(x), format = '%Y-%m-%d'))
 
 
@@ -132,8 +156,14 @@ server <- function(input, output, session) {
       validate(need(is.convertible.to.date(df$date[1]), message = "Columns containing dates need to be formatted like: 2022-10-31"))
       df$date <- as.Date(df$date, format = "%Y-%m-%d")
     }
+    width <- rplanes:::q_boundary(as.numeric(input$width))
+    quant_list <- c(0.01, 0.025, seq(0.05, 0.95, by = 0.05), 0.975, 0.99)
+    validate(need(all(width %in% quant_list), message = "Quantiles unavailable for width specified."))
+    df <- df %>%
+      dplyr::mutate(quantile = ifelse(is.na(df$quantile), 0.5, df$quantile)) %>%
+      filter(quantile %in% width)
     df
-  })
+  }) %>% bindEvent(input$width)
 
 
   prepped_seed <- reactive({
@@ -168,8 +198,12 @@ server <- function(input, output, session) {
     forc
   })
 
+  locations <- reactive({
+    generics::intersect(data_1()$location, data_2()$location)
+  })
+
   dataServer("tab1", data_1 = data_1, data_2 = data_2 )
-  plotServer("tab2", data_1 = data_1, seed = prepped_seed, forecast = prepped_forecast, btn1 = btn1, status = status, outcome = outcome)
+  plotServer("tab2", data_1 = data_1, locations = locations, seed = prepped_seed, forecast = prepped_forecast, btn1 = btn1, status = status, outcome = outcome)
 
 }
 
