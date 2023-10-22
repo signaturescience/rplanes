@@ -7,7 +7,7 @@ library(ggplot2)
 library(dplyr)
 library(ragg)
 library(rplanes)
-library(lubridate)dev
+library(lubridate)
 
 options(shiny.useragg = TRUE) # font rendering for auto/custom fonts
 
