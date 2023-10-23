@@ -249,10 +249,10 @@ plane_taper <- function(location, input, seed) {
 #'
 #' @description
 #'
-#' This function evaluates whether consecutive values in observations or forecasts are repeated a k number of times. This function takes in a [forecast][to_signal()] or [observed][to_signal()] object.
+#' This function evaluates whether consecutive values in observations or forecasts are repeated a k number of times. This function takes in a [forecast][to_signal()] object that is either from an observed dataset or forecast dataset.
 #'
 #' @param location Character vector with location code; the location must appear in input and seed
-#' @param input Input signal data to be scored; object must be one of [forecast][to_signal()] or [observed][to_signal()]
+#' @param input Input signal data to be scored; object must be one of [forecast][to_signal()]
 #' @param seed Prepared [seed][plane_seed()]
 #' @param tolerance Integer value for the number of allowed repeats before flag is raised. Default is `NULL` and allowed repeats will be determined from seed.
 #' @param prepend Integer value for the number of values from seed to add before the evaluated signal. Default is `NULL` and the number of values will be determined from seed.
