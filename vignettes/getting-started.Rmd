@@ -1,5 +1,5 @@
 ---
-title: "Basic Usage rplanes: Plausibility Analysis of Epidemiological Signals"
+title: "Basic Usage"
 output: 
   rmarkdown::html_vignette:
     toc: TRUE
@@ -14,6 +14,7 @@ vignette: >
 ```{r, include = FALSE}
 knitr::opts_chunk$set(
   collapse = TRUE,
+  echo=TRUE,
   comment = "#>",
   warning=FALSE,
   message=FALSE,
@@ -21,30 +22,34 @@ knitr::opts_chunk$set(
 )
 ```
 
-```{r setup}
+```{r setup, echo=FALSE}
 library(rplanes)
 ```
 
-# I. Overview
-The 'rplanes' package (**pl**ausibility **an**alysis of **e**pidemiological **s**ignals) provides functionality to prepare data and analyze plausibility of both forecasted and reported epidemiological signals. The functions implement a set of plausbility algorithms that are agnostic to geographic and time resolutions and are calculated independently and then presented as a combined score. 
+# Overview
+
+The `rplanes` package (**pl**ausibility **an**alysis of **e**pidemiological **s**ignals) provides functionality to prepare data and analyze plausibility of both forecasted and reported epidemiological signals. The functions implement a set of plausibility algorithms that are agnostic to geographic and time resolutions and are calculated independently and then presented as a combined score. 
 
 ![**Figure 1**: Workflow of the rplanes package](workflow.png){#id .class width=90% height=100%}
 
-**Figure 1** provides a detailed description of the processes used in rplanes. Beginning with raw forecast or observed data, rplanes preps the data using `read_forecast()`. The prepped forecast or observed data is then converted to a signal object using `to_signal()`. For observed signals, we then use `plane_seed()` which applies a cut date to be used as a comparator in the final plausibility analyses. Currently, we have a set of five components that test for plausibility, and we will go into more detail on those in section III. below. However, those five components are then run on a set of forecasts or observed data using our wrapper function, `plane_score()` which outputs the total number of implausibility "flags" for each forecast and a final score based on the number of flags raised divided by the total number of components (0 is none, and 1 is all). Note that some of our components can only be run on forecasts and not on observed data (specifics are below in section III.). One might want to test observed or reported data for plausibility to check for things like backfill or improper reporting. First, we'll run through data formatting and the use of our wrapper function that looks at all components, and then we will go through components individually.
+**Figure 1** provides a detailed description of the processes used in `rplanes`. Beginning with raw forecast or observed data, `rplanes` takes data prepared in a pre-specified format. This required input data format is documented in the package. For convenience, the package includes the `read_forecast()` function to prepare forecast data that is in in the quantile format commonly used in forecasting "hub" consortia. The prepped forecast or observed data is then converted to a signal object using `to_signal()`. For observed signals, we then use `plane_seed()` which applies a cut date to be used as a comparator in the final plausibility analyses. Currently, we have a set of five components that test for plausibility, and we will go into more detail on those in section III. below. However, those five components are then run on a set of forecasts or observed data using our wrapper function, `plane_score()` which outputs the total number of implausibility "flags" for each forecast and a final score based on the number of flags raised divided by the total number of components (0 is none, and 1 is all). Note that some of our components can only be run on forecasts and not on observed data (specifics are below in section III.). One might want to test observed or reported data for plausibility to check for things like backfill or improper reporting. First, we'll run through data formatting and the use of our wrapper function that looks at all components, and then we will go through components individually.
 
 
 
 
 
-# II. Basic Usage
-Before we begin, load all packages required for this vignette:
+# Analyzing plausibility of forecast data
+
+First, load all necessary packages:
+
 ```{r message = FALSE}
+library(rplanes)
 library(dplyr)
 library(purrr)
 library(ggplot2)
 ```
 
-## 1. Read in and format data using our built in functions:
+## Read in and format data
 
 #### A. Read in the data:
 First, we read in [HHS Protect data](https://healthdata.gov/Hospital/COVID-19-Reported-Patient-Impact-and-Hospital-Capa/g62h-syeh). This dataset is internal to the rplanes package. We then select only the columns in which we're interested (here: date, location, and flu.admits) and make sure that the date field is formatted as a date:
