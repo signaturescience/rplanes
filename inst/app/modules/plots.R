@@ -44,7 +44,7 @@ plotUI <- function(id){
 # Server Side ####
 #~~~~~~~~~~~~~~~~~~~~~~~~
 
-plotServer <- function(id, data_1, locations, seed, forecast, btn1, status, outcome) {
+plotServer <- function(id, data_1, locations, seed, forecast, btn1, status, outcome, btn2) {
   moduleServer(id, function(input, output, session) {
 
     observe({
@@ -79,6 +79,9 @@ plotServer <- function(id, data_1, locations, seed, forecast, btn1, status, outc
     })
 
     output$score_table <- DT::renderDataTable(server = FALSE, {
+      if(btn2()>=1){
+        return()
+      }
       df <- purrr::map_df(scoring()$scores_summary, as_tibble) %>%
         tidyr::replace_na(list(flagged = "None"))
       DT::datatable(
@@ -261,7 +264,10 @@ plotServer <- function(id, data_1, locations, seed, forecast, btn1, status, outc
       bindEvent(input$loc, input$plot_type)
 
     output$plane_plot <- renderPlot({
-        plotting()
+      if(btn2()>=1){
+        return()
+      }
+      plotting()
     })
 
     table_df <- reactive({
@@ -304,6 +310,9 @@ plotServer <- function(id, data_1, locations, seed, forecast, btn1, status, outc
       bindEvent(input$loc, input$plot_type)
 
     output$plane_table <- DT::renderDT({
+      if(btn2()>=1) {
+        return()
+      }
       table_df() %>% DT::datatable(rownames = F, filter = "none", escape = F, extensions =c("Buttons", 'Scroller'), options = list(dom = 'Brtip',
                                                                                                                                    deferRender = TRUE,
                                                                                                                                    scrollY = 200,
@@ -311,6 +320,7 @@ plotServer <- function(id, data_1, locations, seed, forecast, btn1, status, outc
                                                                                                                                    columnDefs = list(list(className = 'dt-center', targets = "_all")),
                                                                                                                                    buttons = list('copy', list(extend = "collection", buttons = c("csv", "excel", "pdf"), text = "Download"))))
     })
+
 
   })
 }

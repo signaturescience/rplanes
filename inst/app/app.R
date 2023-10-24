@@ -8,7 +8,7 @@ library(rplanes)
 library(lubridate)
 
 
-#module_sources <- list.files(path = here::here("inst/rplanes_app/modules"), full.names = TRUE)
+#module_sources <- list.files(path = here::here("inst/app/modules"), full.names = TRUE)
 module_sources <- list.files(path = system.file("app/modules/", package = "rplanes"), full.names = TRUE)
 sapply(module_sources, source)
 
@@ -36,7 +36,8 @@ ui <- fluidPage(
                                           textInput("width", label = "Prediction Interval", value = "95"),
                                           inputsUI("tab2")
                                           )),
-                      actionBttn("run", "Analyze", style = "unite", color = "danger")
+                      actionBttn("run", "Analyze", style = "unite", color = "danger"),
+                      actionBttn("reset", "Reset", style = "stretch", color = "warning")
                   ), # sidebarPanel
                   mainPanel(width = 9,
                       tabsetPanel(id = "tabsets",
@@ -46,7 +47,9 @@ ui <- fluidPage(
                                    plotUI("tab2")
                           ),
                           tabPanel("Help",
-                                   htmltools::includeHTML(system.file("app/help_tab.html", package = "rplanes")))
+                                   htmltools::includeHTML(system.file("app/help_tab.html", package = "rplanes"))
+                                   #htmltools::includeHTML(here::here("inst/app/help_tab.html"))
+                                   )
                       )
 
                   )),
@@ -105,6 +108,7 @@ server <- function(input, output, session){
 
     # pass in actionBttn to module plots
     btn1 <- reactive({ input$run })
+    btn2 <- reactive({ input$reset })
 
     # pass input$status and input$outcome to module plots
     status <- reactive({ input$status })
@@ -192,12 +196,19 @@ server <- function(input, output, session){
         forc
     })
 
+    # get all intersecting locations between the datasets to use as input$loc in plots module
     locations <- reactive({
         generics::intersect(data_1()$location, data_2()$location)
     })
 
     dataServer("tab1", data_1 = data_1, data_2 = data_2 )
-    plotServer("tab2", data_1 = data_1, locations = locations, seed = prepped_seed, forecast = prepped_forecast, btn1 = btn1, status = status, outcome = outcome)
+
+    plotServer("tab2", data_1 = data_1, locations = locations, seed = prepped_seed, forecast = prepped_forecast, btn1 = btn1, status = status, outcome = outcome, btn2 = btn2)
+
+    # reset all inputs including the ones in the modules
+    observeEvent(input$reset,{
+        reset(asis = TRUE)
+    })
 
 } # server end
 
