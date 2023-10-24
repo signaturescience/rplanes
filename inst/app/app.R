@@ -7,7 +7,7 @@ library(dplyr)
 library(rplanes)
 library(lubridate)
 
-
+# list module files and iterate sourcing them to use within the app.
 #module_sources <- list.files(path = here::here("inst/app/modules"), full.names = TRUE)
 module_sources <- list.files(path = system.file("app/modules/", package = "rplanes"), full.names = TRUE)
 sapply(module_sources, source)

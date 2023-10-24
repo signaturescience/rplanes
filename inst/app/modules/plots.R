@@ -31,11 +31,11 @@ plotUI <- function(id){
                                         awesomeRadio(ns("plot_type"), "Choice of Plot", choices = c("Coverage" = "cover", "Difference" = "diff", "Repeat" = "repeats", "Taper" = "taper", "Trend" = "trend"), selected = "cover", inline = TRUE, status = "warning"))),
                         tabsetPanel(id = "tabsets_2",
                                     tabPanel(title = textOutput(ns("label")),
-                                             plotOutput(ns("plane_plot"))),
+                                             plotOutput(ns("plane_plot")),
+                                             downloadButton(ns("plot_dwn"))),
                                     tabPanel(title = textOutput(ns("label2")),
                                              DT::DTOutput(ns("plane_table")))
-                                    )))
-
+                                    ))),
 
     )
 }
@@ -270,6 +270,14 @@ plotServer <- function(id, data_1, locations, seed, forecast, btn1, status, outc
       plotting()
     })
 
+    # Handler to download the plot
+    output$plot_dwn <- downloadHandler(
+      filename = function(){paste0(input$loc, "_", input$plot_type, "_plot.png")},
+      content = function(file){
+        ggplot2::ggsave(file, plot = plotting(), width = 14, height = 6, units = "in", device = "png")
+      }
+    )
+
     table_df <- reactive({
       if (input$plot_type == "cover"){
         df <- data.frame(Location = input$loc,
@@ -320,7 +328,6 @@ plotServer <- function(id, data_1, locations, seed, forecast, btn1, status, outc
                                                                                                                                    columnDefs = list(list(className = 'dt-center', targets = "_all")),
                                                                                                                                    buttons = list('copy', list(extend = "collection", buttons = c("csv", "excel", "pdf"), text = "Download"))))
     })
-
 
   })
 }
