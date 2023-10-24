@@ -2,210 +2,207 @@ library(shiny)
 library(shinyWidgets)
 library(shinyjs)
 library(shinybusy)
-library(bslib)
 library(ggplot2)
 library(dplyr)
-library(ragg)
 library(rplanes)
 library(lubridate)
 
-options(shiny.useragg = TRUE) # font rendering for auto/custom fonts
 
-#module_sources <- list.files(path = here::here("inst/app/modules"), full.names = TRUE)
+#module_sources <- list.files(path = here::here("inst/rplanes_app/modules"), full.names = TRUE)
 module_sources <- list.files(path = system.file("app/modules/", package = "rplanes"), full.names = TRUE)
 sapply(module_sources, source)
 
-# UI Side ####
-ui <- tagList(
-  includeCSS(system.file("app/style.css", package = "rplanes")),
-  #includeCSS(here::here("inst/app/style.css")),
-  shinybusy::add_busy_spinner(spin = "breeding-rhombus", color = '#073642', position = "full-page", onstart = TRUE),
 
-  shinyjs::useShinyjs(),
-  bslib::page_navbar(id = "nav_page",
-              title = "Rplanes Explorer",
-              theme = bslib::bs_theme(bootswatch = "solar"),
-              fillable = FALSE,
-              sidebar = bslib::sidebar(
-                width = 300,
-                bg = '#6c757d',
-                position = "left",
-                prettyRadioButtons("choice", "Choose Dataset", choices = c("Example", "Custom"), status = "warning", inline = TRUE, icon = icon("check"), bigger = TRUE),
+# UI SIDE ####
 
-                shinyjs::hidden(div(id = "choice_custom",
-                                    fileInput("upload_1", label = tooltip(trigger = list("Upload Observed Data", icon("circle-info")), "Upload only a .csv file"), multiple = F, accept = ".csv"),
-                                    fileInput("upload_2", label = tooltip(trigger = list("Upload Comparison", icon("circle-info")), "Upload data to compare to observed data in .csv format"), multiple = F, accept = ".csv"),
-                                    h6("Is the Comparison a Forecast"),
-                                    prettyToggle("status", label_on = "Yes", icon_on = icon("check"), status_on = "success", label_off = "No", icon_off = icon("remove"), status_off = "warning", value = TRUE))),
-                awesomeRadio("rez", "Resolution", choices = "", inline = T, status = "info"),
-                textInput("outcome", label = tooltip(trigger = list("Type of Outcome", icon("circle-info")), "Type the name of the observed outcome column."), value = "flu.admits"),
-                shinyjs::hidden(div(id = "forc_opt",
-                                    autonumericInput("horizon", "Forecast Horizon", value = 4, maximumValue = 30, minimumValue = 1, decimalPlaces = 0, align = "center", modifyValueOnWheel = T))),
-                materialSwitch("opts", label = "Modify Defaults", value = FALSE, status = "success"),
-                shinyjs::hidden(div(id = "add_options",
-                                    textInput("width", label = tooltip(trigger = list("Prediction Interval", icon("circle-info")), "If quantile forecast, this is the width of the prediction interval. See Help section."), value = "95"),
+ui <- fluidPage(
+    useShinyjs(),  # Set up shinyjs
+    titlePanel("Rplanes Explorer"),
+    sidebarLayout(position = "left",
+                  sidebarPanel(width = 3,
+                      prettyRadioButtons("choice", "Choose Dataset", choices = c("Example", "Custom"), status = "warning", inline = TRUE, icon = icon("check"), bigger = TRUE),
+                      shinyjs::hidden(div(id = "choice_custom",
+                                          fileInput("upload_1", label = "Upload Observed Data", multiple = F, accept = ".csv"),
+                                          fileInput("upload_2", label = "Upload Comparison", multiple = F, accept = ".csv")
+                                          )),
+                                          h6("Is the Comparison a Forecast"),
+                                          prettyToggle("status", label_on = "Yes", icon_on = icon("check"), status_on = "success", label_off = "No", icon_off = icon("remove"), status_off = "warning", value = TRUE),
+                      awesomeRadio("rez", "Resolution", choices = "", inline = T, status = "info"),
+                      textInput("outcome", label = "Type of Outcome", value = "flu.admits"),
+                      shinyjs::hidden(div(id = "forc_opt",
+                                          shinyWidgets::autonumericInput("horizon", "Forecast Horizon", value = 4, maximumValue = 30, minimumValue = 1, decimalPlaces = 0, align = "center", modifyValueOnWheel = T))),
+                      materialSwitch("opts", label = "Modify Defaults", value = FALSE, status = "success"),
+                      shinyjs::hidden(div(id = "add_options",
+                                          textInput("width", label = "Prediction Interval", value = "95"),
+                                          inputsUI("tab2")
+                                          )),
+                      actionBttn("run", "Analyze", style = "unite", color = "danger")
+                  ), # sidebarPanel
+                  mainPanel(width = 9,
+                      tabsetPanel(id = "tabsets",
+                          tabPanel("Data",
+                                   dataUI("tab1")),
+                          tabPanel("Plots",
+                                   plotUI("tab2")
+                          ),
+                          tabPanel("Help",
+                                   htmltools::includeHTML(system.file("app/help_tab.html", package = "rplanes")))
+                      )
 
-                                    inputsUI("tab2"))),
-                actionBttn("run", "Analyze", style = "unite", color = "danger")
+                  )),
 
-              ),
-              bslib::nav_panel("Data",
-                        dataUI("tab1")),
-              bslib::nav_panel("Plots",
-                        plotUI("tab2")),
-              bslib::nav_panel("Help",
-                        htmltools::includeHTML(system.file("app/help_tab.html", package = "rplanes")))
-                        #htmltools::includeHTML("help_tab.html"))
-                        #htmltools::includeMarkdown("help_tab.md"))
-              )
+) # UI end
 
 
-  )
+# SERVER SIDE ####
 
-# Server Side ####
-server <- function(input, output, session) {
-  # Turn on thematic for theme-matched plots
-  thematic::thematic_shiny(font = thematic::font_spec(scale = 2))
+server <- function(input, output, session){
 
-  observe({
-    # unhide the upload custom dataset when choosing "Custom" radiobutton
-    shinyjs::toggle(id = "choice_custom", condition = {input$choice %in% "Custom"})
-    # unhide additional options upon switch
-    shinyjs::toggle(id = "add_options", condition = {input$opts == TRUE})
-    shinyjs::toggle(id = "forc_opt", condition = {input$status == TRUE})
+    observe({
+        # unhide the upload custom dataset when choosing "Custom" radiobutton
+        shinyjs::toggle(id = "choice_custom", condition = {input$choice %in% "Custom"})
+        # unhide additional options upon switch
+        shinyjs::toggle(id = "add_options", condition = {input$opts == TRUE})
+        shinyjs::toggle(id = "forc_opt", condition = {input$status == TRUE})
 
-  })
+    })
 
-  observe({
-    if(input$choice %in% "Example"){
-      duration = lubridate::interval(start = ymd(data_1()$date[1]), end = ymd(data_1()$date[2])) %>% as.period(unit = "day")
-      x = duration@day
-      if(x == 7){
-        y = list("Weekly" = "weeks")
-      } else if(x < 7){
-        y = list("Daily" = "days")
-      } else {
-        y = list("Monthly" = "months")
-      }
-    } else if (input$choice %in% "Custom"){
-      req(input$upload_1)
-      duration = lubridate::interval(start = ymd(data_1()$date[1]), end = ymd(data_1()$date[2])) %>% as.period(unit = "day")
-      x = duration@day
-      if(x == 7){
-        y = list("Weekly" = "weeks")
-      } else if(x < 7){
-        y = list("Daily" = "days")
-      } else {
-        y = list("Monthly" = "months")
-      }
-    }
-    updateAwesomeRadio(session = session, inputId = "rez", choices = y)
-  })
+    # when actionBttn is selected automatically go to the plot tab
+    observeEvent(input$run, {
+        updateTabsetPanel(session, "tabsets", selected = "Plots")
 
+    })
 
-  # when actionBttn is selected automatically go to the plot tab
-  observeEvent(input$run, {
-    nav_select(id = "nav_page", selected = "Plots")
-  })
+    # Update the resolution choice depending on the type of data in the observed dataset (data_1)
+    # This ensures no error when data is weekly the resolution weekly will be selected.
+    # TODO: Perhaps we can do away with this selection, leaving for now just incase
 
-  # pass in actionBttn to module plots
-  btn1 <- reactive({ input$run })
+    observe({
+        if(input$choice %in% "Example"){
+            duration = lubridate::interval(start = ymd(data_1()$date[1]), end = ymd(data_1()$date[2])) %>% as.period(unit = "day")
+            x = duration@day
+            if(x == 7){
+                y = list("Weekly" = "weeks")
+            } else if(x < 7){
+                y = list("Daily" = "days")
+            } else {
+                y = list("Monthly" = "months")
+            }
+        } else if (input$choice %in% "Custom"){
+            req(input$upload_1)
+            duration = lubridate::interval(start = ymd(data_1()$date[1]), end = ymd(data_1()$date[2])) %>% as.period(unit = "day")
+            x = duration@day
+            if(x == 7){
+                y = list("Weekly" = "weeks")
+            } else if(x < 7){
+                y = list("Daily" = "days")
+            } else {
+                y = list("Monthly" = "months")
+            }
+        }
+        updateAwesomeRadio(session = session, inputId = "rez", choices = y)
+    })
 
-  # pass input$status and input$outcome to module plots
-  status <- reactive({ input$status })
-  outcome <- reactive({ input$outcome })
+    # pass in actionBttn to module plots
+    btn1 <- reactive({ input$run })
 
-  data_1 <- reactive({
-    if (input$choice == "Example") {
-      # example observed data
-      df <- read.csv(system.file("extdata/observed", "hdgov_hosp_weekly.csv", package = "rplanes"))
-    } else {
-      # Uploading observed data
-      req(input$upload_1)
-      ext <- tools::file_ext(input$upload_1$name)
-      df <- switch(ext,
-             csv = read.csv(input$upload_1$datapath),
-             validate("Invalid file; Please upload a .csv file"))
-    }
-    df$date <-  as.Date(df$date)
-    df
-  })
+    # pass input$status and input$outcome to module plots
+    status <- reactive({ input$status })
+    outcome <- reactive({ input$outcome })
 
-  # function to check if date can be converted to the format yyyy-mm-dd
-  is.convertible.to.date <- function(x) !is.na(as.Date(as.character(x), format = '%Y-%m-%d'))
+    data_1 <- reactive({
+        if (input$choice == "Example") {
+            # example observed data
+            df <- read.csv(system.file("extdata/observed", "hdgov_hosp_weekly.csv", package = "rplanes"))
+        } else {
+            # Uploading observed data
+            req(input$upload_1)
+            ext <- tools::file_ext(input$upload_1$name)
+            df <- switch(ext,
+                         csv = read.csv(input$upload_1$datapath),
+                         validate("Invalid file; Please upload a .csv file"))
+        }
+        df$date <-  as.Date(df$date)
+        df
+    })
 
-
-  data_2 <- reactive({
-    if(input$choice == "Example") {
-      # example forecast data
-      df <- read.csv(system.file("extdata/forecast", "2022-10-31-SigSci-TSENS.csv", package = "rplanes"))
-    } else {
-      # Uploading forecast data
-      req(input$upload_2)
-      ext <- tools::file_ext(input$upload_2$name)
-      df <- switch(ext,
-             csv = read.csv(input$upload_2$datapath),
-             validate("Invalid file; Please upload a .csv file"))
-    }
-    if(input$status){
-      validate(need(is.convertible.to.date(df$forecast_date[1]), message = "Columns containing dates need to be formatted like: 2022-10-31"))
-      df$forecast_date <- as.Date(df$forecast_date, format = "%Y-%m-%d")
-      df$target_end_date <- as.Date(df$target_end_date, format = "%Y-%m-%d")
-
-    } else {
-      validate(need(is.convertible.to.date(df$date[1]), message = "Columns containing dates need to be formatted like: 2022-10-31"))
-      df$date <- as.Date(df$date, format = "%Y-%m-%d")
-    }
-    width <- rplanes:::q_boundary(as.numeric(input$width))
-    quant_list <- c(0.01, 0.025, seq(0.05, 0.95, by = 0.05), 0.975, 0.99)
-    validate(need(all(width %in% quant_list), message = "Quantiles unavailable for width specified."))
-    df <- df %>%
-      dplyr::mutate(quantile = ifelse(is.na(df$quantile), 0.5, df$quantile)) %>%
-      filter(quantile %in% width)
-    df
-  }) %>% bindEvent(input$width)
+    # function to check if date can be converted to the format yyyy-mm-dd
+    is.convertible.to.date <- function(x) !is.na(as.Date(as.character(x), format = '%Y-%m-%d'))
 
 
-  prepped_seed <- reactive({
-    df = data_1() %>% dplyr::filter(location %in% unique(data_2()$location))
-    if(input$status){
-      date = unique(df$date)[unique(df$date) < min(data_2()$target_end_date)]
-      date = tail(date, 1)
-    } else {
-      date = unique(df$date)[unique(df$date) < min(data_2()$date)]
-      date = tail(date, 1)
-    }
-    signal <- to_signal(df, outcome = input$outcome, type = "observed", resolution = input$rez)
-    prepped_seed  <- plane_seed(signal, cut_date = date)
-    prepped_seed
-  })
+    data_2 <- reactive({
+        if(input$choice == "Example") {
+            # example forecast data
+            df <- read.csv(system.file("extdata/forecast", "2022-10-31-SigSci-TSENS.csv", package = "rplanes"))
+        } else {
+            # Uploading forecast data
+            req(input$upload_2)
+            ext <- tools::file_ext(input$upload_2$datapath)
+            df <- switch(ext,
+                         csv = read.csv(input$upload_2$datapath),
+                         validate("Invalid file; Please upload a .csv file"))
+        }
+        if(input$status){
+            df$forecast_date <- as.Date(df$forecast_date, format = "%Y-%m-%d")
+            df$target_end_date <- as.Date(df$target_end_date, format = "%Y-%m-%d")
+            width <- round(rplanes:::q_boundary(as.numeric(input$width)), 2)
+            quant_list <- round(c(0.01, 0.025, seq(0.05, 0.95, by = 0.05), 0.975, 0.99), 2)
+            validate(need(all(width %in% quant_list), message = "Quantiles unavailable for width specified."))
+            df <- df %>%
+                dplyr::mutate(quantile = ifelse(is.na(df$quantile), 0.5, df$quantile)) %>%
+                filter(quantile %in% width)
 
-  prepped_forecast <- reactive({
-    if (input$choice == "Example"){
-      forc <- read_forecast(system.file("extdata/forecast", "2022-10-31-SigSci-TSENS.csv", package = "rplanes"), pi_width = as.numeric(input$width)) %>%
-        to_signal(., outcome = "flu.admits", type = "forecast", horizon = as.numeric(input$horizon), resolution = input$rez)
-    } else if (input$status){
-      forc <- read_forecast(input$upload_2$datapath, pi_width = as.numeric(input$width)) %>%
-        filter(location %in% unique(data_1()$location)) %>%
-        to_signal(., outcome = input$outcome, type = "forecast", horizon = input$horizon, resolution = input$rez)
-    } else {
-      df <- read.csv(input$upload_2$datapath)
-      df$date <- as.Date(df$date)
-      forc <- df %>%
-        filter(location %in% unique(data_1()$location)) %>%
-        to_signal(., outcome = input$outcome, type = "observed", horizon = input$horizon, resolution = input$rez)
-    }
-    forc
-  })
+        } else {
+            validate(need(is.convertible.to.date(df$date[1]), message = "Columns containing dates need to be formatted like: 2022-10-31"))
+            df$date <- as.Date(df$date, format = "%Y-%m-%d")
+        }
+        df
+    }) %>% bindEvent(input$width, input$choice, input$upload_2)
 
-  locations <- reactive({
-    generics::intersect(data_1()$location, data_2()$location)
-  })
 
-  dataServer("tab1", data_1 = data_1, data_2 = data_2 )
-  plotServer("tab2", data_1 = data_1, locations = locations, seed = prepped_seed, forecast = prepped_forecast, btn1 = btn1, status = status, outcome = outcome)
+    prepped_seed <- reactive({
+        df = data_1() %>% dplyr::filter(location %in% unique(data_2()$location))
+        if(input$status){
+            date = unique(df$date)[unique(df$date) < min(data_2()$target_end_date)]
+            date = tail(date, 1)
+        } else {
+            date = unique(df$date)[unique(df$date) < min(data_2()$date)]
+            date = tail(date, 1)
+        }
+        signal <- to_signal(df, outcome = input$outcome, type = "observed", resolution = input$rez)
+        prepped_seed  <- plane_seed(signal, cut_date = date)
+        prepped_seed
+    })
 
-}
+    prepped_forecast <- reactive({
+        if (input$choice == "Example"){
+            forc <- read_forecast(system.file("extdata/forecast", "2022-10-31-SigSci-TSENS.csv", package = "rplanes"), pi_width = as.numeric(input$width)) %>%
+                to_signal(., outcome = "flu.admits", type = "forecast", horizon = as.numeric(input$horizon), resolution = input$rez)
+        } else if (input$status){
+            forc <- read_forecast(input$upload_2$datapath, pi_width = as.numeric(input$width)) %>%
+                filter(location %in% unique(data_1()$location)) %>%
+                to_signal(., outcome = input$outcome, type = "forecast", horizon = input$horizon, resolution = input$rez)
+        } else {
+            df <- read.csv(input$upload_2$datapath)
+            df$date <- as.Date(df$date)
+            forc <- df %>%
+                filter(location %in% unique(data_1()$location)) %>%
+                to_signal(., outcome = input$outcome, type = "observed", horizon = input$horizon, resolution = input$rez)
+        }
+        forc
+    })
+
+    locations <- reactive({
+        generics::intersect(data_1()$location, data_2()$location)
+    })
+
+    dataServer("tab1", data_1 = data_1, data_2 = data_2 )
+    plotServer("tab2", data_1 = data_1, locations = locations, seed = prepped_seed, forecast = prepped_forecast, btn1 = btn1, status = status, outcome = outcome)
+
+} # server end
+
+
 
 # Run the application
 shinyApp(ui = ui, server = server)
+

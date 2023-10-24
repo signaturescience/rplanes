@@ -12,24 +12,29 @@ inputsUI <- function(id){
     shinyjs::hidden(div(id = ns("args1"),
                         sliderTextInput(ns("sig"), "Choice of Significance for Trend", choices = seq(from = 0.01, to = 0.2, by = 0.01), selected = 0.1, grid = TRUE))),
     shinyjs::hidden(div(id = ns("args2"),
-                        numericInput(ns("tol"), label = tooltip(trigger = list("Choice of Tolerance", icon("circle-info")), "Option to choose the number of allowed repeats before being flagged. Default is 0 (NULL) and repeats will be determined from seed."), value = 0, min = 0, max = 50, step = 1),
-                        numericInput(ns("pre"), label = tooltip(trigger = list("Prepend Values", icon("circle-info")), "Option to choose the number of values from seed to evaluate against. Default is 0 (NULL) and value will be determined from seed."),  value = 0, min = 0, max = 365, step = 1)))
+                        numericInput(ns("tol"), label = "Choice of Tolerance", value = 0, min = 0, max = 50, step = 1),
+                        numericInput(ns("pre"), label = "Prepend Values",  value = 0, min = 0, max = 365, step = 1)))
   )
 }
 
 plotUI <- function(id){
   ns <- NS(id)
   tagList(
-    card(full_screen = TRUE, card_header("Scoring Table"), height = "500px", DT::DTOutput(ns("score_table"))),
+    wellPanel(fluidRow(column(width = 9,
+                              DT::dataTableOutput(ns("score_table")) %>% shinycssloaders::withSpinner(type = 6, size=2, color = "#246479")
+                              ))),
+
     shinyjs::hidden(div(id = ns("args3"),
-                        layout_column_wrap(width = 1/3, height = 100, fill = FALSE, fillable = FALSE,
-                                           pickerInput(ns("loc"), "Choose a Location", choices = "", options =  list(`live-search` = TRUE)),
-                                           awesomeRadio(ns("plot_type"), "Choice of Plot", choices = c("Coverage" = "cover", "Difference" = "diff", "Repeat" = "repeats", "Taper" = "taper", "Trend" = "trend"), selected = "cover", inline = TRUE, status = "warning"),
-                                           actionButton(ns("plot"), "Plot", class = "btn-success")),
-                        layout_column_wrap(width = 1/2,
-                                           card(full_screen = TRUE, card_header(textOutput(ns("label"))), height = "500px", plotOutput(ns("plane_plot"))),
-                                           card(full_screen = TRUE, card_header(textOutput(ns("label2"))), height = "500px", DT::DTOutput(ns("plane_table")))
-                        )))
+                        fluidRow(column(width = 3,
+                                        pickerInput(ns("loc"), "Choose a Location", choices = "", options =  list(`live-search` = TRUE))),
+                                 column(width = 6,
+                                        awesomeRadio(ns("plot_type"), "Choice of Plot", choices = c("Coverage" = "cover", "Difference" = "diff", "Repeat" = "repeats", "Taper" = "taper", "Trend" = "trend"), selected = "cover", inline = TRUE, status = "warning"))),
+                        tabsetPanel(id = "tabsets_2",
+                                    tabPanel(title = textOutput(ns("label")),
+                                             plotOutput(ns("plane_plot"))),
+                                    tabPanel(title = textOutput(ns("label2")),
+                                             DT::DTOutput(ns("plane_table")))
+                                    )))
 
 
     )
@@ -43,8 +48,6 @@ plotServer <- function(id, data_1, locations, seed, forecast, btn1, status, outc
   moduleServer(id, function(input, output, session) {
 
     observe({
-      #locations <- generics::intersect(data_1()$location, forecast()$data$location)
-      #updatePickerInput(session = session, inputId = "loc", choices = locations)
       updatePickerInput(session = session, inputId = "loc", choices = locations())
     })
 
@@ -55,7 +58,8 @@ plotServer <- function(id, data_1, locations, seed, forecast, btn1, status, outc
       shinyjs::toggle(id = "args3", condition = {btn1()})
     })
 
-
+    # run the scoring using logic to modify the args parameter in plane_score for the repeats function
+    # This applies to the repeats option, was not taking my direct inputs unless I specified it out into a list like below.
     scoring <- eventReactive(btn1(), {
       if (input$tol == 0 & input$pre == 0){
         comp_args <- list(trend = list(sig_lvl = input$sig), repeats = list(prepend = NULL, tolerance = NULL))
@@ -74,18 +78,44 @@ plotServer <- function(id, data_1, locations, seed, forecast, btn1, status, outc
       scores
     })
 
-    output$score_table <- DT::renderDT({
+    output$score_table <- DT::renderDataTable(server = FALSE, {
       df <- purrr::map_df(scoring()$scores_summary, as_tibble) %>%
         tidyr::replace_na(list(flagged = "None"))
-      df %>% DT::datatable(rownames = F, filter = "top", escape = F, height = "100%", fillContainer = T, extensions =c("Buttons"), options = list(dom = 'lBrtip',
-                                                                                                              pageLength = 10,
-                                                                                                              lengthMenu = list(c(10, 20, 50, -1), c("10", "20", "50", "All")),
-                                                                                                              columnDefs = list(list(className = 'dt-center', targets = "_all")),
-                                                                                                              buttons = list('copy', list(extend = "collection", buttons = c("csv", "excel", "pdf"), text = "Download"))
-                                                                                                              ))
-    })
+      DT::datatable(
+        df,
+        extensions = "Buttons",
+        filter = "top",
+        selection = "none", #this is to avoid select rows if you click on the rows
+        rownames = FALSE,
+        options = list(
+          scrollX = TRUE,
+          autoWidth = FALSE,
+          dom = 'Blrtip',
+          buttons = list(
+            'copy',
+            # this will download the entire dataset using modifier = list(page = "all")
+            list(
+              extend = 'collection',
+              buttons = list(
+                list(extend = "csv", filename = "score_data", exportOptions = list(
+                  columns = ":visible",modifier = list(page = "all"))
+                ),
+                list(extend = 'excel', filename = "score_data", title = NULL,
+                     exportOptions = list(columns = ":visible", modifier = list(page = "all"))),
+                list(extend = 'pdf', filename = "score_data", exportOptions = list(
+                  columns = ":visible", modifier = list(page = "all")))),
+              text = 'Download')
 
-    # label-header for plotting card
+          ),
+          # add the option to display more rows as a length menu
+          lengthMenu = list(c(10, 30, 50, -1),
+                            c('10', '30', '50', 'All'))
+        ),
+        class = "display"
+      )
+      })
+
+    # label-header for plot tab
     output$label <- renderText({
       if(input$plot_type == "cover"){
         "Coverage Plot"
@@ -100,7 +130,7 @@ plotServer <- function(id, data_1, locations, seed, forecast, btn1, status, outc
       }
     })
 
-    # label-header for table card
+    # label-header for table tab
     output$label2 <- renderText({
       if(input$plot_type == "cover"){
         "Coverage Table"
@@ -115,7 +145,7 @@ plotServer <- function(id, data_1, locations, seed, forecast, btn1, status, outc
       }
     })
 
-    plot_df <- eventReactive(input$plot, {
+    plot_df <- reactive({
       cut_date <- seed()[[1]]$meta$cut_date
       dates = unique(as.character(data_1()$date))
       dates = dates[dates <= cut_date]
@@ -132,50 +162,50 @@ plotServer <- function(id, data_1, locations, seed, forecast, btn1, status, outc
         forecast_df = forecast_df %>%
           dplyr::filter(location %in% input$loc) %>%
           dplyr::mutate(type = "Forecast") %>%
-          dplyr::select(date, point, lower, upper, type)
+          dplyr::select(location, date, point, lower, upper, type)
       } else {
         forecast_df = forecast_df %>%
           dplyr::filter(location %in% input$loc) %>%
-          dplyr::mutate(type = "Observed") %>%
+          dplyr::mutate(type = "Comparison") %>%
           dplyr::rename(point = outcome()) %>%
-          dplyr::select(date, point, type)
+          dplyr::select(location, date, point, type)
       }
       df_plot = bind_rows(observed_df, forecast_df) %>%
         dplyr::mutate(date = as.Date(date, format = "%Y-%m-%d"))
       df_plot
     })
 
-    coverage <- eventReactive(input$plot, {
+    coverage <- reactive({
       item <- paste0(input$loc, "-cover")
       cover <- scoring()$full_results[[item]]
       cover
     })
 
-    difference <- eventReactive(input$plot, {
+    difference <- reactive({
       item <- paste0(input$loc, "-diff")
       diff <- scoring()$full_results[[item]]
       diff
     })
 
-    repeats <- eventReactive(input$plot, {
+    repeats <- reactive({
       item <- paste0(input$loc, "-repeats")
       df <- scoring()$full_results[[item]]
       df
     })
 
-    taper <- eventReactive(input$plot, {
+    taper <- reactive({
       item <- paste0(input$loc, "-taper")
       df <- scoring()$full_results[[item]]
       df
     })
 
-    trend <- eventReactive(input$plot, {
+    trend <- reactive({
       item <- paste0(input$loc, "-trend")
       df <- scoring()$full_results[[item]]$output
       df
     })
 
-    plotting <- eventReactive(input$plot, {
+    plotting <- reactive({
 
       if(input$plot_type == "cover"){
         date_min <- plot_df() %>% dplyr::filter(type == "Forecast") %>% pull(date) %>% min()
@@ -227,41 +257,51 @@ plotServer <- function(id, data_1, locations, seed, forecast, btn1, status, outc
           theme(legend.title=element_blank())
       }
       p
-    })
+    }) %>%
+      bindEvent(input$loc, input$plot_type)
 
     output$plane_plot <- renderPlot({
         plotting()
     })
 
-    table_df <- eventReactive(input$plot, {
+    table_df <- reactive({
       if (input$plot_type == "cover"){
-        df <- data.frame(last_observed_value = coverage()$last_value,
+        df <- data.frame(Location = input$loc,
+                         last_observed_value = coverage()$last_value,
                          lower_bounds = coverage()$bounds$lower,
                          upper_bounds = coverage()$bounds$upper,
-                         out_bounds = coverage()$indicator)
+                         out_bounds = coverage()$indicator) %>%
+          dplyr::rename(`Last Observed Value` = last_observed_value, `Lower Boundry` = lower_bounds, `Upper Boundry` = upper_bounds, `Last Value out of Boundry` = out_bounds)
       } else if(input$plot_type == "diff"){
-        df <- data.frame(Values = difference()$values,
-                                Difference = c(NA, difference()$evaluated_differences),
-                                Max_difference = difference()$maximum_difference) %>%
-          dplyr::mutate(`Diff > Max` = Difference > Max_difference )
+        df <- data.frame(Location = input$loc,
+                         Values = difference()$values,
+                         Difference = c(NA, difference()$evaluated_differences),
+                         Max_difference = difference()$maximum_difference) %>%
+          dplyr::mutate(`Diff > Max` = Difference > Max_difference ) %>%
+          dplyr::rename(`Difference between Successive Value` = Difference, `Max Difference Observed in Data` = Max_difference, `Difference > Max Observed`= `Diff > Max`)
       } else if(input$plot_type == "repeats"){
         validate(need(!is.na(repeats()$repeats[1,1]), message = "No Repeats detected."))
         df <- repeats()$repeats %>%
-            dplyr::mutate(flagged = "Repeat")
+            dplyr::mutate(Repeat = TRUE) %>%
+          dplyr::select(location, date, point, Repeat) %>%
+          dplyr::rename(Location = location, Date = date, Value = point)
+
       } else if(input$plot_type == "taper"){
         df <-  plot_df() %>%
           dplyr::filter(type == "Forecast") %>%
           dplyr::mutate(widths = taper()$widths) %>%
           dplyr::mutate(tapering = (widths - dplyr::lag(widths)) < 0) %>%
           tidyr::replace_na(list(tapering = FALSE)) %>%
-          dplyr::select(date, lower, upper, widths, tapering) %>%
-          dplyr::mutate_if(is.numeric, round, 1)
+          dplyr::select(location, date, lower, upper, widths, tapering) %>%
+          dplyr::mutate_if(is.numeric, round, 1) %>%
+          dplyr::rename(Location = location, Date = date, `Lower Boundry`= lower, `Upper Boundry`=upper, Width = widths, `Width is Decreasing` = tapering)
       } else if(input$plot_type == "trend"){
         df <- trend()
       }
       df
 
-    })
+    }) %>%
+      bindEvent(input$loc, input$plot_type)
 
     output$plane_table <- DT::renderDT({
       table_df() %>% DT::datatable(rownames = F, filter = "none", escape = F, extensions =c("Buttons", 'Scroller'), options = list(dom = 'Brtip',

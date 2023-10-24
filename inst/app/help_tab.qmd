@@ -13,8 +13,6 @@ library(dplyr)
 
 ## Introduction
 
-This app helps to facilitate the use of the R package [PLANES](https://signaturescience.github.io/rplanes/) (Plausibility Analysis of Epidemiological Signals). This open-source package contains tools/components to assess the uncertainty of near-term forecasts. Some infectious disease forecasting signals may exhibit implausible values. Our aim is to develop a set of tools to pick up such occurrences and provide a scoring mechanism to flag any such values for further evaluation.
-
 The accepted forecasts can be daily, weekly or monthly forecasts. There are two inputs that can be supplied, first is the observed data and second a comparison. This comparison is either a forecast or another observed data set containing signals whose dates do not overlap with the first data set.
 
 ## Data

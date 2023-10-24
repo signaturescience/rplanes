@@ -30,19 +30,18 @@ Imports:
     tidyr,
     utils
 Suggests:
-    bslib (>= 0.5.1),
     DT,
     ggplot2,
     ggrepel,
     htmltools,
     knitr,
     MMWRweek,
-    ragg,
     rmarkdown,
     shiny,
     shinybusy,
     shinyjs,
     shinyWidgets,
+    shinycssloaders,
     testthat (>= 3.0.0),
     thematic,
     tools
