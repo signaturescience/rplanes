@@ -71,14 +71,35 @@
 <img src="logo.png" class="logo" alt=""><h1 id="rplanes">rplanes<a class="anchor" aria-label="anchor" href="#rplanes"></a>
 </h1>
 </div>
+<p><a href="https://signaturescience.github.io/rplanes/"><img src="reference/figures/logo.png" align="right" height="139" alt="rplanes website"></a></p>
 <!-- badges: start -->
 
+<blockquote>
+<p><strong>DEVELOPMENT STATUS</strong>: The <code>rplanes</code> package is being actively developed. As of v0.0.1 the package is under alpha release. Users should be aware that there may be significant changes to the API in this phase.</p>
+</blockquote>
+<div class="section level2">
+<h2 id="introduction">Introduction<a class="anchor" aria-label="anchor" href="#introduction"></a>
+</h2>
+<p>The <code>rplanes</code> package (<strong>pl</strong>ausibility <strong>an</strong>alysis of <strong>e</strong>pidemiological <strong>s</strong>ignals) provides functionality to prepare data and analyze plausibility of both forecasted and reported epidemiological signals. The functions implement a set of plausibility algorithms that are agnostic to geographic and time resolutions and are calculated independently and then presented as a combined score.</p>
+</div>
 <div class="section level2">
 <h2 id="installation">Installation<a class="anchor" aria-label="anchor" href="#installation"></a>
 </h2>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co">#install.pacakges("remotes")</span></span>
-<span><span class="fu">remotes</span><span class="fu">::</span><span class="fu">install_github</span><span class="op">(</span><span class="st">"signaturescience/rplanes"</span><span class="op">)</span></span></code></pre></div>
+<span><span class="fu">remotes</span><span class="fu">::</span><span class="fu">install_github</span><span class="op">(</span><span class="st">"signaturescience/rplanes"</span>, build_vignettes<span class="op">=</span><span class="cn">TRUE</span><span class="op">)</span></span></code></pre></div>
+</div>
+<div class="section level2">
+<h2 id="getting-started">Getting Started<a class="anchor" aria-label="anchor" href="#getting-started"></a>
+</h2>
+<p>The <code>rplanes</code> package includes vignettes describing package features in detail. To get started, refer to the “Basic Usage” vignette on the <a href="https://signaturescience.github.io/rplanes/articles/basic-usage.html">package website</a> or in the R console:</p>
+<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/vignette.html" class="external-link">vignette</a></span><span class="op">(</span><span class="st">"basic-usage"</span>, package<span class="op">=</span><span class="st">"rplanes"</span><span class="op">)</span></span></code></pre></div>
+</div>
+<div class="section level2">
+<h2 id="contributing">Contributing<a class="anchor" aria-label="anchor" href="#contributing"></a>
+</h2>
+<p>Please use GitHub issues to report bugs or request features. Contributions will be reviewed via pull requests.</p>
 </div>
 </div>
   </main><aside class="col-md-3"><div class="license">
