@@ -3,7 +3,7 @@ pkgdown: 2.0.7
 pkgdown_sha: ~
 articles:
   basic-usage: basic-usage.html
-last_built: 2023-10-25T15:53Z
+last_built: 2023-10-25T16:15Z
 urls:
   reference: https://signaturescience.github.io/rplanes/reference
   article: https://signaturescience.github.io/rplanes/articles
