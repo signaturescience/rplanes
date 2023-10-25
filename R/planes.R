@@ -437,12 +437,28 @@ plane_score <- function(input, seed, components = "all", args = NULL) {
     )
 
   ## verify components for signal type ... some won't apply to observed
-  if(is_observed(input) & any(components %in% c("cover", "trend", "taper", "all"))) {
-    stop("Input must be a forecast when component contains 'cover', 'taper', or 'trend'.")
-  }
+  allowed_observed <- c("repeats","diff")
 
+  ## handle condition when "all" components are requested
+  ## observed data will only have a subset (the allowed compoments above)
   if(length(components) == 1 && components == "all") {
-    components <- names(complist)
+    if(is_observed(input)) {
+      components <- allowed_observed
+    } else {
+      components <- names(complist)
+    }
+  } else {
+    ## now handle case when components have been defined as a character vector (not as "all")
+    if(is_observed(input)) {
+      if(any(!components %in% allowed_observed)) {
+        warning(paste0("Only the following components are allowed for observed signals: ", paste0(allowed_observed, collapse = ";")))
+      }
+      components <- components[components %in% allowed_observed]
+      ## check if components vector is empty and if so stop
+      if(length(components) == 0) {
+        stop("The signal is observed but none of the allowed components for observed signals were specified.")
+      }
+    }
   }
 
   ## get all possible locations

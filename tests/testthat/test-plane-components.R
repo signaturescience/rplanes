@@ -221,6 +221,24 @@ test_that("plane_score returns summary based on components specified", {
 
 })
 
+test_that("plane_score handles components for signals appropriately", {
+
+  prepped_seed <- plane_seed(prepped_observed, cut_date = "2023-05-20")
+
+  ## check that the score function only uses diff component if selected which should be fine for observed
+  res <- plane_score(prepped_observed, prepped_seed, components = "diff")
+  expect_equal(unique(res$scores_raw$component), "diff")
+
+  ## check that score function can pick out relevant components
+  ## in this case only diff should be used because this is an observed signal
+  res <- plane_score(prepped_observed, prepped_seed, components = c("diff","taper"))
+  expect_equal(unique(res$scores_raw$component), "diff")
+
+  ## check that score errors if forecast-only components are used with observed
+  expect_error(plane_score(prepped_observed, prepped_seed, components = c("taper","cover")))
+
+})
+
 
 test_that("plane_trend flags known changepoints and is sensitive to changes in sig.lvl", {
 
