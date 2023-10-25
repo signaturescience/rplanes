@@ -34,7 +34,7 @@ The `rplanes` package (**pl**ausibility **an**alysis of **e**pidemiological **s*
 3. Compare those characteristics to the evaluated data for each location
 4. Synthesize individual component results into an overall score
 
-The package workflow is demonstrated in detail below (see Figure 1).
+The package workflow is demonstrated in detail below (see **Figure 1**).
 
 ![**Figure 1**: Workflow of the rplanes package](workflow.png){#id .class width=90% height=100%}
 
@@ -55,7 +55,7 @@ library(ggplot2)
 
 ## Prepare observed data
 
-To motivate this example we will use flu hospitalizations from [HHS Protect](https://healthdata.gov/Hospital/COVID-19-Reported-Patient-Impact-and-Hospital-Capa/g62h-syeh). Note that the data here has been aggregated from daily to weekly resolution, and is provided in this format as internal `rplanes` package data. We select only the columns in which we're interested ("date", "location", and "flu.admits") and make sure that the date field is formatted as a date:
+To motivate this example we will use incident flu hospitalization reported via [HHS Protect](https://healthdata.gov/Hospital/COVID-19-Reported-Patient-Impact-and-Hospital-Capa/g62h-syeh). Note that the data here has been aggregated from daily to weekly resolution, and is provided in this format as internal `rplanes` package data. We select only the columns in which we're interested ("date", "location", and "flu.admits") and make sure that the date field is formatted as a date:
 
 ```{r, eval=FALSE}
 hosp_all <-
@@ -75,7 +75,7 @@ hosp_all <-
 knitr::kable(head(hosp_all))
 ```
 
-It is important to emphasize that the observed data must at minimum include columns for location (geographic unit such as FIPS code) and date (date of reported value; must be date class).
+It is important to emphasize that the observed data must at minimum include columns for location (geographic unit such as FIPS code), date (date of reported value; must be date class), and a reported value for each location/date combination.
 
 ## Convert observed data into a signal with `to_signal()`
 
@@ -89,7 +89,7 @@ observed_signal <- to_signal(input = hosp_all, outcome = "flu.admits", type = "o
 
 ## Create a seed from the observed data via `plane_seed()`
 
-The `plane_seed()` function provides a means to internally calculate and store baseline characteristics for the observed data in a *seed*. These characteristics are summarized independently for each location, and are then used in downstream scoring functions.
+The `plane_seed()` function provides a means to internally calculate and store baseline characteristics for the observed data in what the package calls a "seed". These characteristics are summarized independently for each location, and are then used in downstream scoring functions.
 
 In this example, we input the prepped observed signal object and make use of the "cut_date" argument. By restricting to dates on or before the specified cut date, we ensure that the baseline characteristics are not computed based on data that overlaps with the forecast. In practice, it may be possible to use the default (`NULL`) cut date when analyzing forecasts, so long as the reported data is available up to (and not exceeding) the first horizon of the forecast.
 
@@ -99,7 +99,7 @@ prepped_seed <- plane_seed(observed_signal, cut_date = "2022-10-29")
 
 ## Prepare forecast data
 
-The forecast to evaluate must include a point estimate and some representation of uncertainty (i.e., prediction interval). For analysis in `rplanes`, the forecast must be prepared to include the following:
+The forecast data to be assessed must include a point estimate and some representation of uncertainty (i.e., prediction interval) for each location and horizon. For analysis in `rplanes`, the forecast data must be prepared to include the following:
 
 * `location`: Geographic unit such as FIPS code
 * `date`: Date corresponding the forecast horizon
@@ -108,7 +108,7 @@ The forecast to evaluate must include a point estimate and some representation o
 * `point`: Point estimate for the forecast
 * `upper`: Upper limit of a given prediction interval for the forecast
 
-For convenience, the `rplanes` package includes `read_forecast()` to convert forecasts from a quantile format used by many forecast hubs[^c19fh][^fs] into the format needed for plausibility analysis. The `read_forecast()` function reads csv input and returns a `tibble` with summarized forecast data for each location and horizon in the original file. 
+For convenience, the `rplanes` package includes `read_forecast()` to convert forecasts from a quantile format used by many forecast hubs[^c19fh]<sup>,</sup>[^fs] into the format needed for plausibility analysis. The `read_forecast()` function reads csv input and returns a `tibble` with summarized forecast data for each location and horizon in the original file. 
 
 [^c19fh]: https://github.com/reichlab/covid19-forecast-hub
 [^fs]: https://github.com/cdcepi/Flusight-forecast-data
@@ -156,7 +156,7 @@ forecast_signal <-
 
 ## Run `plane_score()` and visualize results
 
-The `planes_score()` function wraps PLANES scoring for plausibility components across all locations in single step. The function can accept arguments to specific component functions and allows the user to dictate which components to use (with a default to all). For more about these arguments see `?plane_score`.
+The `planes_score()` function wraps PLANES scoring for plausibility components across all locations in a single step. The function can accept arguments to specific component functions and allows the user to dictate which components to use (with a default to all). For more about these arguments see `?plane_score`.
 
 We pass the input forecast signal to the function along with the prepped seed to run the scoring independently at all locations:
 
@@ -166,7 +166,7 @@ scores <- plane_score(input = forecast_signal, seed = prepped_seed)
 
 Note that if we had other forecasts to evaluate for the same time period, we could prepare each forecast signal appropriately and use the same seed (i.e., we would not have to recreate the seed for each forecast). 
 
-The output of `plane_score()` is a list of scoring results for all locations. We can convert the `scores_summary` element from that list to a tibble. The `res` tibble below shows location, the number of flags raised ("n_flags"), the number of components tested ("n_components"), the "score", which is "n_flags" divided by "n_components", the names of components tested, and the names of the components that were flagged (if any):
+The output of `plane_score()` is a list of scoring results for all locations. We can convert the `scores_summary` element from that list to a `tibble`. The `res` object below shows the location, the number of flags raised ("n_flags"), the number of components tested ("n_components"), the "score" (which is "n_flags" divided by "n_components"), the names of components tested, and the names of the components that were flagged (if any):
 
 ```{r, echo=TRUE, eval=FALSE}
 res <-
@@ -184,7 +184,6 @@ res <-
 knitr::kable(head(res))
 ```
 
-For the evaluated forecast, most of the locations had no flags raised. However, several had three of the five possible components flagged for implausibility.
 
 ```{r fig.align = 'center'}
 res %>%
@@ -195,6 +194,7 @@ res %>%
   labs(x = "Score", y = "Count")
 ```
 
+For the evaluated forecast, most of the locations had one or fewer of the flags raised. However, several locations had two or three of the five possible components flagged for implausibility.
 
 # Analyzing plausibility of observed data
 
@@ -240,7 +240,7 @@ observed_signal <- to_signal(input = hosp_pre23, outcome = "flu.admits", type = 
 
 We can use the observed the signal as the input to `plane_score()`, but also as the input to `plane_seed()`. However, to do so we must use an argument that restricts the seeding to *only* dates prior to the cut date (inclusive). 
 
-In this example, because we are assessing the observed data for the week of 2022-12-31 we would want to seed our plausibility analysis with characteristics up through the most recent reported date before that (i.e., 2022-12-24):
+In this example, because we are assessing the observed data for the week of 2022-12-31 we would want to seed our plausibility analysis with characteristics up through the most recent reported date (i.e., 2022-12-24):
 
 ```{r}
 prepped_seed <- plane_seed(observed_signal, cut_date = "2022-12-24")
@@ -248,7 +248,7 @@ prepped_seed <- plane_seed(observed_signal, cut_date = "2022-12-24")
 
 ## Run `plane_score()` and visualize results
 
-As with the forecast assessments, the PLANES scoring is wrapped for convenience in the `plane_score()` function. Since we are assessing an observed signal in this case, we can explicitly tell the scoring to use certain components. It is important to emphasize that not all components will work for forecasts *and* observed signals:
+As with the forecast assessments, the PLANES scoring is wrapped for convenience in the `plane_score()` function. Since we are assessing an observed signal in this case, we can explicitly tell the scoring to use certain components. It is important to emphasize that not all components will work for both forecasts and observed signals:
 
 ```{r}
 scores <- plane_score(observed_signal, seed = prepped_seed, components = c("repeats","diff"))
@@ -270,8 +270,6 @@ res <-
 knitr::kable(head(res))
 ```
 
-These results indicate that there is only one location for which any flag has been raised. Again, in this case only two components are used for scoring so the results should be interpreted accordingly. Furthermore, we have to consider that for reported signals the date at which the observed data is retrieved is paramount. It will likely be most meaningful to analyze plausibility of observed data in real time (or near real time) as opposed to retrospectively, as backfill and reporting issues may be corrected prior to evaluation.
-
 ```{r fig.align = 'center'}
 res %>%
   count(score) %>%
@@ -281,3 +279,4 @@ res %>%
   labs(x = "Score", y = "Count")
 ```
 
+These results indicate that there is just one location for which any flag has been raised. Again, in this case only two components are used for scoring so the results should be interpreted accordingly. Furthermore, we have to consider that for reported signals the date at which the observed data is retrieved is paramount. It will likely be most meaningful to analyze plausibility of observed data in real time (or near real time) as opposed to retrospectively, since backfill and reporting issues may be corrected prior to assessment.
