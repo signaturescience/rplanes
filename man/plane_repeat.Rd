@@ -9,7 +9,7 @@ plane_repeat(location, input, seed, tolerance = NULL, prepend = NULL)
 \arguments{
 \item{location}{Character vector with location code; the location must appear in input and seed}
 
-\item{input}{Input signal data to be scored; object must be one of \link[=to_signal]{forecast}}
+\item{input}{Input signal data to be scored; object must be one of \link[=to_signal]{forecast} or \link[=to_signal]{observed}}
 
 \item{seed}{Prepared \link[=plane_seed]{seed}}
 
@@ -25,7 +25,7 @@ A \code{list} with the following values:
 }
 }
 \description{
-This function evaluates whether consecutive values in observations or forecasts are repeated a k number of times. This function takes in a \link[=to_signal]{forecast} object that is either from an observed dataset or forecast dataset.
+This function evaluates whether consecutive values in observations or forecasts are repeated a k number of times. This function takes in a \link[=to_signal]{forecast} or \link[=to_signal]{observed} object that is either from an observed dataset or forecast dataset.
 }
 \examples{
 ## read in example observed data and prep observed signal
