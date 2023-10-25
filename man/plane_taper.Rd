@@ -21,7 +21,7 @@ A \code{list} with the following values:
 }
 }
 \description{
-This function evaluates whether or not the evaluated signal interval tapers (i.e., decreases in width) as horizons progress. The interval used in this plausbility component is drawn from the upper and lower bounds of the forecasted prediction interval. As such, the only accepted signal format is \link[=to_signal]{forecast}, which will include upper and lower bounds.
+This function evaluates whether or not the evaluated signal interval tapers (i.e., decreases in width) as horizons progress. The interval used in this plausibility component is drawn from the upper and lower bounds of the forecasted prediction interval. As such, the only accepted signal format is \link[=to_signal]{forecast}, which will include upper and lower bounds.
 }
 \examples{
 

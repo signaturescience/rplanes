@@ -9,3 +9,5 @@ scratch_dw.R
 ^_pkgdown\.yml$
 ^docs$
 ^pkgdown$
+^doc$
+^Meta$
