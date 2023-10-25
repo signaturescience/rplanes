@@ -7,7 +7,7 @@
 #' @param input Data to be converted to signal; see "Details" for more information
 #' @param outcome Name of the outcome column in the input data
 #' @param type Signal type; must be one of "observed" or "forecast"; default is "observed"
-#' @param resolution The temporal resolution of the signal; data can be aggregated daily, weekly, or monthly; default is `"weeks"`
+#' @param resolution The temporal resolution of the signal; data can be aggregated daily, weekly, or monthly; default is `"weeks"`; see "Details" for more information
 #' @param horizon Number of time steps ahead for forecast signals; only used if `type="forecast"`; default is `NULL`
 #'
 #' @details
@@ -17,6 +17,8 @@
 #' For "observed" data the data frame must at minimum include columns for **location** (geographic unit such as FIPS code) and **date** (date of reported value; must be `date` class). The data should also include a column that contains the outcome (e.g., case count).
 #'
 #' For "forecast" data the data frame must include columns for **location** (geographic unit such as FIPS code), **date** (date corresponding to forecast horizon; must be `date` class or character formatted as 'YYYY-MM-DD'), **horizon** (forecast horizon), **lower** (the lower limit of the prediction interval for the forecast), **point** (the point estimate for the forecast), and **upper** (the upper limit of the prediction interval for the forecast). Note that the [read_forecast] function returns data in this format.
+#'
+#' The input data must at the daily, weekly, or monthly resolution. The "resolution" parameter is designed to use string matching. This allows flexibility for the user, such that, for example, an input of "day", "days", or "daily" would all resolve to a resolution of *days*. The same rules apply for designating weekly or monthly resolution.
 #'
 #' @return An object of the class `signal`. The object will have a second class of either `observed` or `forecast` depending on the value passed to the "type" argument.
 #' @export
