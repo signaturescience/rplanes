@@ -17,7 +17,7 @@
 
 ## Introduction
 
-The ‘rplanes’ package (**pl**ausibility **an**alysis of
+The `rplanes` package (**pl**ausibility **an**alysis of
 **e**pidemiological **s**ignals) provides functionality to prepare data
 and analyze plausibility of both forecasted and reported epidemiological
 signals. The functions implement a set of plausibility algorithms that
