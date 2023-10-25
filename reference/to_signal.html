@@ -75,7 +75,7 @@
 
 
 <dt>resolution</dt>
-<dd><p>The temporal resolution of the signal; data can be aggregated daily, weekly, or monthly; default is <code>"weeks"</code></p></dd>
+<dd><p>The temporal resolution of the signal; data can be aggregated daily, weekly, or monthly; default is <code>"weeks"</code>; see "Details" for more information</p></dd>
 
 
 <dt>horizon</dt>
@@ -93,6 +93,7 @@
     <p>The input signal data may be either "observed" or "forecast" data. Depending on the type, the input data must conform to certain format prior to submission. In both cases, the data must be passed as a data frame.</p>
 <p>For "observed" data the data frame must at minimum include columns for <strong>location</strong> (geographic unit such as FIPS code) and <strong>date</strong> (date of reported value; must be <code>date</code> class). The data should also include a column that contains the outcome (e.g., case count).</p>
 <p>For "forecast" data the data frame must include columns for <strong>location</strong> (geographic unit such as FIPS code), <strong>date</strong> (date corresponding to forecast horizon; must be <code>date</code> class or character formatted as 'YYYY-MM-DD'), <strong>horizon</strong> (forecast horizon), <strong>lower</strong> (the lower limit of the prediction interval for the forecast), <strong>point</strong> (the point estimate for the forecast), and <strong>upper</strong> (the upper limit of the prediction interval for the forecast). Note that the <a href="read_forecast.html">read_forecast</a> function returns data in this format.</p>
+<p>The input data must at the daily, weekly, or monthly resolution. The "resolution" parameter is designed to use string matching. This allows flexibility for the user, such that, for example, an input of "day", "days", or "daily" would all resolve to a resolution of <em>days</em>. The same rules apply for designating weekly or monthly resolution.</p>
     </div>
 
     <div class="section level2">
