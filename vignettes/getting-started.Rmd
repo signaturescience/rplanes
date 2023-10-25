@@ -9,8 +9,6 @@ vignette: >
   %\VignetteEncoding{UTF-8}
 ---
 
-<img src="logo.png" style="position:absolute;top:1px;right:1px;width:7.5%;" />
-
 ```{r, include = FALSE}
 knitr::opts_chunk$set(
   collapse = TRUE,
@@ -28,19 +26,27 @@ library(rplanes)
 
 # Overview
 
-The `rplanes` package (**pl**ausibility **an**alysis of **e**pidemiological **s**ignals) provides functionality to prepare data and analyze plausibility of both forecasted and reported epidemiological signals. The functions implement a set of plausibility algorithms that are agnostic to geographic and time resolutions and are calculated independently and then presented as a combined score. 
+The `rplanes` package (**pl**ausibility **an**alysis of **e**pidemiological **s**ignals) provides functionality to prepare data and analyze plausibility of both forecasted and observed epidemiological signals. The functions implement a set of plausibility algorithms that are agnostic to geographic and time resolutions and are calculated independently and then presented as a combined score. The package allows users to:
+
+1. Prepare signal data (either forecast or observed) to be evaluated
+2. Create a set of baseline characteristics for previously observed data
+3. Compare those characteristics to the evaluated data for each location
+4. Synthesize individual component results into an overall score
+
+The package workflow is demonstrated in detail below (see Figure 1).
 
 ![**Figure 1**: Workflow of the rplanes package](workflow.png){#id .class width=90% height=100%}
 
-**Figure 1** provides a detailed description of the processes used in `rplanes`. Beginning with raw forecast or observed data, `rplanes` takes data prepared in a pre-specified format. This required input data format is documented in the package. For convenience, the package includes the `read_forecast()` function to prepare forecast data that is in in the quantile format commonly used in forecasting "hub" consortia. The prepped forecast or observed data is then converted to a signal object using `to_signal()`. For observed signals, we then use `plane_seed()` which applies a cut date to be used as a comparator in the final plausibility analyses. Currently, we have a set of five components that test for plausibility, and we will go into more detail on those in section III. below. However, those five components are then run on a set of forecasts or observed data using our wrapper function, `plane_score()` which outputs the total number of implausibility "flags" for each forecast and a final score based on the number of flags raised divided by the total number of components (0 is none, and 1 is all). Note that some of our components can only be run on forecasts and not on observed data (specifics are below in section III.). One might want to test observed or reported data for plausibility to check for things like backfill or improper reporting. First, we'll run through data formatting and the use of our wrapper function that looks at all components, and then we will go through components individually.
+**Figure 1** provides a detailed description of the workflow used in `rplanes`. The `rplanes` processing begins with forecast or observed data prepared in a pre-specified format. The required input data format is documented in the package. For convenience, the package includes the `read_forecast()` function to prepare forecast data that is in the quantile format commonly used in forecasting hubs. The prepped forecast or observed data is then converted to a signal object using `to_signal()`. The signal data will be compared against baseline characteristics for previously observed data at each location. These characteristics are aggregated using `plane_seed()`. With the seed and the signal data prepared, the user can run the plausibility scoring independently for each location in the evaluated data. Scores are comprised of individual binary plausibility components. The functions that drive each component are wrapped in the `plane_score()` function for ease-of-use. By default the `plane_score()` wrapper will try to use all relevant components, however the user can dictate specific components as needed. It is important to note that depending on the type of signal to be evalauted (i.e., forecast versus observed data), some components may not apply.
 
 
-
-
+One might want to test observed or reported data for plausibility to check for things like backfill or improper reporting. 
 
 # Analyzing plausibility of forecast data
 
-First, load all necessary packages:
+Plausibility analysis can support operational forecasting and outbreak analytic activities. Here we demonstrate how to use `rplanes` to score an example forecasted data set.
+
+Several packages must be loaded to prior to conducting the analysis:
 
 ```{r message = FALSE}
 library(rplanes)
@@ -51,94 +57,122 @@ library(ggplot2)
 
 ## Read in and format data
 
-#### A. Read in the data:
-First, we read in [HHS Protect data](https://healthdata.gov/Hospital/COVID-19-Reported-Patient-Impact-and-Hospital-Capa/g62h-syeh). This dataset is internal to the rplanes package. We then select only the columns in which we're interested (here: date, location, and flu.admits) and make sure that the date field is formatted as a date:
-```{r}
-hosp <- read.csv(system.file("extdata/observed/hdgov_hosp_weekly.csv", package = "rplanes"))
+#### Prepare observed data
 
-tmp_hosp <-
-  hosp %>%
-  dplyr::select(date, location, flu.admits) %>%
-  dplyr::mutate(date = as.Date(date))
+To motivate this example we will use flu hospitalizations from [HHS Protect](https://healthdata.gov/Hospital/COVID-19-Reported-Patient-Impact-and-Hospital-Capa/g62h-syeh). Note that the data here has been aggregated from daily to weekly resolution, and is provided in this format as internal `rplanes` package data. We select only the columns in which we're interested ("date", "location", and "flu.admits") and make sure that the date field is formatted as a date:
 
-head(tmp_hosp)
+```{r, eval=FALSE}
+hosp_all <-
+  read.csv(system.file("extdata/observed/hdgov_hosp_weekly.csv", package = "rplanes")) %>%
+  select(date, location, flu.admits) %>%
+  mutate(date = as.Date(date))
+
+head(hosp_all)
 ```
 
-#### B. Convert our raw forecast into a prepped forecast using `read_forecast()`
+```{r, eval = TRUE, echo=FALSE}
+hosp_all <-
+  read.csv(system.file("extdata/observed/hdgov_hosp_weekly.csv", package = "rplanes")) %>%
+  select(date, location, flu.admits) %>%
+  mutate(date = as.Date(date))
 
-The raw forecast data must contain data with columns formatted as in the below example:
-
-```{r}
-head(read.csv(system.file("extdata/forecast/2022-10-31-SigSci-TSENS.csv",
-                                              package = "rplanes")))
+knitr::kable(head(hosp_all))
 ```
 
-The *location* column must match the locations within the observed data set. Locations can be in [FIPS code](https://www.bls.gov/respondents/mwr/electronic-data-interchange/appendix-d-usps-state-abbreviations-and-fips-codes.htm) or a character. The *type* column can be either a point, a quantile probability or both. 
+It is important to emphasize that the observed data must at minimum include columns for location (geographic unit such as FIPS code) and date (date of reported value; must be date class).
 
-The read_forecast function reads a csv file and prepares it for the to_signal function and downstream plausibility analysis. The object returned is a tibble with summarized forecast data (i.e., prediction interval) for each location and horizon in the original file. 
+#### Convert observed data into a signal with `to_signal()`
 
-This function has two arguments:
+The downstream plausibility analysis requires that observed and/or forecasted data be converted to an S3 "signal" class. The `to_signal()` function constructs this object and applies an additional "observed" or "forecast" class depedning on the type of signal specified.
 
-* `file`: Path to csv file to read
-* `pi_width`: Width of prediction interval as integer; default 95 corresponds to 95% prediction interval
+Here we will convert the observed data from above to a signal object:
 
 ```{r}
-prepped_forecast <- read_forecast(system.file("extdata/forecast/2022-10-31-SigSci-TSENS.csv",
-                                              package = "rplanes"))
-
-head(prepped_forecast)
+observed_signal <- to_signal(input = hosp_all, outcome = "flu.admits", type = "observed", resolution = "weeks", horizon = NULL)
 ```
-The output of read_forecast (what we've named "prepped_forecast") is a tibble with the following columns:
 
-* `location`: Geographic unit such as FIPS code
-* `date`: Date corresponding the forecast horizon
-* `horizon`: Forecast horizon
-* `lower`: Lower limit of the prediction interval for the forecast. If forecast contains quantile predictions.
-* `point`: Point estimate for the forecast
-* `upper`: Upper limit of the prediction interval for the forecast. If forecast contains quantile predictions.
+#### Create a seed from the observed data via `plane_seed()`
 
-#### C. Convert the prepped forecast and observed data into signals using `to_signal()`
-This function creates an object of the S3 class "signal". The user can conditionally specify either a "forecast" or "observed" signal. It has five arguments:
+The `plane_seed()` function provides a means to internally calculate and store baseline characteristics for the observed data in a *seed*. These characteristics are summarized independently for each location, and are then used in downstream scoring functions.
 
-* `input`: Data to be converted to signal; see "Details" in documentation (i.e., `?to_signal()`) for more information
-* `outcome`: Name of the outcome column in the input data
-* `type`: Signal type; must be one of "observed" or "forecast"; default is "observed"
-* `resolution`: The temporal resolution of the signal; data can be aggregated daily, weekly, or monthly; default is "weeks"
-* `horizon`:	Number of time steps ahead for forecast signals; only used if type="forecast"; default is NULL
-```{r}
-forecast_signal <- 
-  prepped_forecast  %>%
-  to_signal(., outcome = "flu.admits", type = "forecast", resolution = "weeks", horizon = 4)
-
-
-observed_signal <- to_signal(input = tmp_hosp, outcome = "flu.admits", type = "observed", resolution = "weeks", horizon = NULL)
-```
-The output of `to_signal()` (what we've named "forecast_signal" and "observed_signal") is An object of the class `signal`. The object will have a second class of either observed or forecast depending on the value passed to the "type" argument.
-
-#### D. Convert the observed signal into a seed object by using `plane_seed()` and defining a cut date:
-
-This function uses the observed data set to pre-populate for a set period (cut_date). It has two arguments and it wraps the seed engine to operate across all locations in the input signal:
-
-* `input`: Input signal data used for seeding; must be an observed signal object
-* `cut_date`: Maximum date (inclusive) for which seeding should be performed; default is NULL and the entire input will be used for seeding
+In this example, we input the prepped observed signal object and make use of the "cut_date" argument. By restricting to dates on or before the specified cut date, we ensure that the baseline characteristics are not computed based on data that overlaps with the forecast. In practice, it may be possible to use the defualt (`NULL`) cut date when analyzing forecasts, so long as the reported data is available up to (and not exceeding) the first horizon of the forecast.
 
 ```{r}
 prepped_seed <- plane_seed(observed_signal, cut_date = "2022-10-29")
 ```
-The output of `plane_seed()` is a named list of length n, where multiple elements corresponding to seed characteristics and metadata for each of the n locations are nested in independent lists.
 
-## 2. Run formatted data through `plane_score()` and visualize results:
-This function wraps PLANES scoring for specified components across all locations in single step. It has four arguments:
+#### Prepare forecast data
 
-* `input`: Input signal data to be scored; object must be one of forecast or observed
-* `seed`: Prepared seed
-* `components`: Character vector specifying components. Must be either "all" or any combination of "cover", "diff", "taper", "trend", and "repeats". Default is 'all' and will use all available components for the given signal
-* `args`: Named list of arguments for component functions. List elements must be named to match the given component and arguments passed as a nested list (e.g., args = list(trend = list(sig_lvl = 0.05))). Default is NULL and defaults for all components will be used
+The forecast to evaluate must include a point estimate and some representation of uncertainty (i.e., prediction interval). For analysis in `rplanes`, the forecast must be prepared to include the following:
+
+* `location`: Geographic unit such as FIPS code
+* `date`: Date corresponding the forecast horizon
+* `horizon`: Forecast horizon
+* `lower`: Lower limit of a given prediction interval for the forecast
+* `point`: Point estimate for the forecast
+* `upper`: Upper limit of a given prediction interval for the forecast
+
+For convenience, the `rplanes` package includes `read_forecast()` to convert forecasts from a quantile format used by many forecast hubs[^c19fh][^fs] into the format needed for plausibility analysis. The `read_forecast()` function reads csv input and returns a `tibble` with summarized forecast data for each location and horizon in the original file. 
+
+[^c19fh]: https://github.com/reichlab/covid19-forecast-hub
+[^fs]: https://github.com/cdcepi/Flusight-forecast-data
+
+For this example, we use a forecast of incident weekly flu hospitalizations. This forecast is originally in the quantile format referenced above and is included in `rplanes` as example data:
+
+```{r, echo=TRUE, eval=FALSE}
+forecast_fp <- system.file("extdata/forecast/2022-10-31-SigSci-TSENS.csv", package = "rplanes")
+
+read.csv(forecast_fp) %>% 
+  head(.)
+```
+
+```{r, echo=FALSE, eval=TRUE}
+forecast_fp <- system.file("extdata/forecast/2022-10-31-SigSci-TSENS.csv", package = "rplanes")
+
+read.csv(forecast_fp) %>% 
+  head(.) %>%
+  knitr::kable(.)
+```
+
+We can use `read_forecast()` to load the data and convert to the required format:
+
+```{r, echo=TRUE, eval=FALSE}
+prepped_forecast <- read_forecast(forecast_fp)
+
+head(prepped_forecast)
+```
+
+```{r, echo=FALSE, eval=TRUE}
+prepped_forecast <- read_forecast(forecast_fp)
+
+knitr::kable(head(prepped_forecast))
+```
+
+#### Convert forecast data into a signal with `to_signal()`
+
+With the forecast formatted appropriately, we can convert it to a signal object:
+
+```{r}
+forecast_signal <- 
+  prepped_forecast  %>%
+  to_signal(., outcome = "flu.admits", type = "forecast", resolution = "weeks", horizon = 4)
+```
+
+#### Run `plane_score()` and visualize results
+
+The `planes_score()` function wraps PLANES scoring for plausibility components across all locations in single step. The function can accept arguments to specific component functions and allows the user to dictate which components to use (with a default to all). For more about these arguments see `?plane_score`.
+
+We pass the input forecast signal to the fucntion along with the prepped seed to run the scoring independently at all locations:
+
 ```{r}
 scores <- plane_score(input = forecast_signal, seed = prepped_seed)
 ```
-The output of `plane_score()` is a list of scoring results, and we can convert the scores_summary from that list to a tibble. The `res` tibble below shows location (character vector - can work with names instead of FIPS codes), the number of flags raised (`n_flags`), the number of components tested (`n_components`), the `score`, which is `n_flags/n_components`, the components tested, and the name of the components that were flagged.
-```{r}
+
+Note that if we had other forecasts to evaluate for the same time period, we could prepare each forecast signal appropriately and use the same seed (i.e., we would not have to recreate the seed for each forecast). 
+
+The output of `plane_score()` is a list of scoring results for all locations. We can convert the `scores_summary` element from that list to a tibble. The `res` tibble below shows location, the number of flags raised ("n_flags"), the number of components tested ("n_components"), the "score", which is "n_flags" divided by "n_components", the names of components tested, and the names of the components that were flagged (if any):
+
+```{r, echo=TRUE, eval=FALSE}
 res <-
   scores$scores_summary %>%
   map_df(., as_tibble)
@@ -146,413 +180,97 @@ res <-
 head(res)
 ```
 
-As you can see in the histogram of the results, the HHS protect data locations mainly had 0 flags, but a few had 3/5 components flagged for implausibility.
-```{r fig.align = 'center'}
-hist(res$score,
-     main = "Histogram of Forecast Scores by Location",
-     xlab = "Score")
-```
-
-
-## 3. Run plane_score() to check for plausibility of observed data:
-We will repeat the same steps as above, but this time we're comparing observed data to the seed to check for plausibility. Currently, only plane_diff and plane_repeat can be run on observed data.
-
-We will convert our results to a tibble as we did above:
-```{r}
-# Run plane_score:
-observed_scores <- plane_score(input = observed_signal, seed = prepped_seed, components = c("diff", "repeats"))
-
-# Convert list to tibble:
-obs_res <-
-  observed_scores$scores_summary %>%
+```{r, echo=FALSE, eval=TRUE}
+res <-
+  scores$scores_summary %>%
   map_df(., as_tibble)
-
-# Visualize distribution of scores:
-hist(obs_res$score,
-     main = "Histogram of Observed Scores by Location",
-     xlab = "Score")
-```
-Here, all locations have at least one flag raised. This makes sense, because we are comparing our larger observed_signal to the shorter prepped_seed. The main reason for including this in the vignette was for usage, but these results are not worth interpretting.
-
-# III. Individual Components
-The rplanes package currently has a set of 5 components that each test for plausibility in different ways. All 5 components are then wrapped into `plane_score()` to produce an overall score based on the number of components that raised implausibility flags. You can also run the components individually to look at certain aspects of your data. All components can be used to test forecast data, but some cannot be used on observed data. We will go through the components individually below using the same data that we have already read in and formatted in II.1. above. All 5 components use the following arguments, and some have additional arguments:
-
-* `location`: character vector with location code; the location must appear in input and seed. The location can be any character vector with unique names (e.g., FIPS codes, state abbreviations, county names, etc.)
-* `input`: input signal data to be scored; object must be one of signal (forecast or observed - created using `to_signal()`)
-* `seed`: the prepared seed created using `plane_seed()`
-
-Additionally, all components return an `indicator` field that tells us whether or not the data is plausible. If `indicator = TRUE`, the data is implausible and a flag is raised. If it is false, the data is plausible and no flag is raised.
-
-Before we get into the component functions, let's write a function to retrieve the observed and forecast data for a specific location so that we can plot examples of flags of each component:
-```{r}
-get_data <- function(Location) {
-  dat_obs <-
-    observed_signal[["data"]] %>%
-    dplyr::filter(location == Location) %>%
-    dplyr::filter(date <= "2022-10-29") %>%
-    dplyr::mutate(date = as.Date(date)) %>%
-    dplyr::mutate(type = "observed") %>%
-    dplyr::mutate(lower = NA) %>%
-    dplyr::mutate(upper = NA)
-
-
-  dat_fore <-
-    forecast_signal[["data"]] %>%
-    dplyr::select(date, location, flu.admits = point, lower, upper) %>%
-    dplyr::filter(location == Location) %>%
-    dplyr::mutate(type = "forecast")
-
-  dat <- rbind(dat_obs, dat_fore)
-  return(dat)
-}
-```
-
-
-
-
-## 1. Difference component, plane_diff():
-#### A. Description:
-This function implements the point-to-point difference plausibility component. Differences in evaluated signals are calculated from input values iteratively subtracted from the previous values (i.e., for each x at time point i, the difference will be calculated as xi - xi-1). The plausibility analysis uses the evaluated differences to compare against the maximum difference observed and recorded in the seed. This component can be used on either forecast data or observed data, and it only uses the three arguments listed above.
-
-#### B. An example where a flag is NOT raised and the data is plausible:
-First, let's look at a location where the difference component does not raise a flag:
-```{r}
-# Run plane_diff()
-plane_diff(location = "51", input = forecast_signal, seed = prepped_seed)
-```
-The `indicator` at this location is FALSE, meaning that no flag is raised and this seems plausible.
-Also returned are:
-
-* `values`: A vector with the values assessed including the last value in seed concatenated with the evaluated signal values
-* `evaluated_differences`: A vector with the consecutive differences for the values
-* `maximum_difference`: A vector with one value for the maximum difference observed in seed
-
-Let's plot this location to visualize the results:
-```{r fig.align = 'center'}
-# Get data from that location for plotting
-diff_dat <- get_data(Location = "51")  # get observed and forecast data for location "51"
-
-# Plot
-ggplot(data = diff_dat, mapping = aes(x = date, y = flu.admits)) +
-  geom_line() +
-  geom_line(aes(colour = type)) +
-  geom_point(aes(colour = type)) +
-  xlab("Date") +
-  ylab("Flu Hospital Admissions") +
-  ggtitle(paste("Difference Component where Flag Was Not Raised"))
-```
-In this example at location 51, no flag was raised, because the difference between the last observed data point and the first forecast data point (black line, difference = 45) was not greater than the maximum difference between consecutive points within the observed dataset (in this case, that maximum difference is between the second to last observed and the last observed points and it equals 97).
-
-#### C. An example where a flag IS raised and the data is implausible:
-Next, let's look at a location where a flag will be triggered by `plane_diff()`:
-```{r}
-# Run plane_diff()
-plane_diff(location = "09", input = forecast_signal, seed = prepped_seed)
-```
-
-At location "09", the indicator is TRUE and a flag is raised, which means that the data is implausible. The evaluated difference (37) was greater than the maximum difference within the observed dataset (29).
-```{r fig.align = 'center'}
-# Get data from that location for plotting
-diff_dat_flag <- get_data(Location = "09")  # get observed and forecast data for location "09"
-
-# Plot
-ggplot(data = diff_dat_flag, mapping = aes(x = date, y = flu.admits)) +
-  geom_line() +
-  geom_line(aes(colour = type)) +
-  geom_point(aes(colour = type)) +
-  geom_vline(xintercept = as.numeric(as.Date("2022-10-29")), linetype = 4, colour = "red") +
-  xlab("Date") +
-  ylab("Flu Hospital Admissions") +
-  ggtitle(paste("Difference Component where Flag Was Raised"))
-```
-
-#### D. An example using this function to look at plausibility of observed data:
-```{r}
-plane_diff(location = "12", input = observed_signal, seed = prepped_seed)
-```
-As was the case above when looking at `plane_score()`, we're comparing a subset of a dataset to the larger version of itself, so the number of flags will naturally be inflated. Nevertheless, the maximum difference within the seed was 144, but in the observed data, we see differences as high as 499, so this example would be flagged as implausible.
-
-
-
-
-## 2. Coverage component, plane_cover():
-
-#### A. Description:
-This function evaluates whether or not the evaluated signal interval covers the last observed value. The interval used in this plausibility component is drawn from the upper and lower bounds of the forecasted prediction interval. As such, **the only accepted signal format is forecast**, which will include upper and lower bounds. The function only uses the 3 arguments mentioned above (location, input, and seed), and again, **input must be a forecast**.
-
-#### B. An example where a flag is NOT raised and the data is plausible:
-```{r}
-# Run plane_cover()
-plane_cover(location = "04", input = forecast_signal, seed = prepped_seed)
-```
-The `indicator` is FALSE, meaning that the forecast is plausible, and the prediction interval (13 - 103) covers the `last_value` (34) of the observed data. Let's confirm this visually:
-```{r fig.align = 'center'}
-cover_dat <- get_data(Location = "04") # get observed and forecast data for location "04"
-
-ggplot(data = cover_dat, mapping = aes(x = date, y = flu.admits)) +
-  geom_line() +
-  geom_line(aes(colour = type)) +
-  geom_point(aes(colour = type)) +
-  geom_ribbon(aes(ymin = lower, ymax = upper, colour = type, fill = type), alpha = 0.2) +
-  xlab("Date") +
-  ylab("Flu Hospital Admissions") +
-  ggtitle(paste("Coverage Component where Flag Was Not Raised"))
-```
-As you can see, the last blue, observed point (34) falls within the prediction interval of the forecast (the translucent red ribbon, between 13 and 103 for the first forecast point).
-
-
-#### C. An example where a flag IS raised and the data is implausible:
-```{r}
-# Run plane_cover()
-plane_cover(location = "02", input = forecast_signal, seed = prepped_seed)
-```
-The `indicator` is TRUE, meaning that the forecast is NOT plausible, and the prediction interval (0 - 11) does not cover the `last_value` (14) of the observed data. Let's confirm this visually:
-```{r fig.align = 'center'}
-cover_dat_flag <- get_data(Location = "02") # get observed and forecast data for location "02"
-
-ggplot(data = cover_dat_flag, mapping = aes(x = date, y = flu.admits)) +
-  geom_line() +
-  geom_line(aes(colour = type)) +
-  geom_point(aes(colour = type)) +
-  geom_ribbon(aes(ymin = lower, ymax = upper, colour = type, fill = type), alpha = 0.2) +
-  geom_vline(xintercept = as.numeric(as.Date("2022-10-29")), linetype = 4, colour = "red") +
-  xlab("Date") +
-  ylab("Flu Hospital Admissions") +
-  ggtitle(paste("Coverage Component where Flag Was Raised"))
-
-```
-As you can see, the last blue, observed point (14) falls outside of the prediction interval of the forecast (between 0 and 11 for the first forecast point).
-
-
-
-
-## 3.  Taper component, plane_taper():
-
-#### A. Description:
-This function evaluates whether or not the evaluated signal interval tapers (i.e., decreases in width) as horizons progress. The interval used in this plausibility component is drawn from the upper and lower bounds of the forecasted prediction interval. As such, **the only accepted signal format is forecast**, which will include upper and lower bounds. The function only uses the 3 arguments mentioned above (location, input, and seed), and again, **input must be a forecast**.
-
-
-#### B. An example where a flag is NOT raised and the data is plausible:
-```{r}
-# Run plane_taper()
-plane_taper(location = "16", input = forecast_signal, seed = prepped_seed)
-```
-The `indicator` is FALSE, so no flag is raised, and this forecast is considered plausible. The widths of the prediction intervals do not taper; they get larger as the forecast horizon increases (6, 7, 8, 9). Let's visualize this:
-
-```{r fig.align = 'center'}
-taper_dat <- get_data(Location = "16")
-
-ggplot(data = taper_dat, mapping = aes(x = date, y = flu.admits)) +
-  geom_line() +
-  geom_line(aes(colour = type)) +
-  geom_point(aes(colour = type)) +
-  geom_ribbon(aes(ymin = lower, ymax = upper, colour = type, fill = type), alpha = 0.2) +
-  xlab("Date") +
-  ylab("Flu Hospital Admissions") +
-  ggtitle(paste("Taper Component where Flag Was Not Raised"))
-```
-As you can see, the prediction intervals (translucent red interval around forecast) do not taper; they get wider. In the first forecast point (first horizon), the lower bound of the prediction interval is 0 and the upper is 6, so the width = 6, and that width increases to 7, 8, and 9 as the horizon increases.
-
-#### C. An example where a flag IS raised and the data is implausible:
-None of our forecasts for flu hospital admissions using the HHS Protect data actually have tapering prediction intervals, so we need to create a fake forecast with tapering intervals:
-```{r}
-# First, create a new forecast signal:
-fake_forecast_signal <- forecast_signal
-
-# Choose a location where you want to change the upper and lower bounds
-# and then find the index where location matches (I picked "23"):
-location_index <- which(fake_forecast_signal$data$location == "23")
-
-# Update the lower and upper values for location "23" so that they taper:
-fake_forecast_signal$data$lower[location_index] <- c(0, 0, 1, 1)
-fake_forecast_signal$data$upper[location_index] <- c(14, 12, 10, 6)
-```
-Now we can run `plane_taper()` using this fake forecast:
-```{r}
-plane_taper(location = "23", input = fake_forecast_signal, seed = prepped_seed)
-```
-The `indicator` is TRUE, so a flag is raised, and this forecast is considered implausible. The widths of the prediction intervals taper; they get smaller as the forecast horizon increases (14, 12, 9, 5). Let's visualize this:
-```{r fig.align = 'center'}
-taper_dat_flag <- get_data(Location = "23")
-# Have to edit this to put fake forecast prediction intervals into this data:
-taper_dat_flag$lower[39:42] <- c(0, 0, 1, 1)
-taper_dat_flag$upper[39:42] <- c(14, 12, 10, 6)
   
-ggplot(data = taper_dat_flag, mapping = aes(x = date, y = flu.admits)) +
-  geom_line() +
-  geom_line(aes(colour = type)) +
-  geom_point(aes(colour = type)) +
-  geom_ribbon(aes(ymin = lower, ymax = upper, colour = type, fill = type), alpha = 0.2) +
-  geom_vline(xintercept = as.numeric(as.Date("2022-10-29")), linetype = 4, colour = "red") +
-  xlab("Date") +
-  ylab("Flu Hospital Admissions") +
-  ggtitle(paste("Taper Component where Flag Was Raised"))
+knitr::kable(head(res))
 ```
-As you can see, the prediction intervals (translucent red interval around forecast) DO taper. In the first forecast point (first horizon), the lower bound of the prediction interval is 0 and the upper is 14, so the width = 14, and that width decreases to 12, 9, and 5 as the horizon increases. This forecast is implausible.
 
-
-
-## 4. Repeat component, plane_repeat():
-
-#### A. Description:
-This function evaluates whether consecutive values in observations or forecasts are repeated a k number of times. This function takes in a forecast object that is **either from an observed dataset or forecast dataset**. This function uses the 3 arguments that all rplanes component functions use, and it has two additional arguments:
-
-* `tolerance`: Integer value for the number of allowed repeats before flag is raised. Default is NULL and allowed repeats will be determined from seed by finding the "max repeats" (most repeated values in observed data at location)
-* `prepend`: Integer value for the number of values from seed to add before the evaluated signal. Default is NULL and the number of values will be determined from seed also by using the maximum number of repeats. For example, let's say our seed data is c(1, 2, 3, 3, 3), our forecast is c(3, 3, 5, 6), and our tolerance threshold is set at 4. With a prepend length of 2, the sequence c(3, 3, 3, 3, 5, 6) would be checked for any set of more than 4 consecutive, repeating numbers. In that case, no flag would be raised, because there were only 4 repeating 3's. However, if we change the prepend length to 3, the evaluated sequence would be c(3, 3, 3, 3, 3, 5, 6), and a flag would be raised, because there were more repeats than the tolerance threshold.
-
-#### B. An example where a flag is NOT raised and the data is plausible using default arguments:
-```{r}
-plane_repeat(location = "37", input = forecast_signal, seed = prepped_seed, tolerance = NULL, prepend = NULL)
-```
-The `indicator` is FALSE, meaning that no flag is raised and the data is considered plausible. This means that there weren't an unreasonable number of repeats in the forecast (the tolerance default here is calculated as the maximum number of consecutive repeats in the observed data). There were fewer repeats in the forecast than the maximum number of observed repeats. Let's visualize this:
-```{r fig.align = 'center'}
-repeat_dat <- get_data(Location = "37")
-
-ggplot(data = repeat_dat, mapping = aes(x = date, y = flu.admits)) +
-  geom_line() +
-  geom_line(aes(colour = type)) +
-  geom_point(aes(colour = type)) +
-  xlab("Date") +
-  ylab("Flu Hospital Admissions") +
-  ggtitle(paste("Repeat Component where Flag Was Not Raised under Default Arguments"))
-```
-The forecast doesn't appear to have any repeats, and this is considered a plausible forecast.
-
-#### C. An example where a flag IS raised and the data is implausible using default arguments:
-```{r}
-plane_repeat(location = "32", input = forecast_signal, seed = prepped_seed, tolerance = NULL, prepend = NULL)
-```
-The indicator is TRUE, meaning that a flag is raised and the data is implausible. This means that there were an unreasonable number of repeats in the forecast (4 consecutive repeats of 15). There were more repeats in the forecast than the maximum number of observed repeats. Let’s visualize this:
-```{r fig.align = 'center'}
-repeat_dat_flag <- get_data(Location = "32")
-
-ggplot(data = repeat_dat_flag, mapping = aes(x = date, y = flu.admits)) +
-  geom_line() +
-  geom_line(aes(colour = type)) +
-  geom_point(aes(colour = type)) +
-  geom_vline(xintercept = as.numeric(as.Date("2022-10-29")), linetype = 4, colour = "red") +
-  xlab("Date") +
-  ylab("Flu Hospital Admissions") +
-  ggtitle(paste("Repeat Component where Flag Was Raised under Default Arguments"))
-```
-You can see that there are four consecutive repeats in the forecast. This is considered implausible.
-
-#### D. Sensitivity and the tolerance argument:
-We will use the same location as above ("32") where a flag was raised when we used the default tolerance. If we increase the tolerance to 4, you will notice that the flag is no longer raised. Increasing the tolerance reduces the sensitivity of the test.
-```{r}
-plane_repeat(location = "32", input = forecast_signal, seed = prepped_seed, tolerance = 4, prepend = NULL)
-```
+For the evaluated forecast, most of the locations had no flags raised. However, several had three of the five possible components flagged for implausibility.
 
 ```{r fig.align = 'center'}
-ggplot(data = repeat_dat_flag, mapping = aes(x = date, y = flu.admits)) +
-  geom_line() +
-  geom_line(aes(colour = type)) +
-  geom_point(aes(colour = type)) +
-  geom_segment(aes(x =  as.Date("2022-11-05"), 
-                   y = 24, 
-                   xend = as.Date("2022-11-26"), 
-                   yend = 24)) +
-  xlab("Date") +
-  ylab("Flu Hospital Admissions") +
-  ggtitle(paste("Repeat Component where Flag Was NOT Raised with Increased Tolerance"))
+res %>%
+  count(score) %>%
+  mutate(score = as.character(score)) %>%
+  ggplot(aes(score,n)) +
+  geom_col() +
+  labs(x = "Score", y = "Count")
 ```
-The black horizontal line in the plot above is the tolerance length, and you can see that it is the same length as the repeats in the forecast; therefore, no flags have been raised. Note that the opposite is also true. If you reduce the tolerance, you increase the sensitivity, and a flag may be raised when it wasn't otherwise:
+
+
+# Analyzing plausibility of observed data
+
+One might want to test observed or reported data for plausibility to check for things like backfill or errors in reporting mechanisms. The steps to use `rplanes` to analyze plausibility of observed data are very similar to forecast evaluations. The input data must be converted to a signal, which is passed (along with a seed) to the scoring function. However, the key difference is that for observed data the same data source used to create the input signal can be used for seeding.
+
+## Read in and format data
+
+#### Prepare observed data
+
+```{r, eval=FALSE}
+hosp_pre23 <-
+  read.csv(system.file("extdata/observed/hdgov_hosp_weekly.csv", package = "rplanes")) %>%
+  select(date, location, flu.admits) %>%
+  mutate(date = as.Date(date)) %>%
+  filter(date < as.Date("2023-01-01"))
+
+head(hosp_pre23)
+```
+
+```{r, eval = TRUE, echo=FALSE}
+hosp_pre23 <-
+  read.csv(system.file("extdata/observed/hdgov_hosp_weekly.csv", package = "rplanes")) %>%
+  select(date, location, flu.admits) %>%
+  mutate(date = as.Date(date)) %>%
+  filter(date < as.Date("2023-01-01"))
+
+knitr::kable(head(hosp_pre23))
+```
+
+#### Convert observed data into a signal with `to_signal()`
+
 ```{r}
-plane_repeat(location = "32", input = forecast_signal, seed = prepped_seed, tolerance = 3, prepend = NULL)
+observed_signal <- to_signal(input = hosp_pre23, outcome = "flu.admits", type = "observed", resolution = "weeks", horizon = NULL)
 ```
+
+#### Create a seed from the observed data via `plane_seed()`
+
+```{r}
+prepped_seed <- plane_seed(observed_signal, cut_date = "2022-12-24")
+```
+
+
+#### Run `plane_score()` and visualize results
+
+```{r}
+scores <- plane_score(observed_signal, seed = prepped_seed, components = c("repeats","diff"))
+```
+
+```{r, echo=TRUE, eval=FALSE}
+res <-
+  scores$scores_summary %>%
+  map_df(., as_tibble)
+  
+head(res)
+```
+
+```{r, echo=FALSE, eval=TRUE}
+res <-
+  scores$scores_summary %>%
+  map_df(., as_tibble)
+  
+knitr::kable(head(res))
+```
+
+<!-- For the evaluated forecast, most of the locations had no flags raised. However, several had three of the five possible components flagged for implausibility. -->
 
 ```{r fig.align = 'center'}
-ggplot(data = repeat_dat_flag, mapping = aes(x = date, y = flu.admits)) +
-  geom_line() +
-  geom_line(aes(colour = type)) +
-  geom_point(aes(colour = type)) +
-  geom_segment(aes(x =  as.Date("2022-11-12"), 
-                   y = 24, 
-                   xend = as.Date("2022-11-26"), 
-                   yend = 24)) +
-  xlab("Date") +
-  ylab("Flu Hospital Admissions") +
-  ggtitle(paste("Repeat Component where Flag Was NOT Raised with Increased Tolerance"))
+res %>%
+  count(score) %>%
+  mutate(score = as.character(score)) %>%
+  ggplot(aes(score,n)) +
+  geom_col() +
+  labs(x = "Score", y = "Count")
 ```
-The black horizontal line in the plot above is the tolerance length, and you can see that it is shorter than the repeats in the forecast; therefore, a flag has been raised.
 
-
-#### E. An example using this function to look at plausibility of observed data:
-```{r}
-plane_repeat(location = "32", input = observed_signal, seed = prepped_seed)
-```
-No flag is raised, which indicates that there are not an implausible number of repeats in the observed data.
-
-
-## 5. Trend component, plane_trend():
-
-#### A. Description:
-This function identifies any change points in the forecast data or in the final observed data point. Change points are identified by any significant change in magnitude or direction of the slope of the time series. This component can only be used to assess the plausibility of **forecast** data. This function uses the 3 arguments that all rplanes component functions use (location, input, seed), and it has one additional argument:
-
-* `sig_lvl`: The significance level at which to identify change points (between zero and one); default is 0.1
-
-
-
-#### B. An example where a flag is NOT raised and the data is plausible:
-```{r}
-plane_trend(location = "17", input = forecast_signal, seed = prepped_seed)
-```
-The `indicator` is FALSE, so no flag is raised, and this forecast is considered plausible. No change points have been detected in the forecast or in the final observed data point. Because there are no flags, flagged_dates is NA. We will look at the "output" tibble in an example where there were change points, but first, let's observe location 17:
-```{r fig.align = 'center'}
-trend_dat <- get_data(Location = "17")
-
-ggplot(data = trend_dat, mapping = aes(x = date, y = flu.admits)) +
-  geom_line() +
-  geom_line(aes(colour = type)) +
-  geom_point(aes(colour = type)) +
-  xlab("Date") +
-  ylab("Flu Hospital Admissions") +
-  ggtitle(paste("Trend Component where Flag Was Not Raised under Default Arguments"))
-```
-As we can see, there is no significant change in the magnitude or direction of the slope in the forecast data. This is considered plausible.
-
-#### C. An example where a flag IS raised and the data is implausible:
-```{r}
-plane_trend(location = "54", input = forecast_signal, seed = prepped_seed)
-```
-The output of `plane_trend()` is a `list` of 3:
-
-- `indicator`: Logical as to whether or not the any forecast data or the final observed data point are a significant change point
-- `output`: An n x 7 tibble. The length of the forecast plus the observed data determine the length of n. The columns are:
-     - `Location`: A character vector with the location code
-     - `Index`: An integer index of all observed and forecast data
-     - `Date`: The dates corresponding to all observed and forecast data (formatted as date)
-     - `Value`: The incidence of all observed and forecast data (e.g., hospitalization rates)
-     - `Type`: Indicates whether the data row is observed or forecast data
-     - `Changepoint`: Logical identifying any change point (whether in observed or forecast data). A TRUE is returned if any point is determined a change point based on the user defined significance level (sig_lvl).
-     - `Flagged`: Logical indicating whether or not the change point was flagged. Change points are only flagged if they are in the forecast data or are the final observed data point. A TRUE is returned if the Changepoint is TRUE and is a final observed data point or any forecast point.
- - `flagged_dates`: The date of any flagged change point(s). If there are none, NA is returned
-
-As we see, the indicator was TRUE, so a flag was raised; this forecast is implausible. Notice that two change points were identified (Index 13 and 16), but only one was flagged (Index 16). This is because we are only concerned with change points in the forecast and the last observed data point. Let's visualize this:
-```{r fig.align = 'center'}
-trend_dat_flag <- get_data(Location = "54")
-
-# Get flag info for change points:
-trend_flags <- 
-  plane_trend(location = "54", input = forecast_signal, seed = prepped_seed)[["output"]] %>%
-  dplyr::filter(Changepoint == TRUE)
-
-
-ggplot(data = trend_dat_flag, mapping = aes(x = date, y = flu.admits)) +
-  geom_line() +
-  geom_line(aes(colour = type)) +
-  geom_point(aes(colour = type)) +
-  geom_point(data = trend_flags, mapping = aes(x = Date, y = Value, fill=Flagged), shape=23, size=4) +
-  xlab("Date") +
-  ylab("Flu Hospital Admissions") +
-  ggtitle(paste("Trend Component where Flag Was Raised under Default Arguments"))
-```
-In this plot, both change points are shown with a diamond, but only the latter point is flagged. In this example, the last observed point (blue diamond) was considered the change point. This forecast is implausible.
-
-
-#### D. Sensitivity of the Significance Level:
-Let's continue looking at location "54." Under the default significance level (`sig_lvl` = 0.1), a flag is raised and the last observed data point is considered a change point. If we reduce the significance level to 0.05 (and therefore decrease the sensitivity of the test), we now see that no flags are raised:
-```{r}
-plane_trend(location = "54", input = forecast_signal, seed = prepped_seed, sig_lvl = 0.05)
-```
-Now the `indicator` is FALSE, and no flags are raised. We encourage you to perform some exploratory data analysis on your data to find the level of sensitivity required for your needs.
