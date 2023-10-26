@@ -386,7 +386,7 @@ plane_repeat <- function(location, input, seed, tolerance = NULL, prepend = NULL
 #'
 #' @param input Input signal data to be scored; object must be one of [forecast][to_signal()] or [observed][to_signal()]
 #' @param seed Prepared [seed][plane_seed()]
-#' @param components Character vector specifying components. Must be either "all" or any combination of "cover", "diff", "taper", "trend", and "repeats". Default is `'all'` and will use all available components for the given signal
+#' @param components Character vector specifying components. Must be either "all" or any combination of "cover", "diff", "taper", "trend", and "repeat". Default is `"all"` and will use all available components for the given signal
 #' @param args Named list of arguments for component functions. List elements must be named to match the given component and arguments passed as a nested list (e.g., `args = list(trend = list(sig_lvl = 0.05))`). Default is `NULL` and defaults for all components will be used
 #'
 #'
@@ -432,12 +432,12 @@ plane_score <- function(input, seed, components = "all", args = NULL) {
     list(cover = list(.function = plane_cover),
          diff = list(.function = plane_diff),
          taper = list(.function = plane_taper),
-         repeats = list(.function = plane_repeat),
+         `repeat` = list(.function = plane_repeat),
          trend = list(.function = plane_trend)
     )
 
   ## verify components for signal type ... some won't apply to observed
-  allowed_observed <- c("repeats","diff")
+  allowed_observed <- c("repeat","diff")
 
   ## handle condition when "all" components are requested
   ## observed data will only have a subset (the allowed compoments above)
