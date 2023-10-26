@@ -461,9 +461,9 @@ and the names of the components that were flagged (if any):</p>
 <col width="10%">
 <col width="9%">
 <col width="15%">
-<col width="6%">
-<col width="36%">
-<col width="22%">
+<col width="7%">
+<col width="35%">
+<col width="21%">
 </colgroup>
 <thead><tr class="header">
 <th align="left">location</th>
@@ -479,7 +479,7 @@ and the names of the components that were flagged (if any):</p>
 <td align="right">1</td>
 <td align="right">5</td>
 <td align="right">0.2</td>
-<td align="left">cover;diff;repeats;taper;trend</td>
+<td align="left">cover;diff;repeat;taper;trend</td>
 <td align="left">cover</td>
 </tr>
 <tr class="even">
@@ -487,7 +487,7 @@ and the names of the components that were flagged (if any):</p>
 <td align="right">0</td>
 <td align="right">5</td>
 <td align="right">0.0</td>
-<td align="left">cover;diff;repeats;taper;trend</td>
+<td align="left">cover;diff;repeat;taper;trend</td>
 <td align="left">NA</td>
 </tr>
 <tr class="odd">
@@ -495,7 +495,7 @@ and the names of the components that were flagged (if any):</p>
 <td align="right">0</td>
 <td align="right">5</td>
 <td align="right">0.0</td>
-<td align="left">cover;diff;repeats;taper;trend</td>
+<td align="left">cover;diff;repeat;taper;trend</td>
 <td align="left">NA</td>
 </tr>
 <tr class="even">
@@ -503,7 +503,7 @@ and the names of the components that were flagged (if any):</p>
 <td align="right">0</td>
 <td align="right">5</td>
 <td align="right">0.0</td>
-<td align="left">cover;diff;repeats;taper;trend</td>
+<td align="left">cover;diff;repeat;taper;trend</td>
 <td align="left">NA</td>
 </tr>
 <tr class="odd">
@@ -511,7 +511,7 @@ and the names of the components that were flagged (if any):</p>
 <td align="right">0</td>
 <td align="right">5</td>
 <td align="right">0.0</td>
-<td align="left">cover;diff;repeats;taper;trend</td>
+<td align="left">cover;diff;repeat;taper;trend</td>
 <td align="left">NA</td>
 </tr>
 <tr class="even">
@@ -519,8 +519,8 @@ and the names of the components that were flagged (if any):</p>
 <td align="right">3</td>
 <td align="right">5</td>
 <td align="right">0.6</td>
-<td align="left">cover;diff;repeats;taper;trend</td>
-<td align="left">cover;diff;repeats</td>
+<td align="left">cover;diff;repeat;taper;trend</td>
+<td align="left">cover;diff;repeat</td>
 </tr>
 </tbody>
 </table>
@@ -643,7 +643,7 @@ assessing an observed signal in this case, we can explicitly tell the
 scoring to use certain components. It is important to emphasize that not
 all components will work for both forecasts and observed signals:</p>
 <div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">scores</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/plane_score.html">plane_score</a></span><span class="op">(</span><span class="va">observed_signal</span>, seed <span class="op">=</span> <span class="va">prepped_seed</span>, components <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"repeats"</span>,<span class="st">"diff"</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
+<code class="sourceCode R"><span><span class="va">scores</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/plane_score.html">plane_score</a></span><span class="op">(</span><span class="va">observed_signal</span>, seed <span class="op">=</span> <span class="va">prepped_seed</span>, components <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"repeat"</span>,<span class="st">"diff"</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
 <div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">res</span> <span class="op">&lt;-</span></span>
 <span>  <span class="va">scores</span><span class="op">$</span><span class="va">scores_summary</span> <span class="op"><a href="../reference/pipe.html">%&gt;%</a></span></span>
@@ -665,7 +665,7 @@ all components will work for both forecasts and observed signals:</p>
 <td align="right">0</td>
 <td align="right">2</td>
 <td align="right">0</td>
-<td align="left">diff;repeats</td>
+<td align="left">diff;repeat</td>
 <td align="left">NA</td>
 </tr>
 <tr class="even">
@@ -673,7 +673,7 @@ all components will work for both forecasts and observed signals:</p>
 <td align="right">0</td>
 <td align="right">2</td>
 <td align="right">0</td>
-<td align="left">diff;repeats</td>
+<td align="left">diff;repeat</td>
 <td align="left">NA</td>
 </tr>
 <tr class="odd">
@@ -681,7 +681,7 @@ all components will work for both forecasts and observed signals:</p>
 <td align="right">0</td>
 <td align="right">2</td>
 <td align="right">0</td>
-<td align="left">diff;repeats</td>
+<td align="left">diff;repeat</td>
 <td align="left">NA</td>
 </tr>
 <tr class="even">
@@ -689,7 +689,7 @@ all components will work for both forecasts and observed signals:</p>
 <td align="right">0</td>
 <td align="right">2</td>
 <td align="right">0</td>
-<td align="left">diff;repeats</td>
+<td align="left">diff;repeat</td>
 <td align="left">NA</td>
 </tr>
 <tr class="odd">
@@ -697,7 +697,7 @@ all components will work for both forecasts and observed signals:</p>
 <td align="right">0</td>
 <td align="right">2</td>
 <td align="right">0</td>
-<td align="left">diff;repeats</td>
+<td align="left">diff;repeat</td>
 <td align="left">NA</td>
 </tr>
 <tr class="even">
@@ -705,7 +705,7 @@ all components will work for both forecasts and observed signals:</p>
 <td align="right">0</td>
 <td align="right">2</td>
 <td align="right">0</td>
-<td align="left">diff;repeats</td>
+<td align="left">diff;repeat</td>
 <td align="left">NA</td>
 </tr>
 </tbody>
