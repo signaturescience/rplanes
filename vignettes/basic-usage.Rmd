@@ -251,7 +251,7 @@ prepped_seed <- plane_seed(observed_signal, cut_date = "2022-12-24")
 As with the forecast assessments, the PLANES scoring is wrapped for convenience in the `plane_score()` function. Since we are assessing an observed signal in this case, we can explicitly tell the scoring to use certain components. It is important to emphasize that not all components will work for both forecasts and observed signals:
 
 ```{r}
-scores <- plane_score(observed_signal, seed = prepped_seed, components = c("repeats","diff"))
+scores <- plane_score(observed_signal, seed = prepped_seed, components = c("repeat","diff"))
 ```
 
 ```{r, echo=TRUE, eval=FALSE}
