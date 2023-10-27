@@ -10,7 +10,7 @@
     
     <a class="navbar-brand me-2" href="../index.html">rplanes</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.0.0.9001</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.0.1</small>
 
     
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -45,9 +45,20 @@
     </div>
 
     <div class="section level2">
-<h2 class="pkg-version" data-toc-text="development version" id="rplanes-development-version">rplanes (development version)<a class="anchor" aria-label="anchor" href="#rplanes-development-version"></a></h2>
-<ul><li>Initial release.</li>
-</ul></div>
+<h2 class="pkg-version" data-toc-text="0.0.1" id="rplanes-001">rplanes 0.0.1<a class="anchor" aria-label="anchor" href="#rplanes-001"></a></h2>
+<p>Alpha release for the <code>rplanes</code> package!</p>
+<p>Several of the key package features include:</p>
+<ul><li>
+<code><a href="../reference/read_forecast.html">read_forecast()</a></code>: Data prep function to read in forecasts in quantile format used by forecasting hubs</li>
+<li>
+<code><a href="../reference/to_signal.html">to_signal()</a></code>: Constructor for the “signal” S3 class used in the package</li>
+<li>
+<code><a href="../reference/plane_seed.html">plane_seed()</a></code>: Function to create the baseline characteristics from observed data for a given range of dates</li>
+<li>
+<code><a href="../reference/plane_score.html">plane_score()</a></code>: Wrapper to run plausibility components independently across all locations</li>
+</ul><p>As of this release, there are five plausibility components included <code>rplanes</code>. We will continue to develop the package to add components, update functionality, and address any issues as needed.</p>
+<p>For more information on features and use-cases, refer to the “Basic Usage” vignette on the <a href="https://signaturescience.github.io/rplanes/articles/basic-usage.html">package website</a> or in the R console: <code><a href="../articles/basic-usage.html">vignette("basic-usage", package="rplanes")</a></code></p>
+</div>
   </main></div>
 
 
