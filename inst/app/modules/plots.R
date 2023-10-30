@@ -60,7 +60,8 @@ plotServer <- function(id, data_1, locations, seed, forecast, btn1, status, outc
 
     # run the scoring using logic to modify the args parameter in plane_score for the repeats function
     # This applies to the repeats option, was not taking my direct inputs unless I specified it out into a list like below.
-    scoring <- eventReactive(btn1(), {
+    scoring <- eventReactive(btn1(),{
+
       if (input$tol == 0 & input$pre == 0){
         comp_args <- list(trend = list(sig_lvl = input$sig), repeats = list(prepend = NULL, tolerance = NULL))
       } else if (input$tol == 0){
@@ -79,9 +80,6 @@ plotServer <- function(id, data_1, locations, seed, forecast, btn1, status, outc
     })
 
     output$score_table <- DT::renderDataTable(server = FALSE, {
-      if(btn2()>=1){
-        return()
-      }
       df <- purrr::map_df(scoring()$scores_summary, as_tibble) %>%
         tidyr::replace_na(list(flagged = "None"))
       DT::datatable(
@@ -264,9 +262,6 @@ plotServer <- function(id, data_1, locations, seed, forecast, btn1, status, outc
       bindEvent(input$loc, input$plot_type)
 
     output$plane_plot <- renderPlot({
-      if(btn2()>=1){
-        return()
-      }
       plotting()
     })
 
@@ -318,9 +313,6 @@ plotServer <- function(id, data_1, locations, seed, forecast, btn1, status, outc
       bindEvent(input$loc, input$plot_type)
 
     output$plane_table <- DT::renderDT({
-      if(btn2()>=1) {
-        return()
-      }
       table_df() %>% DT::datatable(rownames = F, filter = "none", escape = F, extensions =c("Buttons", 'Scroller'), options = list(dom = 'Brtip',
                                                                                                                                    deferRender = TRUE,
                                                                                                                                    scrollY = 200,
