@@ -248,7 +248,7 @@ prepped_seed <- plane_seed(observed_signal, cut_date = "2022-12-24")
 
 ## Run `plane_score()` and visualize results
 
-As with the forecast assessments, the PLANES scoring is wrapped for convenience in the `plane_score()` function. Since we are assessing an observed signal in this case, we can explicitly tell the scoring to use certain components. It is important to emphasize that not all components will work for both forecasts and observed signals. Currently, `plane_cover()`, `plane_taper()`, and `plane_trend()` work only for forecasts and not observed data.
+As with the forecast assessments, the PLANES scoring is wrapped for convenience in the `plane_score()` function. Since we are assessing an observed signal in this case, we can explicitly tell the scoring to use certain components. It is important to emphasize that not all components will work for both forecasts and observed signals. Currently, `plane_cover()`, `plane_taper()`, and `plane_trend()` work only for forecasts and not for observed data.
 
 ```{r}
 scores <- plane_score(observed_signal, seed = prepped_seed, components = c("repeat","diff"))
