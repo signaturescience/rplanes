@@ -22,6 +22,7 @@ knitr::opts_chunk$set(
 )
 ```
 
+
 # Overview
 The rplanes package currently has a set of 5 components that each test for plausibility in different ways. All 5 components are then wrapped into `plane_score()` to produce an overall score based on the number of components that raised implausibility flags. You can also run the components individually to look at certain aspects of your data. All components can be used to test forecast data, but some cannot be used on observed data. We will go through the components individually below. All 5 components use the following arguments, and some have additional arguments:
 
