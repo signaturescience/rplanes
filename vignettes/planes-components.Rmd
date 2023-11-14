@@ -43,7 +43,7 @@ tibble(
   knitr::kable()
 ```
 
-All components are designed to take a location (i.e., string specifying location code), the signal prepared with `to_signal()` that will be evaluated, and the seed prepared with `plane_seed()` that holds baseline characteristics. To further customize behavior some of the functions accept additional arguments, each of which is detailed in the examples that follow. Each component function returns a `list` that is standardized to at minimum return an "indicator" element, which returns `TRUE` if the component flag is raised (i.e., data is implausible) and `FALSE` if the component flag is not raised (i.e., data is not implausible).
+All components are designed to take a location (i.e., string specifying location code), the signal prepared with `to_signal()` that will be evaluated, and the seed prepared with `plane_seed()` that holds baseline characteristics. To further customize behavior, some of the functions accept additional arguments, each of which is detailed in the examples that follow. Each component function returns a `list` that is standardized to at minimum return an "indicator" element, which returns `TRUE` if the component flag is raised (i.e., data is implausible) and `FALSE` if the component flag is not raised (i.e., data is not implausible).
 
 It is important to emphasize that all of the individual components are wrapped in the `plane_score()` function for ease-of-use, and in practice most users will likely use the wrapper instead of accessing the functions directly. However, in the examples below we use the functions outside of `plane_score()` to more clearly demonstrate how they operate. Likewise, we have created mock forecast data in each of the examples to demonstrate usage. Users should refer to the ["Basic Usage" vignette](basic-usage.html) for practical guidance on how to prepare data for `rplanes` analyses.
 
@@ -109,11 +109,10 @@ The seed stores the last observed value and the maximum difference for the given
 
 ```{r}
 prepped_seed$`01`$last_value
-```
 
-```{r}
 prepped_seed$`01`$diff$max
 ```
+
 
 We would expect the implausibility flag to be raised in this case:
 
@@ -172,9 +171,7 @@ Again, we can see the last value and maximum observed difference for the given l
 
 ```{r}
 prepped_seed$`01`$last_value
-```
 
-```{r}
 prepped_seed$`01`$diff$max
 ```
 
@@ -648,7 +645,7 @@ ggplot(data = trend_dat, mapping = aes(x = date, y = flu.admits)) +
 
 ### Controlling sensitivity with parameters
 
-By toggling the significance level, we can control the sensitivity of the trend assessment. Here we lower the significance level to `0.001` and see that the flag is no longer raised:
+By toggling the significance level, we can control the sensitivity of the trend assessment. Here we lower the significance level to `0.001` and see that the flag is no longer raised using the same data as above in section **0.7.1**:
 
 ```{r}
 plane_trend(location = "01", input = prepped_forecast, seed = prepped_seed, sig_lvl = 0.001)
@@ -711,3 +708,64 @@ ggplot(data = trend_dat, mapping = aes(x = date, y = flu.admits)) +
   ylab("Flu hospitalizations") +
   ggtitle(paste("Trend component\nNot flagged"))
 ```
+
+### Not flagged as implausible but does have change point in the observed data
+There are some cases where `plane_trend()` will identify a change point in the observed data but will not raise an implausibility flag for the forecast. This only occurs when there is a significant change point found in the observed data prior to the last observed time stamp. We include this in the output tibble to provide more information to users. Here we will look at location "06" where that occurs. We need to define a new prepped_seed, because this changepoint occurs after our previously defined cut date:
+```{r}
+## create seed with cut date
+prepped_seed <- plane_seed(observed_signal, cut_date = "2022-10-29")
+point_est <- c(40,41,40,43)
+
+prepped_forecast <-
+  tibble(
+    location = "06",
+    date = seq(as.Date("2022-11-05"), as.Date("2022-11-26"), by = 7),
+    horizon = 1:4,
+    lower = point_est - c(5,10,15,20),
+    point = point_est,
+    upper = point_est + c(5,10,15,20),
+  ) %>%
+  to_signal(outcome = "flu.admits", type = "forecast", horizon = 4)
+```
+
+```{r, echo=TRUE, eval=FALSE}
+prepped_forecast$data
+```
+
+```{r, echo=FALSE, eval=TRUE}
+prepped_forecast$data %>%
+  knitr::kable(.)
+```
+
+In this case we would not expect an implausibility flag to be raised, but we do see a change point:
+
+```{r}
+plane_trend(location = "06", input = prepped_forecast, seed = prepped_seed, sig_lvl = 0.1)
+```
+Note that on 2022-09-17, a changepoint was observed, but because it was not in our forecast, nor was it the last observed data point, a flag was not raised.
+
+The visualization below shows the changepoint in the observed data:
+
+```{r}
+trend_dat <- 
+  prepped_forecast$data %>%
+  mutate(type = "forecast") %>%
+  rename(flu.admits = point) %>%
+  bind_rows(observed_signal$data %>% filter(location == "06") %>% filter(date <= "2022-10-29") %>% mutate(type="observed"), . )
+
+trend_flags <-
+  plane_trend(location = "06", input = prepped_forecast, seed = prepped_seed, sig_lvl = 0.1)$output %>%
+  filter(Changepoint == TRUE)
+
+ggplot(data = trend_dat, mapping = aes(x = date, y = flu.admits)) +
+  geom_line(lty="dotted") +
+  geom_line(aes(colour = type)) +
+  geom_point(aes(colour = type)) +
+  geom_ribbon(aes(ymin = lower, ymax = upper, fill = type), alpha = 0.2) +
+  geom_point(data = trend_flags, mapping = aes(x = Date, y = Value), shape=23, size=4) +
+  xlab("Date") +
+  ylab("Flu hospitalizations") +
+  ggtitle(paste("Trend component\nUnflagged Changepoint in Observed Signal"))
+```
+We can see the change point on 2022-09-17 (diamond), but it was not flagged, because it was not in the forecast or the last observed point.
+
