@@ -645,7 +645,7 @@ ggplot(data = trend_dat, mapping = aes(x = date, y = flu.admits)) +
 
 ### Controlling sensitivity with parameters
 
-By toggling the significance level, we can control the sensitivity of the trend assessment. Here we lower the significance level to `0.001` and see that the flag is no longer raised using the same data as above in section **0.7.1**:
+By toggling the significance level, we can control the sensitivity of the trend assessment. Here we lower the significance level to `0.001` and see that the flag is no longer raised using the same data as above:
 
 ```{r}
 plane_trend(location = "01", input = prepped_forecast, seed = prepped_seed, sig_lvl = 0.001)
@@ -709,8 +709,10 @@ ggplot(data = trend_dat, mapping = aes(x = date, y = flu.admits)) +
   ggtitle(paste("Trend component\nNot flagged"))
 ```
 
-### Not flagged as implausible but does have change point in the observed data
-There are some cases where `plane_trend()` will identify a change point in the observed data but will not raise an implausibility flag for the forecast. This only occurs when there is a significant change point found in the observed data prior to the last observed time stamp. We include this in the output tibble to provide more information to users. Here we will look at location "06" where that occurs. We need to define a new prepped_seed, because this changepoint occurs after our previously defined cut date:
+Note that there are some cases where `plane_trend()` will identify a change point in the seed data but will not raise an implausibility flag for the forecast. The trend component checks for change points in all forecasted horizons and the most recent value in the seed. If there is a significant change point found elsewhere in the seed time series, the function will not raise a flag. However, the output includes any change points detected regardless of whether or not they raised on an implausibility flag.
+
+To demonstrate this, we can look at location "06". For this example, we need to define a new `prepped_seed` object because this change point occurs after our previously defined cut date:
+
 ```{r}
 ## create seed with cut date
 prepped_seed <- plane_seed(observed_signal, cut_date = "2022-10-29")
@@ -742,9 +744,10 @@ In this case we would not expect an implausibility flag to be raised, but we do 
 ```{r}
 plane_trend(location = "06", input = prepped_forecast, seed = prepped_seed, sig_lvl = 0.1)
 ```
-Note that on 2022-09-17, a changepoint was observed, but because it was not in our forecast, nor was it the last observed data point, a flag was not raised.
 
-The visualization below shows the changepoint in the observed data:
+Note that on 2022-09-17, a change point was detected, but because it was not in our forecast, nor was it the last observed data point there was no flag raised.
+
+The visualization below shows the change point in the observed data:
 
 ```{r}
 trend_dat <- 
@@ -765,7 +768,5 @@ ggplot(data = trend_dat, mapping = aes(x = date, y = flu.admits)) +
   geom_point(data = trend_flags, mapping = aes(x = Date, y = Value), shape=23, size=4) +
   xlab("Date") +
   ylab("Flu hospitalizations") +
-  ggtitle(paste("Trend component\nUnflagged Changepoint in Observed Signal"))
+  ggtitle(paste("Trend component\nNot flagged but change point in seed"))
 ```
-We can see the change point on 2022-09-17 (diamond), but it was not flagged, because it was not in the forecast or the last observed point.
-
