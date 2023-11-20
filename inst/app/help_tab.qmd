@@ -65,9 +65,9 @@ knitr::kable(data_2, align = c("lcccccc"))
 
 ## Analysis Steps
 
-After the two files have been uploaded, by default, the comparison data set is marked as a forecast. Deselect "Is the Comparison a Forecast" if it is not.
+After the two files have been uploaded, select the type of signal to be evaluated (the comparison).
 
-The resolution, depending on the signal, must be indicated as Daily, Weekly or Monthly.
+The resolution, is calculated from the date column of the observed data set. Depending on the signal, it will be indicated as Daily, Weekly or Monthly.
 
 The type of outcome is the type of signal, in the example it is flu.admits. This field must match the outcome column of the first upload (Observed Data).
 
@@ -89,7 +89,7 @@ The scoring component `Coverage` assessed by rplanes::plane_cover evaluates whet
 
 `Taper` assessed by rplanes::plane_taper evaluates whether or not the forecast signal interval tapers (i.e., decreases in width) as horizons progress. Currently set to work on forecast data sets.
 
-`Trend` assessed by rplanes::plane_trend identifies any change points in forecast data or in the final observed data point. Currently set to work on forecast data sets. The additional argument significance, is the significance level at which to identify change points (between zero and one); default is 0.1.
+`Trend` assessed by rplanes::plane_trend identifies any change points in forecast data or in the final observed data point. Currently set to work on forecast data sets. The additional argument significance, is the significance level at which to identify change points (between zero and one); default is 0.1. You can adjust this in the choice of significance input ranging from 0 to 1.
 
 [When]{.underline} the comparison is [not a forecast]{.underline} only the difference and repeat components are run.
 

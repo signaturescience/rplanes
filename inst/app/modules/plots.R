@@ -6,7 +6,7 @@ inputsUI <- function(id){
   ns <- NS(id)
   tagList(
     shinyjs::hidden(div(id = ns("args1"),
-                        sliderTextInput(ns("sig"), "Choice of Significance for Trend", choices = seq(from = 0.01, to = 0.2, by = 0.01), selected = 0.1, grid = TRUE))),
+                        numericInput(ns("sig"), "Choice of Significance for Trend", value = 0.1, min = 0, max = 1, step = 0.01))),
     shinyjs::hidden(div(id = ns("args2"),
                         numericInput(ns("tol"), label = "Choice of Tolerance", value = 0, min = 0, max = 50, step = 1),
                         numericInput(ns("pre"), label = "Prepend Values",  value = 0, min = 0, max = 365, step = 1)))
@@ -24,7 +24,7 @@ plotUI <- function(id){
                         fluidRow(column(width = 3,
                                         pickerInput(ns("loc"), "Choose a Location", choices = "", options =  list(`live-search` = TRUE))),
                                  column(width = 6,
-                                        awesomeRadio(ns("plot_type"), "Choice of Plot", choices = c("Coverage" = "cover", "Difference" = "diff", "Repeat" = "repeat", "Taper" = "taper", "Trend" = "trend"), selected = "cover", inline = TRUE, status = "warning"))),
+                                        awesomeRadio(ns("plot_type"), "Choice of Plot", choices = "", inline = TRUE, status = "warning"))),
                         tabsetPanel(id = "tabsets_2",
                                     tabPanel(title = textOutput(ns("label")),
                                              plotOutput(ns("plane_plot")),
@@ -45,14 +45,17 @@ plotServer <- function(id, score, data_1, locations, seed, forecast, btn1, statu
 
     observe({
       updatePickerInput(session = session, inputId = "loc", choices = locations())
+      choice <- c("Coverage" = "cover", "Difference" = "diff", "Repeat" = "repeat", "Taper" = "taper", "Trend" = "trend")
+      plot_choice <- choice[choice %in% score()]
+      updateAwesomeRadio(session = session, inputId = "plot_type", choices = plot_choice, inline = TRUE, status = "warning")
     })
 
 
 
     # unhide the locations options and function arguments depending on scoring selection
     observe({
-      shinyjs::toggle(id = "args1", condition = {score() %in% "trend"})
-      shinyjs::toggle(id = "args2", condition = {score() %in% "repeat"})
+      shinyjs::toggle(id = "args1", condition = {"trend" %in% score()})
+      shinyjs::toggle(id = "args2", condition = {"repeat" %in% score()})
       shinyjs::toggle(id = "args3", condition = {btn1()})
     })
 

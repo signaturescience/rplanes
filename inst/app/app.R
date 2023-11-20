@@ -71,29 +71,17 @@ server <- function(input, output, session){
 
   observe({
     if(input$status == "Observed"){
-      score_opt = c("Difference" = "diff", "Repeat" = "repeat", "Trend" = "trend")
-      updatePickerInput(session = session, inputId = "score", choices = score_opt, selected = c("diff", "repeat", "trend"))
+      score_opt = c("Difference" = "diff", "Repeat" = "repeat")
+      updatePickerInput(session = session, inputId = "score", choices = score_opt, selected = c("diff", "repeat"))
     } else {
       score_opt = c("Coverage" = "cover", "Difference" = "diff", "Repeat" = "repeat", "Taper" = "taper", "Trend" = "trend")
       updatePickerInput(session = session, inputId = "score", choices = score_opt, selected = c("Coverage" = "cover", "Difference" = "diff", "Repeat" = "repeat", "Taper" = "taper", "Trend" = "trend"))
     }
   })
 
-  #observeEvent(input$score, {
-  #  updateCheckboxGroupButtons(session = session, inputId = "score",
-  #                             disabledChoices = if("all" %in% input$score) c("cover", "diff", "repeat", "taper", "trend") else NULL,
-  #                             checkIcon = list(
-  #                               yes = tags$i(class = "fa fa-check-square",
-  #                                            style = "color: steelblue"),
-  #                               no = tags$i(class = "fa fa-square-o",
-  #                                           style = "color: steelblue")))
-  #}, ignoreInit = TRUE)
-
-
     # when actionBttn is selected automatically go to the plot tab
     observeEvent(input$run, {
         updateTabsetPanel(session, "tabsets", selected = "Plots")
-
     })
 
     # Update the resolution choice depending on the type of data in the observed dataset (data_1)
