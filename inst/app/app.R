@@ -20,20 +20,20 @@ ui <- fluidPage(
     titlePanel("Rplanes Explorer"),
     sidebarLayout(position = "left",
                   sidebarPanel(width = 3,
-                      prettyRadioButtons("choice", "Choose Dataset", choices = c("Example", "Custom"), status = "warning", inline = TRUE, icon = icon("check"), bigger = TRUE),
+                      prettyRadioButtons("choice", "Choose Dataset", choices = c("Custom", "Example"), selected = "Custom",  status = "warning", inline = TRUE, icon = icon("check"), bigger = TRUE),
                       shinyjs::hidden(div(id = "choice_custom",
                                           fileInput("upload_1", label = "Upload Observed Data", multiple = F, accept = ".csv"),
                                           fileInput("upload_2", label = "Upload Comparison", multiple = F, accept = ".csv")
                                           )),
-                                          h6("Is the Comparison a Forecast"),
-                                          prettyToggle("status", label_on = "Yes", icon_on = icon("check"), status_on = "success", label_off = "No", icon_off = icon("remove"), status_off = "warning", value = TRUE),
+                      awesomeRadio("status", "Type of signal to be evaluated", choices = c("Forecast", "Observed"), selected= "Forecast", inline = T, status = "warning"),
                       awesomeRadio("rez", "Resolution", choices = "", inline = T, status = "info"),
-                      textInput("outcome", label = "Type of Outcome", value = "flu.admits"),
+                      textInput("outcome", label = "Outcome", value = "flu.admits"),
                       shinyjs::hidden(div(id = "forc_opt",
                                           shinyWidgets::autonumericInput("horizon", "Forecast Horizon", value = 4, maximumValue = 30, minimumValue = 1, decimalPlaces = 0, align = "center", modifyValueOnWheel = T))),
                       materialSwitch("opts", label = "Modify Defaults", value = FALSE, status = "success"),
                       shinyjs::hidden(div(id = "add_options",
                                           textInput("width", label = "Prediction Interval", value = "95"),
+                                          pickerInput(inputId = "score", label = "PLANES Component(s)", choices = "", options = list(`actions-box` = TRUE), multiple = T),
                                           inputsUI("tab2")
                                           )),
                       actionBttn("run", "Analyze", style = "unite", color = "danger"),
@@ -61,14 +61,34 @@ ui <- fluidPage(
 
 server <- function(input, output, session){
 
-    observe({
-        # unhide the upload custom dataset when choosing "Custom" radiobutton
-        shinyjs::toggle(id = "choice_custom", condition = {input$choice %in% "Custom"})
-        # unhide additional options upon switch
-        shinyjs::toggle(id = "add_options", condition = {input$opts == TRUE})
-        shinyjs::toggle(id = "forc_opt", condition = {input$status == TRUE})
-
+  observe({
+    # unhide the upload custom dataset when choosing "Custom" radiobutton
+    shinyjs::toggle(id = "choice_custom", condition = {input$choice %in% "Custom"})
+    # unhide additional options upon switch
+    shinyjs::toggle(id = "add_options", condition = {input$opts == TRUE})
+    shinyjs::toggle(id = "forc_opt", condition = {input$status == "Forecast"})
     })
+
+  observe({
+    if(input$status == "Observed"){
+      score_opt = c("Difference" = "diff", "Repeat" = "repeat", "Trend" = "trend")
+      updatePickerInput(session = session, inputId = "score", choices = score_opt, selected = c("diff", "repeat", "trend"))
+    } else {
+      score_opt = c("Coverage" = "cover", "Difference" = "diff", "Repeat" = "repeat", "Taper" = "taper", "Trend" = "trend")
+      updatePickerInput(session = session, inputId = "score", choices = score_opt, selected = c("Coverage" = "cover", "Difference" = "diff", "Repeat" = "repeat", "Taper" = "taper", "Trend" = "trend"))
+    }
+  })
+
+  #observeEvent(input$score, {
+  #  updateCheckboxGroupButtons(session = session, inputId = "score",
+  #                             disabledChoices = if("all" %in% input$score) c("cover", "diff", "repeat", "taper", "trend") else NULL,
+  #                             checkIcon = list(
+  #                               yes = tags$i(class = "fa fa-check-square",
+  #                                            style = "color: steelblue"),
+  #                               no = tags$i(class = "fa fa-square-o",
+  #                                           style = "color: steelblue")))
+  #}, ignoreInit = TRUE)
+
 
     # when actionBttn is selected automatically go to the plot tab
     observeEvent(input$run, {
@@ -113,6 +133,7 @@ server <- function(input, output, session){
     # pass input$status and input$outcome to module plots
     status <- reactive({ input$status })
     outcome <- reactive({ input$outcome })
+    score <- reactive({ input$score })
 
     data_1 <- reactive({
         if (input$choice == "Example") {
@@ -146,7 +167,7 @@ server <- function(input, output, session){
                          csv = read.csv(input$upload_2$datapath),
                          validate("Invalid file; Please upload a .csv file"))
         }
-        if(input$status){
+        if(input$status == "Forecast"){
             df$forecast_date <- as.Date(df$forecast_date, format = "%Y-%m-%d")
             df$target_end_date <- as.Date(df$target_end_date, format = "%Y-%m-%d")
             width <- round(rplanes:::q_boundary(as.numeric(input$width)), 2)
@@ -166,7 +187,7 @@ server <- function(input, output, session){
 
     prepped_seed <- reactive({
         df = data_1() %>% dplyr::filter(location %in% unique(data_2()$location))
-        if(input$status){
+        if(input$status == "Forecast"){
             date = unique(df$date)[unique(df$date) < min(data_2()$target_end_date)]
             date = tail(date, 1)
         } else {
@@ -182,7 +203,7 @@ server <- function(input, output, session){
         if (input$choice == "Example"){
             forc <- read_forecast(system.file("extdata/forecast", "2022-10-31-SigSci-TSENS.csv", package = "rplanes"), pi_width = as.numeric(input$width)) %>%
                 to_signal(., outcome = "flu.admits", type = "forecast", horizon = as.numeric(input$horizon), resolution = input$rez)
-        } else if (input$status){
+        } else if (input$status == "Forecast"){
             forc <- read_forecast(input$upload_2$datapath, pi_width = as.numeric(input$width)) %>%
                 filter(location %in% unique(data_1()$location)) %>%
                 to_signal(., outcome = input$outcome, type = "forecast", horizon = input$horizon, resolution = input$rez)
@@ -203,7 +224,7 @@ server <- function(input, output, session){
 
     dataServer("tab1", data_1 = data_1, data_2 = data_2 )
 
-    plotServer("tab2", data_1 = data_1, locations = locations, seed = prepped_seed, forecast = prepped_forecast, btn1 = btn1, status = status, outcome = outcome, btn2 = btn2)
+    plotServer("tab2", score = score, data_1 = data_1, locations = locations, seed = prepped_seed, forecast = prepped_forecast, btn1 = btn1, status = status, outcome = outcome, btn2 = btn2)
 
     # reset all inputs including the ones in the modules
     observeEvent(input$reset,{

@@ -5,10 +5,6 @@
 inputsUI <- function(id){
   ns <- NS(id)
   tagList(
-    radioGroupButtons(ns("score"), "Choice of scoring", choices = c("All"= "all", "Coverage" = "cover", "Difference" = "diff", "Repeat" = "repeats", "Taper" = "taper", "Trend" = "trend"), individual = F, direction = "vertical", justified = F, width = "100%",
-                      checkIcon = list(
-                        yes = icon("square-check"),
-                        no = icon("square"))),
     shinyjs::hidden(div(id = ns("args1"),
                         sliderTextInput(ns("sig"), "Choice of Significance for Trend", choices = seq(from = 0.01, to = 0.2, by = 0.01), selected = 0.1, grid = TRUE))),
     shinyjs::hidden(div(id = ns("args2"),
@@ -28,7 +24,7 @@ plotUI <- function(id){
                         fluidRow(column(width = 3,
                                         pickerInput(ns("loc"), "Choose a Location", choices = "", options =  list(`live-search` = TRUE))),
                                  column(width = 6,
-                                        awesomeRadio(ns("plot_type"), "Choice of Plot", choices = c("Coverage" = "cover", "Difference" = "diff", "Repeat" = "repeats", "Taper" = "taper", "Trend" = "trend"), selected = "cover", inline = TRUE, status = "warning"))),
+                                        awesomeRadio(ns("plot_type"), "Choice of Plot", choices = c("Coverage" = "cover", "Difference" = "diff", "Repeat" = "repeat", "Taper" = "taper", "Trend" = "trend"), selected = "cover", inline = TRUE, status = "warning"))),
                         tabsetPanel(id = "tabsets_2",
                                     tabPanel(title = textOutput(ns("label")),
                                              plotOutput(ns("plane_plot")),
@@ -44,17 +40,19 @@ plotUI <- function(id){
 # Server Side ####
 #~~~~~~~~~~~~~~~~~~~~~~~~
 
-plotServer <- function(id, data_1, locations, seed, forecast, btn1, status, outcome, btn2) {
+plotServer <- function(id, score, data_1, locations, seed, forecast, btn1, status, outcome, btn2) {
   moduleServer(id, function(input, output, session) {
 
     observe({
       updatePickerInput(session = session, inputId = "loc", choices = locations())
     })
 
+
+
     # unhide the locations options and function arguments depending on scoring selection
     observe({
-      shinyjs::toggle(id = "args1", condition = {input$score == "all" | input$score == "trend"})
-      shinyjs::toggle(id = "args2", condition = {input$score == "all" | input$score == "repeats"})
+      shinyjs::toggle(id = "args1", condition = {score() %in% "trend"})
+      shinyjs::toggle(id = "args2", condition = {score() %in% "repeat"})
       shinyjs::toggle(id = "args3", condition = {btn1()})
     })
 
@@ -63,19 +61,15 @@ plotServer <- function(id, data_1, locations, seed, forecast, btn1, status, outc
     scoring <- eventReactive(btn1(),{
 
       if (input$tol == 0 & input$pre == 0){
-        comp_args <- list(trend = list(sig_lvl = input$sig), repeats = list(prepend = NULL, tolerance = NULL))
+        comp_args <- list(trend = list(sig_lvl = input$sig), `repeat` = list(prepend = NULL, tolerance = NULL))
       } else if (input$tol == 0){
-        comp_args <- list(trend = list(sig_lvl = input$sig), repeats = list(prepend = input$pre, tolerance = NULL))
+        comp_args <- list(trend = list(sig_lvl = input$sig), `repeat` = list(prepend = input$pre, tolerance = NULL))
       } else if (input$pre == 0){
-        comp_args <- list(trend = list(sig_lvl = input$sig), repeats = list(prepend = NULL, tolerance = input$tol))
+        comp_args <- list(trend = list(sig_lvl = input$sig), `repeat` = list(prepend = NULL, tolerance = input$tol))
       } else {
-        comp_args <- list(trend = list(sig_lvl = input$sig), repeats = list(prepend = input$pre, tolerance = input$tol))
+        comp_args <- list(trend = list(sig_lvl = input$sig), `repeat` = list(prepend = input$pre, tolerance = input$tol))
       }
-      if (status()){
-        scores <- plane_score(forecast(), seed(), components = input$score, args = comp_args)
-      } else {
-        scores <- plane_score(forecast(), seed(), components = c("diff", "repeats"), args = comp_args)
-      }
+      scores <- plane_score(forecast(), seed(), components = score(), args = comp_args)
       scores
     })
 
@@ -122,7 +116,7 @@ plotServer <- function(id, data_1, locations, seed, forecast, btn1, status, outc
         "Coverage Plot"
       } else if(input$plot_type == "diff") {
         "Difference Plot"
-      } else if(input$plot_type == "repeats"){
+      } else if(input$plot_type == "repeat"){
         "Repeat Plot"
       } else if(input$plot_type == "taper"){
         "Taper Plot"
@@ -137,7 +131,7 @@ plotServer <- function(id, data_1, locations, seed, forecast, btn1, status, outc
         "Coverage Table"
       } else if(input$plot_type == "diff") {
         "Difference Table"
-      } else if(input$plot_type == "repeats"){
+      } else if(input$plot_type == "repeat"){
         "Repeat Table"
       } else if(input$plot_type == "taper"){
         "Taper Table"
@@ -159,7 +153,7 @@ plotServer <- function(id, data_1, locations, seed, forecast, btn1, status, outc
 
       forecast_df <- forecast()$data
       forecast_df$date = as.character(forecast_df$date)
-      if (status()){
+      if (status() == "Forecast"){
         forecast_df = forecast_df %>%
           dplyr::filter(location %in% input$loc) %>%
           dplyr::mutate(type = "Forecast") %>%
@@ -189,7 +183,7 @@ plotServer <- function(id, data_1, locations, seed, forecast, btn1, status, outc
     })
 
     repeats <- reactive({
-      item <- paste0(input$loc, "-repeats")
+      item <- paste0(input$loc, "-repeat")
       df <- scoring()$full_results[[item]]
       df
     })
@@ -230,7 +224,7 @@ plotServer <- function(id, data_1, locations, seed, forecast, btn1, status, outc
           labs(title = "Plane Diff", x = "", y = "Value", subtitle = paste0("For location: ", input$loc), caption = paste0("Point greater than ", difference()$maximum_difference, " is circled in red.")) +
           geom_line(alpha = 0.3) +
           theme(legend.title=element_blank())
-      } else if(input$plot_type == "repeats"){
+      } else if(input$plot_type == "repeat"){
         repeat_tbl <- repeats()$repeats
         p <- ggplot() +
           geom_point(data = plot_df(), aes(date, point, color = type), size = 4) +
@@ -288,7 +282,7 @@ plotServer <- function(id, data_1, locations, seed, forecast, btn1, status, outc
                          Max_difference = difference()$maximum_difference) %>%
           dplyr::mutate(`Diff > Max` = Difference > Max_difference ) %>%
           dplyr::rename(`Difference between Successive Value` = Difference, `Max Difference Observed in Data` = Max_difference, `Difference > Max Observed`= `Diff > Max`)
-      } else if(input$plot_type == "repeats"){
+      } else if(input$plot_type == "repeat"){
         validate(need(!is.na(repeats()$repeats[1,1]), message = "No Repeats detected."))
         df <- repeats()$repeats %>%
             dplyr::mutate(Repeat = TRUE) %>%
