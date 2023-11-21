@@ -28,10 +28,15 @@ A \code{list} with the following values:
 }
 }
 \description{
-This function ...
+This function evaluates the shape of the trajectory of the forecast signal and compares that shape to existing shapes in observed data. If the shape is flagged as a novel shape, a flag is raised, and the signal is considered implausible. See details for further information.
 }
 \details{
-asdfadsf
+This function uses a Dynamic Time Warping (DTW) algorithm to identify shapes within the observed seed data.
+
+sliding windows
+dtw on observed
+dtw comparing observed distances to signal distances
+if distance > threshold, than it is novel and it is flagged as implausible
 }
 \examples{
 adfsadfa
