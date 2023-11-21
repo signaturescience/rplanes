@@ -65,7 +65,7 @@ knitr::kable(data_2, align = c("lcccccc"))
 
 ## Analysis Steps
 
-After the two files have been uploaded, select the type of signal to be evaluated (the comparison).
+After the two files have been uploaded, select the type of signal (a forecast or observed data) to be evaluated (the comparison).
 
 The resolution, is calculated from the date column of the observed data set. Depending on the signal, it will be indicated as Daily, Weekly or Monthly.
 
@@ -85,7 +85,7 @@ The scoring component `Coverage` assessed by rplanes::plane_cover evaluates whet
 
 `Difference` assessed by rplanes::plane_diff, evaluates the point-to-point difference and whether the comparison exceeds the maximum difference in observed data. Works on observed or forecast data sets.
 
-`Repeat` assessed by rplanes::plane_repeat evaluates whether consecutive values in observations or forecasts are repeated a k number of times. Additional arguments tolerance is the number (k) of allowed repeats, and prepend indicates the number of values from the observed data set to be evaluated against. Both arguments default to NULL and the values are determined from the observed data.
+`Repeat` assessed by rplanes::plane_repeat evaluates whether consecutive values in observations or forecasts are repeated a k number of times. Additional arguments tolerance is the number (k) of allowed repeats, and prepend indicates the number of values from the observed data set to be evaluated against. Both arguments default to 0 for NULL, and the values for both arguments are determined from the observed data.
 
 `Taper` assessed by rplanes::plane_taper evaluates whether or not the forecast signal interval tapers (i.e., decreases in width) as horizons progress. Currently set to work on forecast data sets.
 

@@ -6,10 +6,12 @@ dataUI <- function(id){
   ns <- NS(id)
   tagList(
     wellPanel(
+      h3(HTML("<span style='color: #008B8B;'>Observed Signal Data Set</span>")),
       fluidRow(column(width = 9), DT::dataTableOutput(ns("observed")))
 
       ),
     wellPanel(
+      h3(HTML("<span style='color: #008B8B;'>Data Set to be Evaluated</span>")),
       fluidRow(column(width = 9, DT::dataTableOutput(ns("forecast"))))
   )
   )

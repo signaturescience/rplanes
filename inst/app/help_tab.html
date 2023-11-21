@@ -89,39 +89,39 @@ ul.task-list li input[type="checkbox"] {
 </thead>
 <tbody>
 <tr class="odd">
-<td style="text-align: left;">2022-08-20</td>
-<td style="text-align: center;">2022</td>
-<td style="text-align: center;">33</td>
-<td style="text-align: center;">12</td>
-<td style="text-align: center;">67</td>
-</tr>
-<tr class="even">
-<td style="text-align: left;">2023-04-29</td>
+<td style="text-align: left;">2023-01-28</td>
 <td style="text-align: center;">2023</td>
-<td style="text-align: center;">17</td>
-<td style="text-align: center;">27</td>
-<td style="text-align: center;">14</td>
-</tr>
-<tr class="odd">
-<td style="text-align: left;">2022-06-11</td>
-<td style="text-align: center;">2022</td>
-<td style="text-align: center;">23</td>
-<td style="text-align: center;">55</td>
-<td style="text-align: center;">15</td>
+<td style="text-align: center;">4</td>
+<td style="text-align: center;">25</td>
+<td style="text-align: center;">71</td>
 </tr>
 <tr class="even">
-<td style="text-align: left;">2022-10-01</td>
+<td style="text-align: left;">2022-04-02</td>
 <td style="text-align: center;">2022</td>
-<td style="text-align: center;">39</td>
-<td style="text-align: center;">25</td>
-<td style="text-align: center;">4</td>
+<td style="text-align: center;">13</td>
+<td style="text-align: center;">19</td>
+<td style="text-align: center;">37</td>
 </tr>
 <tr class="odd">
-<td style="text-align: left;">2022-09-17</td>
+<td style="text-align: left;">2022-12-17</td>
 <td style="text-align: center;">2022</td>
-<td style="text-align: center;">37</td>
-<td style="text-align: center;">49</td>
-<td style="text-align: center;">0</td>
+<td style="text-align: center;">50</td>
+<td style="text-align: center;">32</td>
+<td style="text-align: center;">231</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">2023-02-04</td>
+<td style="text-align: center;">2023</td>
+<td style="text-align: center;">5</td>
+<td style="text-align: center;">51</td>
+<td style="text-align: center;">64</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">2023-01-14</td>
+<td style="text-align: center;">2023</td>
+<td style="text-align: center;">2</td>
+<td style="text-align: center;">31</td>
+<td style="text-align: center;">58</td>
 </tr>
 </tbody>
 </table>
@@ -258,7 +258,7 @@ ul.task-list li input[type="checkbox"] {
 </section>
 <section id="analysis-steps" class="level2">
 <h2 class="anchored" data-anchor-id="analysis-steps">Analysis Steps</h2>
-<p>After the two files have been uploaded, select the type of signal to be evaluated (the comparison).</p>
+<p>After the two files have been uploaded, select the type of signal (a forecast or observed data) to be evaluated (the comparison).</p>
 <p>The resolution, is calculated from the date column of the observed data set. Depending on the signal, it will be indicated as Daily, Weekly or Monthly.</p>
 <p>The type of outcome is the type of signal, in the example it is flu.admits. This field must match the outcome column of the first upload (Observed Data).</p>
 <p>If the comparison is a forecast, the horizon drop down will appear and this is to indicate how far the signal is forecasted. The example data contains 4 week ahead forecasts so the horizon is 4.</p>
@@ -270,7 +270,7 @@ ul.task-list li input[type="checkbox"] {
 <h2 class="anchored" data-anchor-id="components">Components</h2>
 <p>The scoring component <code>Coverage</code> assessed by rplanes::plane_cover evaluates whether the signal covers the last observed value. Currently set to work on forecast data sets.</p>
 <p><code>Difference</code> assessed by rplanes::plane_diff, evaluates the point-to-point difference and whether the comparison exceeds the maximum difference in observed data. Works on observed or forecast data sets.</p>
-<p><code>Repeat</code> assessed by rplanes::plane_repeat evaluates whether consecutive values in observations or forecasts are repeated a k number of times. Additional arguments tolerance is the number (k) of allowed repeats, and prepend indicates the number of values from the observed data set to be evaluated against. Both arguments default to NULL and the values are determined from the observed data.</p>
+<p><code>Repeat</code> assessed by rplanes::plane_repeat evaluates whether consecutive values in observations or forecasts are repeated a k number of times. Additional arguments tolerance is the number (k) of allowed repeats, and prepend indicates the number of values from the observed data set to be evaluated against. Both arguments default to 0 for NULL, and the values for both arguments are determined from the observed data.</p>
 <p><code>Taper</code> assessed by rplanes::plane_taper evaluates whether or not the forecast signal interval tapers (i.e., decreases in width) as horizons progress. Currently set to work on forecast data sets.</p>
 <p><code>Trend</code> assessed by rplanes::plane_trend identifies any change points in forecast data or in the final observed data point. Currently set to work on forecast data sets. The additional argument significance, is the significance level at which to identify change points (between zero and one); default is 0.1. You can adjust this in the choice of significance input ranging from 0 to 1.</p>
 <p><u>When</u> the comparison is <u>not a forecast</u> only the difference and repeat components are run.</p>
