@@ -30,23 +30,7 @@ dataServer <- function(id, data_1, data_2) {
                     options = list(
                       scrollX = TRUE,
                       autoWidth = FALSE,
-                      dom = 'Blrtip',
-                      buttons = list(
-                        'copy',
-                        # this will download the entire dataset using modifier = list(page = "all")
-                        list(
-                          extend = 'collection',
-                          buttons = list(
-                            list(extend = "csv", filename = "score_data", exportOptions = list(
-                              columns = ":visible",modifier = list(page = "all"))
-                            ),
-                            list(extend = 'excel', filename = "score_data", title = NULL,
-                                 exportOptions = list(columns = ":visible", modifier = list(page = "all"))),
-                            list(extend = 'pdf', filename = "score_data", exportOptions = list(
-                              columns = ":visible", modifier = list(page = "all")))),
-                          text = 'Download')
-
-                      ),
+                      dom = 'lrtip',
                       # add the option to display more rows as a length menu
                       lengthMenu = list(c(10, 30, 50, -1),
                                         c('10', '30', '50', 'All'))
@@ -62,23 +46,7 @@ dataServer <- function(id, data_1, data_2) {
                     options = list(
                       scrollX = TRUE,
                       autoWidth = FALSE,
-                      dom = 'Blrtip',
-                      buttons = list(
-                        'copy',
-                        # this will download the entire dataset using modifier = list(page = "all")
-                        list(
-                          extend = 'collection',
-                          buttons = list(
-                            list(extend = "csv", filename = "score_data", exportOptions = list(
-                              columns = ":visible",modifier = list(page = "all"))
-                            ),
-                            list(extend = 'excel', filename = "score_data", title = NULL,
-                                 exportOptions = list(columns = ":visible", modifier = list(page = "all"))),
-                            list(extend = 'pdf', filename = "score_data", exportOptions = list(
-                              columns = ":visible", modifier = list(page = "all")))),
-                          text = 'Download')
-
-                      ),
+                      dom = 'lrtip',
                       # add the option to display more rows as a length menu
                       lengthMenu = list(c(10, 30, 50, -1),
                                         c('10', '30', '50', 'All'))

@@ -8,52 +8,55 @@ library(rplanes)
 library(lubridate)
 
 # list module files and iterate sourcing them to use within the app.
-module_sources <- list.files(path = here::here("inst/app/modules"), full.names = TRUE)
-#module_sources <- list.files(path = system.file("app/modules/", package = "rplanes"), full.names = TRUE)
+#module_sources <- list.files(path = here::here("inst/app/modules"), full.names = TRUE)
+module_sources <- list.files(path = system.file("app/modules/", package = "rplanes"), full.names = TRUE)
 sapply(module_sources, source)
 
 
 # UI SIDE ####
 
-ui <- fluidPage(
-    useShinyjs(),  # Set up shinyjs
-    titlePanel("Rplanes Explorer"),
-    sidebarLayout(position = "left",
-                  sidebarPanel(width = 3,
-                      prettyRadioButtons("choice", "Choose Dataset", choices = c("Custom", "Example"), selected = "Custom",  status = "warning", inline = TRUE, icon = icon("check"), bigger = TRUE),
-                      shinyjs::hidden(div(id = "choice_custom",
-                                          fileInput("upload_1", label = "Upload Observed Data", multiple = F, accept = ".csv"),
-                                          fileInput("upload_2", label = "Upload Comparison", multiple = F, accept = ".csv")
-                                          )),
-                      awesomeRadio("status", "Type of signal to be evaluated", choices = c("Forecast", "Observed"), selected= "Forecast", inline = T, status = "warning"),
-                      awesomeRadio("rez", "Resolution", choices = "", inline = T, status = "info"),
-                      textInput("outcome", label = "Outcome", value = "flu.admits"),
-                      shinyjs::hidden(div(id = "forc_opt",
-                                          shinyWidgets::autonumericInput("horizon", "Forecast Horizon", value = 4, maximumValue = 30, minimumValue = 1, decimalPlaces = 0, align = "center", modifyValueOnWheel = T))),
-                      materialSwitch("opts", label = "Modify Defaults", value = FALSE, status = "success"),
-                      shinyjs::hidden(div(id = "add_options",
-                                          textInput("width", label = "Prediction Interval", value = "95"),
-                                          pickerInput(inputId = "score", label = "PLANES Component(s)", choices = "", options = list(`actions-box` = TRUE), multiple = T),
-                                          inputsUI("tab2")
-                                          )),
-                      actionBttn("run", "Analyze", style = "unite", color = "danger"),
-                      actionBttn("reset", "Reset", style = "stretch", color = "warning")
-                  ), # sidebarPanel
-                  mainPanel(width = 9,
-                      tabsetPanel(id = "tabsets",
-                          tabPanel("Data",
-                                   dataUI("tab1")),
-                          tabPanel("Plots",
-                                   plotUI("tab2")
-                          ),
-                          tabPanel("Help",
-                                   #htmltools::includeHTML(system.file("app/help_tab.html", package = "rplanes"))
-                                   htmltools::includeHTML(here::here("inst/app/help_tab.html"))
-                                   )
-                      )
+ui <- navbarPage(title = "Rplanes Explorer",
+                 inverse = T, # invert color of navigation top bar to black
+                 useShinyjs(),  # Set up shinyjs
+                 tabPanel(title = "Plots",
+                          fluidPage(
+                            sidebarLayout(position = "left",
+                                          sidebarPanel(width = 3,
+                                                       prettyRadioButtons("choice", "Choose Dataset", choices = c("Custom", "Example"), selected = "Custom",  status = "warning", inline = TRUE, icon = icon("check"), bigger = TRUE),
+                                                       shinyjs::hidden(div(id = "choice_custom",
+                                                                           fileInput("upload_1", label = "Upload Observed Data", multiple = F, accept = ".csv"),
+                                                                           fileInput("upload_2", label = "Upload Comparison", multiple = F, accept = ".csv")
+                                                       )),
+                                                       awesomeRadio("status", "Type of signal to be evaluated", choices = c("Forecast", "Observed"), selected= "Forecast", inline = T, status = "warning"),
+                                                       awesomeRadio("rez", "Resolution", choices = "", inline = T, status = "info"),
+                                                       textInput("outcome", label = "Outcome", value = "flu.admits"),
+                                                       shinyjs::hidden(div(id = "forc_opt",
+                                                                           shinyWidgets::autonumericInput("horizon", "Forecast Horizon", value = 4, maximumValue = 30, minimumValue = 1, decimalPlaces = 0, align = "center", modifyValueOnWheel = T))),
+                                                       materialSwitch("opts", label = "Modify Defaults", value = FALSE, status = "success"),
+                                                       shinyjs::hidden(div(id = "add_options",
+                                                                           textInput("width", label = "Prediction Interval", value = "95"),
+                                                                           pickerInput(inputId = "score", label = "PLANES Component(s)", choices = "", options = list(`actions-box` = TRUE), multiple = T),
+                                                                           inputsUI("tab2")
+                                                       )),
+                                                       actionBttn("run", "Analyze", style = "unite", color = "danger"),
+                                                       actionBttn("reset", "Reset", style = "stretch", color = "warning")
+                                          ),
+                                          mainPanel(
+                                            tabsetPanel(id = "tabs1",
+                                                        tabPanel("Scoring Table",
+                                                                 tableUI("tab2")),
+                                                        tabPanel("Data Tables",
+                                                                 dataUI("tab1"))),
+                                            plotUI("tab2")
 
-                  )),
+                                          )
+                                          ), # sidebarLayout
 
+
+                          )), # plots tab
+                 tabPanel(title = "Help",
+                          htmltools::includeHTML(system.file("app/help_tab.html", package = "rplanes")))
+                          #htmltools::includeHTML(here::here("inst/app/help_tab.html"))),
 ) # UI end
 
 
@@ -69,6 +72,7 @@ server <- function(input, output, session){
     shinyjs::toggle(id = "forc_opt", condition = {input$status == "Forecast"})
     })
 
+  # update scoring options based on user input of observed or forecast comparison
   observe({
     if(input$status == "Observed"){
       score_opt = c("Difference" = "diff", "Repeat" = "repeat")
@@ -79,14 +83,9 @@ server <- function(input, output, session){
     }
   })
 
-    # when actionBttn is selected automatically go to the plot tab
-    observeEvent(input$run, {
-        updateTabsetPanel(session, "tabsets", selected = "Plots")
-    })
-
     # Update the resolution choice depending on the type of data in the observed dataset (data_1)
     # This ensures no error when data is weekly the resolution weekly will be selected.
-    # TODO: Perhaps we can do away with this selection, leaving for now just incase
+    # TODO: Perhaps we can do away with this selection, making this as part of the backend instead. Leaving this for now.
 
     observe({
         if(input$choice %in% "Example"){
@@ -118,7 +117,7 @@ server <- function(input, output, session){
     btn1 <- reactive({ input$run })
     btn2 <- reactive({ input$reset })
 
-    # pass input$status and input$outcome to module plots
+    # pass input$status, input$outcome, input$score to module plots
     status <- reactive({ input$status })
     outcome <- reactive({ input$outcome })
     score <- reactive({ input$score })

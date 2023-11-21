@@ -13,13 +13,17 @@ inputsUI <- function(id){
   )
 }
 
+tableUI <- function(id){
+  ns <- NS(id)
+  tagList(
+    DT::dataTableOutput(ns("score_table")) %>% shinycssloaders::withSpinner(type = 6, size=2, color = "#246479")
+  )
+
+}
+
 plotUI <- function(id){
   ns <- NS(id)
   tagList(
-    wellPanel(fluidRow(column(width = 9,
-                              DT::dataTableOutput(ns("score_table")) %>% shinycssloaders::withSpinner(type = 6, size=2, color = "#246479")
-                              ))),
-
     shinyjs::hidden(div(id = ns("args3"),
                         fluidRow(column(width = 3,
                                         pickerInput(ns("loc"), "Choose a Location", choices = "", options =  list(`live-search` = TRUE))),
@@ -31,7 +35,7 @@ plotUI <- function(id){
                                              downloadButton(ns("plot_dwn"))),
                                     tabPanel(title = textOutput(ns("label2")),
                                              DT::DTOutput(ns("plane_table")))
-                                    ))),
+                                    )))
 
     )
 }
