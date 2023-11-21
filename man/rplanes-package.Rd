@@ -22,7 +22,7 @@ Useful links:
 
 Authors:
 \itemize{
-  \item Desiree Williams (\href{https://orcid.org/0000-0002-0524-2055}{ORCID})
+  \item Desiree Williams
   \item Amy Benefield
 }
 
