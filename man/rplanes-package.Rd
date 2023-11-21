@@ -18,7 +18,7 @@ Useful links:
 
 }
 \author{
-\strong{Maintainer}: VP Nagraj \email{pnagraj@signaturescience.com} (\href{https://orcid.org/0000-0003-0060-566X}{ORCID})
+\strong{Maintainer}: VP Nagraj \email{nagraj@nagraj.net} (\href{https://orcid.org/0000-0003-0060-566X}{ORCID})
 
 Authors:
 \itemize{

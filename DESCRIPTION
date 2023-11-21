@@ -1,18 +1,19 @@
 Package: rplanes
 Title: Plausibility Analysis of Epidemiological Signals in 'R'
 Version: 0.0.1
-Authors@R: c(
-    person("VP", "Nagraj", , "pnagraj@signaturescience.com", role = c("aut", "cre"),
-           comment = c(ORCID = "0000-0003-0060-566X")),
-    person("Desiree", "Williams", role = "aut",
-           comment = c(ORCID = "0000-0002-0524-2055")),
-    person("Amy", "Benefield", role = "aut")
-  )
-Description: The 'rplanes' package provides functionality to prepare data
-    and and analyze plausibility of both forecasted and reported
-    epidemiological signals. The functions implement a set of plausbility
-    algorithms that are agnostic to geographic and time resolutions and
-    are calculated independently then presented as a combined score.
+Authors@R: 
+    c(person(given = "VP",
+             family = "Nagraj",
+             role = c("aut", "cre"),
+             email = "nagraj@nagraj.net",
+             comment = c(ORCID = "0000-0003-0060-566X")),
+      person(given = "Desiree",
+             family = "Williams",
+             role = "aut"),
+      person(given = "Amy",
+             family = "Benefield",
+             role = "aut"))
+Description: The 'rplanes' package provides functionality to prepare data and and analyze plausibility of both forecasted and reported epidemiological signals. The functions implement a set of plausbility algorithms that are agnostic to geographic and time resolutions and are calculated independently then presented as a combined score.
 License: MIT + file LICENSE
 URL: https://signaturescience.github.io/rplanes/
 Depends: 

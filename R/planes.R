@@ -249,10 +249,10 @@ plane_taper <- function(location, input, seed) {
 #'
 #' @description
 #'
-#' This function evaluates whether consecutive values in observations or forecasts are repeated a k number of times. This function takes in a [forecast][to_signal()] object that is either from an observed dataset or forecast dataset.
+#' This function evaluates whether consecutive values in observations or forecasts are repeated a k number of times. This function takes in a [forecast][to_signal()] or [observed][to_signal()] object that is either from an observed dataset or forecast dataset.
 #'
 #' @param location Character vector with location code; the location must appear in input and seed
-#' @param input Input signal data to be scored; object must be one of [forecast][to_signal()]
+#' @param input Input signal data to be scored; object must be one of [forecast][to_signal()] or [observed][to_signal()]
 #' @param seed Prepared [seed][plane_seed()]
 #' @param tolerance Integer value for the number of allowed repeats before flag is raised. Default is `NULL` and allowed repeats will be determined from seed.
 #' @param prepend Integer value for the number of values from seed to add before the evaluated signal. Default is `NULL` and the number of values will be determined from seed.
@@ -386,7 +386,7 @@ plane_repeat <- function(location, input, seed, tolerance = NULL, prepend = NULL
 #'
 #' @param input Input signal data to be scored; object must be one of [forecast][to_signal()] or [observed][to_signal()]
 #' @param seed Prepared [seed][plane_seed()]
-#' @param components Character vector specifying components. Must be either "all" or any combination of "cover", "diff", "taper", "trend", and "repeats". Default is `'all'` and will use all available components for the given signal
+#' @param components Character vector specifying components. Must be either "all" or any combination of "cover", "diff", "taper", "trend", and "repeat". Default is `"all"` and will use all available components for the given signal
 #' @param args Named list of arguments for component functions. List elements must be named to match the given component and arguments passed as a nested list (e.g., `args = list(trend = list(sig_lvl = 0.05))`). Default is `NULL` and defaults for all components will be used
 #'
 #'
@@ -398,8 +398,10 @@ plane_repeat <- function(location, input, seed, tolerance = NULL, prepend = NULL
 #' @export
 #'
 #' @examples
+#' \dontrun{
 #' ## read in example observed data and prep observed signal
 #' hosp <- read.csv(system.file("extdata/observed/hdgov_hosp_weekly.csv", package = "rplanes"))
+#'
 #' hosp$date <- as.Date(hosp$date, format = "%Y-%m-%d")
 #' prepped_observed <- to_signal(hosp, outcome = "flu.admits", type = "observed", resolution = "weeks")
 #'
@@ -412,14 +414,16 @@ plane_repeat <- function(location, input, seed, tolerance = NULL, prepend = NULL
 #' prepped_seed <- plane_seed(prepped_observed, cut_date = "2022-10-29")
 #'
 #' ## run plane scoring with all components
+#'
 #' plane_score(input = prepped_forecast, seed = prepped_seed)
 #'
 #' ## run plane scoring with select components
 #' plane_score(input = prepped_forecast, seed = prepped_seed, components = c("cover","taper"))
 #'
 #' ## run plane scoring with all components and additional args
-#' comp_args <- list(trend = list(sig_lvl = 0.05), repeats = list(prepend = 4, tolerance = 8))
+#' comp_args <- list(trend = list(sig_lvl = 0.05), repeat = list(prepend = 4, tolerance = 8))
 #' plane_score(input = prepped_forecast, seed = prepped_seed, args = comp_args)
+#' }
 plane_score <- function(input, seed, components = "all", args = NULL) {
 
   ## TODO: create this list as a built-in object?
@@ -428,17 +432,33 @@ plane_score <- function(input, seed, components = "all", args = NULL) {
     list(cover = list(.function = plane_cover),
          diff = list(.function = plane_diff),
          taper = list(.function = plane_taper),
-         repeats = list(.function = plane_repeat),
+         `repeat` = list(.function = plane_repeat),
          trend = list(.function = plane_trend)
     )
 
-  ## TODO: verify components for signal type ... some won't apply to observed
-  if(is_observed(input) & any(components %in% c("cover", "taper", "all"))) {
-    stop("Input must be a forecast when component contains 'cover' or 'taper'.")
-  }
+  ## verify components for signal type ... some won't apply to observed
+  allowed_observed <- c("repeat","diff")
 
+  ## handle condition when "all" components are requested
+  ## observed data will only have a subset (the allowed compoments above)
   if(length(components) == 1 && components == "all") {
-    components <- names(complist)
+    if(is_observed(input)) {
+      components <- allowed_observed
+    } else {
+      components <- names(complist)
+    }
+  } else {
+    ## now handle case when components have been defined as a character vector (not as "all")
+    if(is_observed(input)) {
+      if(any(!components %in% allowed_observed)) {
+        warning(paste0("Only the following components are allowed for observed signals: ", paste0(allowed_observed, collapse = ";")))
+      }
+      components <- components[components %in% allowed_observed]
+      ## check if components vector is empty and if so stop
+      if(length(components) == 0) {
+        stop("The signal is observed but none of the allowed components for observed signals were specified.")
+      }
+    }
   }
 
   ## get all possible locations
@@ -502,7 +522,7 @@ plane_score <- function(input, seed, components = "all", args = NULL) {
 #' This function identifies any change points in the forecast data or in the final observed data point. Change points are identified by any significant change in magnitude or direction of the slope of the time series.
 #'
 #' @param location Character vector with location code; the location must appear in input and seed
-#' @param input Input signal data to be scored; object must be one of [forecast][to_signal()] or [observed][to_signal()]
+#' @param input Input signal data to be scored; object must be [forecast][to_signal()]
 #' @param seed Prepared [seed][plane_seed()]
 #' @param sig_lvl The significance level at which to identify change points (between zero and one); default is 0.1
 #'
@@ -516,13 +536,15 @@ plane_score <- function(input, seed, components = "all", args = NULL) {
 #'     - **Date**: The dates corresponding to all observed and forecast data (formatted as date)
 #'     - **Value**: The incidence of all observed and forecast data (e.g., hospitalization rates)
 #'     - **Type**: Indicates whether the data row is observed or forecast data
-#'     - **Changepoint**: Logical identifying any change point (whether in observed or forecast data)
-#'     - **Flagged**: Logical indicating whether or not the change point was flagged. Change points are only flagged if they are in the forecast data or are the final observed data point
+#'     - **Changepoint**: Logical identifying any change point (whether in observed or forecast data). A TRUE is returned if any point is determined a change point based on the user defined significance level (sig_lvl).
+#'     - **Flagged**: Logical indicating whether or not the change point was flagged. Change points are only flagged if they are in the forecast data or are the final observed data point. A TRUE is returned if the Changepoint is TRUE and is a final observed data point or any forecast point.
 #' - **flagged_dates**: The date of any flagged change point(s). If there are none, NA is returned
 #'
 #' @details
 #'
-#' This function uses ecp::e.divisive(). Within e.divisive(), we use diff(x) instead of the raw data (x), which is a preference and slightly changes the way the points are identified. When we use diff(x), the index aligns with the gap between points rather than the points themselves. Instead of identifying a change point based on the change in size between two points, it identifies change points based on the change in the change itself. For example, the dataframe below shows an example of x and diff(x):
+#' This function uses [e.divisive()][ecp::e.divisive()], which implements a hierarchical divisive algorithm to identify change points based on distances between segments (calculated using equations 3 and 5 in Matteson and James, 2014; the larger the distance, the more likely a change point). Then a permutation test is used to calculate an approximate p-value.
+#'
+#' Within e.divisive(), we use diff(x) instead of x (the raw data). This is a preference and slightly changes the way that change points are identified. When we use diff(x), the index aligns with the gap between points rather than the points themselves. Instead of identifying a change point based on the change in size between two points, it identifies change points based on the change in the change itself. For example, the dataframe below shows an example of x and diff(x):
 #'
 #' |**Index**|**x**| **diff(x)**|
 #' | - |:--:| --:|
@@ -534,9 +556,17 @@ plane_score <- function(input, seed, components = "all", args = NULL) {
 #' | 6 | 75 |  0 |
 #' | 7 | 75 |  0 |
 #'
-#' Given this data, e.divisive(x) would identify index #5 (74) as the change point, because there was a jump of +37 between index 4 and 5. But e.divisive(diff(x)) would pick both index #3 (28) and #5 (1), because there was a jump of +28 from index 2 and 3, and there was a jump of -36 between index # 4 and 5. Ultimately, either way detects change points, but diff(x) seems to provide more information.
+#' Given this data, e.divisive(x) would identify index #5 (74) as the change point, because there was a jump of +37 between index 4 and 5. But e.divisive(diff(x)) would pick both index #3 (28) and #5 (1), because there was a jump of +28 from index 2 and 3, and there was a jump of -36 between index # 4 and 5. Ultimately, either way detects change points, but in this application (forecasting), diff(ex) is more discerning and less likely to identify change points haphazardly.
 #'
 #' Further, we specify min.size = 2, which means that we are forcing a gap of at least 2 points between detecting change points. In a roundabout way, this increases the significance level or at least decreases the number of change points identified. Should we decide to change the function so that we're not using diff(x), it probably makes sense to change min.size to 3.
+#'
+#' @references
+#'
+#'Matteson, D. S., & James, N. A. (2014). A nonparametric approach for multiple change point analysis of multivariate data. Journal of the American Statistical Association, 109(505), 334–345. https://doi.org/10.1080/01621459.2013.849605
+#'
+#' Matteson DS, James NA (2013). “A Nonparametric Approach for Multiple Change Point Analysis of Multivariate Data.” ArXiv e-prints. To appear in the Journal of the American Statistical Association, 1306.4933.
+#'
+#' Gandy, A. (2009) "Sequential implementation of Monte Carlo tests with uniformly bounded resampling risk." Journal of the American Statistical Association.
 #'
 #' @export
 #'
