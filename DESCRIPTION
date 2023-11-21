@@ -38,12 +38,10 @@ Suggests:
     MMWRweek,
     rmarkdown,
     shiny,
-    shinybusy,
     shinyjs,
     shinyWidgets,
     shinycssloaders,
     testthat (>= 3.0.0),
-    thematic,
     tools
 VignetteBuilder: 
     knitr
