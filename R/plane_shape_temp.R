@@ -1,19 +1,3 @@
-#' This helper function is used within plane_shape to generate sliding windows from a vector and return a data frame
-#'
-#' @param vector
-#' @param window_size
-#'
-#' @return
-#' @export
-#'
-#' @examples
-create_sliding_windows_df <- function(vector, window_size) {
-  num_windows <- length(vector) - window_size + 1
-  windows <- purrr::map(1:num_windows, ~ vector[.x:(.x + window_size - 1)])
-  as.data.frame(matrix(unlist(windows), nrow = num_windows, byrow = TRUE))
-}
-############################################################
-
 #' Shape Component
 #'
 #' @description
