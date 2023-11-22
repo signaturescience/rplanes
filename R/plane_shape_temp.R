@@ -30,11 +30,38 @@
 #' if distance > threshold, than it is novel and it is flagged as implausible
 #'
 #' @references
-#'asdfasfa
+#'
+#' Toni Giorgino. Computing and Visualizing Dynamic Time Warping Alignments in R: The dtw Package. Journal of Statistical Software, 31(7), 1-24. doi:10.18637/jss.v031.i07
+#'
+#' Tormene, P.; Giorgino, T.; Quaglini, S. & Stefanelli, M. Matching incomplete time series with dynamic time warping: an algorithm and an application to post-stroke rehabilitation. Artif Intell Med, 2009, 45, 11-34. doi:10.1016/j.artmed.2008.11.007
+#'
 #' @export
 #'
 #' @examples
-#'adfsadfa
+#' # We'll use the HHS Protect data that is internal to rplanes:
+#'
+#' hosp <- read.csv(system.file("extdata/observed/hdgov_hosp_weekly.csv", package = "rplanes"))
+#'
+#' tmp_hosp <-
+#'  hosp %>%
+#'  dplyr::select(date, location, flu.admits) %>%
+#'  dplyr::mutate(date = as.Date(date))
+#'
+#'  prepped_observed <- rplanes::to_signal(tmp_hosp, outcome = "flu.admits", type = "observed", resolution = "weeks")
+#'
+#'  prepped_forecast <- rplanes::read_forecast(system.file("extdata/forecast/2022-10-31-SigSci-TSENS.csv", package = "rplanes")) %>%
+#'    rplanes::to_signal(., outcome = "flu.admits", type = "forecast", horizon = 4)
+#'
+#' prepped_seed <- rplanes::plane_seed(prepped_observed, cut_date = "2022-10-29")
+#'
+#' # First, an example where the shape is novel and a flag is raised:
+#'
+#' plane_shape(location = "13", input = prepped_forecast, seed = prepped_seed)
+#'
+#' # Next, an example where a flag is not raised:
+#'
+#' plane_shape(location = "06", input = prepped_forecast, seed = prepped_seed)
+
 #'
 plane_shape <- function(location, input, seed) {
 
@@ -107,7 +134,7 @@ plane_shape <- function(location, input, seed) {
     obs_traj %>%
     dplyr::mutate(index = 1:dplyr::n()) %>%
     dplyr::group_split(index) %>%
-    map(., ~dplyr::select(.x, -index) %>% unlist(., use.names = FALSE))
+    purrr::map(., ~dplyr::select(.x, -index) %>% unlist(., use.names = FALSE))
 
   ## split the forecast components ...
   ## ... the lower bound, point estimate, upper bound ...
