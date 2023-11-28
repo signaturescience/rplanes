@@ -27,7 +27,7 @@ ui <- navbarPage(title = "Rplanes Explorer",
                                                                            fileInput("upload_2", label = "Upload Comparison", multiple = F, accept = ".csv")
                                                        )),
                                                        awesomeRadio("status", "Type of signal to be evaluated", choices = c("Forecast", "Observed"), selected= "Forecast", inline = T, status = "warning"),
-                                                       awesomeRadio("rez", "Resolution", choices = "", inline = T, status = "info"),
+                                                       awesomeRadio("rez", "Resolution", choices = c("Weekly" = "weeks", "Daily" = "days", "Monthly" = "months"), inline = T, status = "warning"),
                                                        textInput("outcome", label = "Outcome", value = "flu.admits"),
                                                        shinyjs::hidden(div(id = "forc_opt",
                                                                            shinyWidgets::autonumericInput("horizon", "Forecast Horizon", value = 4, maximumValue = 30, minimumValue = 1, decimalPlaces = 0, align = "center", modifyValueOnWheel = T))),
@@ -69,6 +69,7 @@ server <- function(input, output, session){
     # unhide additional options upon switch
     shinyjs::toggle(id = "add_options", condition = {input$opts == TRUE})
     shinyjs::toggle(id = "forc_opt", condition = {input$status == "Forecast"})
+    shinyjs::toggle(id = "rez", condition = {input$choice == "Custom"})
     })
 
   # update scoring options based on user input of observed or forecast comparison
@@ -86,31 +87,21 @@ server <- function(input, output, session){
     # This ensures no error when data is weekly the resolution weekly will be selected.
     # TODO: Perhaps we can do away with this selection, making this as part of the backend instead. Leaving this for now.
 
-    observe({
-        if(input$choice %in% "Example"){
-            duration = lubridate::interval(start = ymd(data_1()$date[1]), end = ymd(data_1()$date[2])) %>% as.period(unit = "day")
-            x = duration@day
-            if(x == 7){
-                y = list("Weekly" = "weeks")
-            } else if(x < 7){
-                y = list("Daily" = "days")
-            } else {
-                y = list("Monthly" = "months")
-            }
-        } else if (input$choice %in% "Custom"){
-            req(input$upload_1)
-            duration = lubridate::interval(start = ymd(data_1()$date[1]), end = ymd(data_1()$date[2])) %>% as.period(unit = "day")
-            x = duration@day
-            if(x == 7){
-                y = list("Weekly" = "weeks")
-            } else if(x < 7){
-                y = list("Daily" = "days")
-            } else {
-                y = list("Monthly" = "months")
-            }
-        }
-        updateAwesomeRadio(session = session, inputId = "rez", choices = y)
-    })
+    # observe({
+    #
+    #   req(input$upload_1)
+    #   duration = lubridate::interval(start = ymd(data_1()$date[1]), end = ymd(data_1()$date[2])) %>% as.period(unit = "day")
+    #   x = duration@day
+    #   if(x == 7){
+    #     y = list("Weekly" = "weeks")
+    #   } else if(x < 7){
+    #     y = list("Daily" = "days")
+    #   } else {
+    #     y = list("Monthly" = "months")
+    #   }
+    #
+    #   updateAwesomeRadio(session = session, inputId = "rez", choices = y)
+    # })
 
     # pass in actionBttn to module plots
     btn1 <- reactive({ input$run })
