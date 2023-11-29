@@ -16,7 +16,12 @@ inputsUI <- function(id){
 tableUI <- function(id){
   ns <- NS(id)
   tagList(
-    DT::dataTableOutput(ns("score_table")) %>% shinycssloaders::withSpinner(type = 6, size=2, color = "#246479")
+    fluidRow(column(width = 4,
+                    plotOutput(ns("score_plot")) %>% shinycssloaders::withSpinner(type = 6, size=2, color = "#246479")),
+             column(width = 8,
+                    DT::dataTableOutput(ns("score_table")) %>% shinycssloaders::withSpinner(type = 6, size=2, color = "#246479")
+    )
+    )
   )
 
 }
@@ -264,6 +269,18 @@ plotServer <- function(id, score, data_1, locations, seed, forecast, btn1, statu
 
     output$plane_plot <- renderPlot({
       plotting()
+    })
+
+    output$score_plot <- renderPlot({
+      purrr::map_df(scoring()$scores_summary, as_tibble) %>%
+        tidyr::separate_rows(components, sep = ";") %>%
+        mutate(flagged2 = purrr::map2_chr(.data$components, .data$flagged, function(x,y) if_else(grepl(x, y), "Flagged", "Not Flagged"))) %>%
+        ggplot(aes(components, location)) +
+        geom_tile(aes(fill = flagged2), col = "black") +
+        theme_minimal() +
+        theme(panel.grid = element_blank(), legend.position = "bottom", legend.title = element_blank()) +
+        scale_fill_manual(values = c("firebrick","lightgrey")) +
+        labs(x = NULL, y = NULL)
     })
 
     # Handler to download the plot
