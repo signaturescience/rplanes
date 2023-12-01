@@ -747,7 +747,7 @@ plane_trend <- function(location, input, seed, sig_lvl = 0.1) {
 #'                                resolution = "weeks")
 #'
 #'  prepped_forecast <- read_forecast(system.file("extdata/forecast/2022-10-31-SigSci-TSENS.csv",
-#                                                 package = "rplanes")) %>%
+#'                                                 package = "rplanes")) %>%
 #'    to_signal(., outcome = "flu.admits", type = "forecast", horizon = 4)
 #'
 #' prepped_seed <- plane_seed(prepped_observed, cut_date = "2022-10-29")
