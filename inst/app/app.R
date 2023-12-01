@@ -42,11 +42,10 @@ ui <- navbarPage(title = "Rplanes Explorer",
                                           ),
                                           mainPanel(
                                             tabsetPanel(id = "tabs1",
-                                                        tabPanel("Scoring Table",
-                                                                 tableUI("tab2")),
-                                                        tabPanel("Data Tables",
-                                                                 dataUI("tab1"))),
-                                            plotUI("tab2")
+                                                        tabPanel("Scores",
+                                                                 plotUI("tab2")),
+                                                        tabPanel("Raw Data",
+                                                                 dataUI("tab1")))
 
                                           )
                                           ), # sidebarLayout
