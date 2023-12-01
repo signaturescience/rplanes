@@ -28,7 +28,7 @@ ui <- navbarPage(title = "Rplanes Explorer",
                                                        )),
                                                        awesomeRadio("status", "Type of signal to be evaluated", choices = c("Forecast", "Observed"), selected= "Forecast", inline = T, status = "warning"),
                                                        awesomeRadio("rez", "Resolution", choices = c("Weekly" = "weeks", "Daily" = "days", "Monthly" = "months"), inline = T, status = "warning"),
-                                                       textInput("outcome", label = "Outcome", value = "flu.admits"),
+                                                       textInput("outcome", label = "Outcome", value = ""),
                                                        shinyjs::hidden(div(id = "forc_opt",
                                                                            shinyWidgets::autonumericInput("horizon", "Forecast Horizon", value = 4, maximumValue = 30, minimumValue = 1, decimalPlaces = 0, align = "center", modifyValueOnWheel = T))),
                                                        materialSwitch("opts", label = "Modify Defaults", value = FALSE, status = "success"),
@@ -68,7 +68,13 @@ server <- function(input, output, session){
     # unhide additional options upon switch
     shinyjs::toggle(id = "add_options", condition = {input$opts == TRUE})
     shinyjs::toggle(id = "forc_opt", condition = {input$status == "Forecast"})
-    shinyjs::toggle(id = "rez", condition = {input$choice == "Custom"})
+    ## certain modifications for data evaluation should not be available for example ...
+    ## ... these are fixed by the example and if user changed them the processing would break
+    ## toggle on only if example is not selected
+    shinyjs::toggle(id = "rez", condition = {input$choice != "Example"})
+    shinyjs::toggle(id = "horizon", condition = {input$choice != "Example"})
+    shinyjs::toggle(id = "status", condition = {input$choice != "Example"})
+    shinyjs::toggle(id = "outcome", condition = {input$choice != "Example"})
     })
 
   # update scoring options based on user input of observed or forecast comparison
@@ -170,7 +176,11 @@ server <- function(input, output, session){
             date = unique(df$date)[unique(df$date) < min(data_2()$date)]
             date = tail(date, 1)
         }
-        signal <- to_signal(df, outcome = input$outcome, type = "observed", resolution = input$rez)
+        if(input$choice == "Example") {
+          signal <- to_signal(df, outcome = "flu.admits", type = "observed", resolution = input$rez)
+        } else {
+          signal <- to_signal(df, outcome = input$outcome, type = "observed", resolution = input$rez)
+        }
         prepped_seed  <- plane_seed(signal, cut_date = date)
         prepped_seed
     })
@@ -178,7 +188,7 @@ server <- function(input, output, session){
     prepped_forecast <- reactive({
         if (input$choice == "Example"){
             forc <- read_forecast(system.file("extdata/forecast", "2022-10-31-SigSci-TSENS.csv", package = "rplanes"), pi_width = as.numeric(input$width)) %>%
-                to_signal(., outcome = "flu.admits", type = "forecast", horizon = as.numeric(input$horizon), resolution = input$rez)
+                to_signal(., outcome = "flu.admits", type = "forecast", horizon = 4, resolution = "weekly")
         } else if (input$status == "Forecast"){
             forc <- read_forecast(input$upload_2$datapath, pi_width = as.numeric(input$width)) %>%
                 filter(location %in% unique(data_1()$location)) %>%
