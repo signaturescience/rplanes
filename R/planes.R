@@ -690,3 +690,173 @@ plane_trend <- function(location, input, seed, sig_lvl = 0.1) {
 
 }
 
+
+#' Shape Component
+#'
+#' @description
+#'
+#' This function evaluates the shape of the trajectory of the forecast signal and compares that shape to existing shapes in observed data. If the shape is flagged as a novel shape, a flag is raised, and the signal is considered implausible. See details for further information.
+#'
+#' @param location Character vector with location code; the location must appear in input and seed
+#' @param input Input signal data to be scored; object must be one of [forecast][to_signal()] or [observed][to_signal()]
+#' @param seed Prepared [seed][plane_seed()]
+#'
+#' @return
+#'
+#' An **indicator** `logical` designating whether or not the shape of the evaluated signal is novel.
+#'
+#' - If indicator = `TRUE` = novel shape = implausible
+#'
+#' - If indicator = `FALSE` = familiar shape found in the seed = plausible
+#'
+#' @details
+#'
+#' This function uses a Dynamic Time Warping (DTW) algorithm to identify shapes within the trusted, observed seed data and then compares the shape of the forecast input signal to the observed shapes. This is done in three broad steps:
+#'
+#' 1. The prepared [seed][plane_seed()] data is divided into a set of sliding windows with a step size of one - each representing a section of the overall time series. The length of these windows is determined by the horizon length of the input data signal (e.g., 2 weeks). If your seed data was a vector, `ts <- c(1, 2, 3, 4, 5)`, and your horizon length was 2, then the sliding windows for your observed seed data would be: c(1, 2), c(2, 3), c(3, 4), and c(4, 5). Each sliding window is a subset of the total trajectory shape of the observed data.
+#'
+#' 2. Shape-based DTW distances are calculated for every 1x1 combination of the observed sliding windows and are stored in a distance matrix. We use these distances to calibrate our function for identifying outlying shapes in forecast data.
+#'
+#'     - We find the minimum distances for each windowed time series to use as a baseline for "observed distances" between chunks of the larger observed time series.
+#'     - We then calculate the maximum of those minimum distance across the observed time series. This will be our **threshold**. If the minimum of the forecast:observed distance matrix is greater than the greatest, minimum observed:observed distance, then we can infer that the forecast is an unfamiliar, novel shape.
+#'
+#' 3. We calculate the shape-based DTW distances between the forecast signal and every observed sliding window. If the distance between the forecast and **any** observed sliding window is less than or equal to our threshold defined above, then this shape is not novel and no flag is raised (**indicator** = `FALSE`).
+#'
+#'
+#' @references
+#'
+#' Toni Giorgino. Computing and Visualizing Dynamic Time Warping Alignments in R: The dtw Package. Journal of Statistical Software, 31(7), 1-24. doi:10.18637/jss.v031.i07
+#'
+#' Tormene, P.; Giorgino, T.; Quaglini, S. & Stefanelli, M. Matching incomplete time series with dynamic time warping: an algorithm and an application to post-stroke rehabilitation. Artif Intell Med, 2009, 45, 11-34. doi:10.1016/j.artmed.2008.11.007
+#'
+#' @export
+#'
+#' @examples
+#' # We'll use the HHS Protect data that is internal to rplanes:
+#'
+#' hosp <- read.csv(system.file("extdata/observed/hdgov_hosp_weekly.csv", package = "rplanes"))
+#'
+#' tmp_hosp <-
+#'  hosp %>%
+#'  dplyr::select(date, location, flu.admits) %>%
+#'  dplyr::mutate(date = as.Date(date))
+#'
+#'  prepped_observed <- to_signal(tmp_hosp,
+#'                                outcome = "flu.admits",
+#'                                type = "observed",
+#'                                resolution = "weeks")
+#'
+#'  prepped_forecast <- read_forecast(system.file("extdata/forecast/2022-10-31-SigSci-TSENS.csv",
+#                                                 package = "rplanes")) %>%
+#'    to_signal(., outcome = "flu.admits", type = "forecast", horizon = 4)
+#'
+#' prepped_seed <- plane_seed(prepped_observed, cut_date = "2022-10-29")
+#'
+#' # First, an example where the shape is novel and a flag is raised:
+#'
+#' plane_shape(location = "13", input = prepped_forecast, seed = prepped_seed)
+#'
+#' # Next, an example where a flag is not raised:
+#'
+#' plane_shape(location = "06", input = prepped_forecast, seed = prepped_seed)
+#'
+#'
+plane_shape <- function(location, input, seed) {
+
+  if(!location %in% names(seed)) {
+    stop(sprintf("%s does not appear in the seed object. Check that the seed was prepared with the location specified.", location))
+  }
+
+  # The observed data:
+  tmp_seed <- seed[[location]]
+
+  ## return the forecast data (with the filter on cut date)
+  tmp_dat <-
+    input$data %>%
+    dplyr::filter(.data$location == .env$location) %>%
+    dplyr::filter(.data$date > as.Date(tmp_seed$meta$cut_date, format = "%Y-%m-%d"))
+
+  ## check that dates are valid (i.e., no observed data overlaps with seed
+  valid_dates(seed_date = tmp_seed$meta$date_range$max, signal_date = min(tmp_dat$date), resolution = tmp_seed$meta$resolution)
+
+  # Pull forecast point estimate:
+  forepoint <-
+    tmp_dat %>%
+    dplyr::pull("point")
+
+  ## select only the PI and point estimate columns
+  forecast <- tmp_dat[,c("lower","point","upper")]
+
+  ## how many observed points to "prepend" to forecasts?
+  ## NOTE: this is set to 4 times as many observations as there are forecasted horizons.
+  prepend_length <- 4 * length(forepoint)
+
+  # Get dates for observed and forecast data:
+  dates <- c(seq(tmp_seed$meta$date_range$min, tmp_seed$meta$date_range$max, by = tmp_seed$meta$resolution), tmp_dat$date)
+
+  ## If there are fewer than 2 time stamps in forecast, abort
+  if(length(forepoint) < 2) {
+    stop(sprintf("%s forecast must be of length greater than one.", location))
+  }
+
+  # Pull observed points:
+  obspoint <- tmp_seed$all_values
+
+  ## If the observed/training data is not at least 4x as long as the forecast, abort
+  if(length(obspoint) < prepend_length) {
+    stop(sprintf("%s observed training data must be at least 4x the length of the forecast data.", location))
+  }
+
+  # Set the window size and step size
+  window_size <- input[["horizon"]]  # Adjust this based on your desired window size (horizon_length)
+
+  # Create sliding windows and return a data frame
+  obs_traj <- create_sliding_windows_df(obspoint, window_size)
+
+  # Calculate all distances in distance matrix:
+  distmat <- dtw::dtwDist(obs_traj)
+  diag(distmat) <- NA
+
+  # Find minimum distances for each time series to use as a baseline for "observed distances" between chunks of the larger observed time series:
+  mins <- apply(distmat, 1, FUN = min, na.rm = TRUE)
+
+  # Find the maximum, minimum distance across the observed time series. This will be our threshold. If the minimum of the forecast:observed distance matrix is less than or equal to the greatest, minimum observed distance, than we can infer that the forecast is not a novel shape
+  threshold <- max(mins)
+
+
+  ############################################################
+  # Calculate forecast distances and flag any forecast that has an unusually high distance:
+
+  ## split the observed windows matrix from above into a list
+  list_obs_traj <-
+    obs_traj %>%
+    dplyr::mutate(index = 1:dplyr::n()) %>%
+    dplyr::group_split(.data$index) %>%
+    purrr::map(., ~dplyr::select(.x, -.data$index) %>% unlist(., use.names = FALSE))
+
+  ## split the forecast components ...
+  ## ... the lower bound, point estimate, upper bound ...
+  ## ... into a list
+  forc_list <- list(lower = forecast$lower,
+                    point = forecast$point,
+                    upper = forecast$upper)
+
+  ## create all combinations of elements from these two lists
+  to_map <- tidyr::crossing(obs = list_obs_traj, forc = forc_list)
+
+  ## iterate over the combinations and compute distances
+  ## NOTE: need to get the first element to get the vectors stored in the list
+  dtw_distances <- purrr::map2_dbl(to_map$forc, to_map$obs, ~dtw::dtw(.x,.y)$distance)
+
+  ## check to see if each distance is <= the defined threshold
+  novel_shape_check <- purrr::map_lgl(dtw_distances, function(x) ifelse(x<= threshold, FALSE, TRUE))
+
+  ## are any of the distances checked <= than the threshold?
+  ## if so this will return TRUE and a flag should be raised
+  ## if any of the shape check results are FALSE then this will return FALSE (no flag)
+  novel_shape <- all(novel_shape_check)
+
+  return(indicator = novel_shape)
+
+}
+
