@@ -127,7 +127,7 @@ plotServer <- function(id, score, data_1, locations, seed, forecast, btn1, statu
       forecast_df <- forecast()$data
       forecast_df$date <- as.character(forecast_df$date)
       if (status() == "Forecast"){
-        forecast_df = forecast_df %>%
+        forecast_df <- forecast_df %>%
           dplyr::filter(location %in% input$loc) %>%
           dplyr::mutate(type = "Forecast") %>%
           dplyr::select(location, date, point, lower, upper, type)
