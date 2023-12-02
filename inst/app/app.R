@@ -43,9 +43,15 @@ ui <- navbarPage(title = "Rplanes Explorer",
                                           mainPanel(
                                             tabsetPanel(id = "tabs1",
                                                         tabPanel("Scores",
+                                                                 shinyjs::hidden(div(id = "instructions1",
+                                                                                     includeMarkdown((system.file("app/instructions.md", package = "rplanes"))))),
+
                                                                  plotUI("tab2")),
                                                         tabPanel("Raw Data",
-                                                                 dataUI("tab1")))
+                                                                 shinyjs::hidden(div(id = "instructions2",
+                                                                                     includeMarkdown((system.file("app/instructions.md", package = "rplanes"))))),
+                                                                 shinyjs::hidden(div(id="raw_data",
+                                                                                     dataUI("tab1")))))
 
                                           )
                                           ), # sidebarLayout
@@ -75,6 +81,11 @@ server <- function(input, output, session){
     shinyjs::toggle(id = "horizon", condition = {input$choice != "Example"})
     shinyjs::toggle(id = "status", condition = {input$choice != "Example"})
     shinyjs::toggle(id = "outcome", condition = {input$choice != "Example"})
+    ## toggle contents of scoring / data tabs
+    ## if the analysis hasn't been run yet then show basic instructions
+    shinyjs::toggle(id = "instructions1", condition = {input$run != TRUE})
+    shinyjs::toggle(id = "instructions2", condition = {input$run != TRUE})
+    shinyjs::toggle(id = "raw_data", condition = {input$run == TRUE})
     })
 
   # update scoring options based on user input of observed or forecast comparison

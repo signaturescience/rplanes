@@ -21,7 +21,7 @@ dataUI <- function(id){
 # Server Side ####
 #~~~~~~~~~~~~~~~~~~~~~~~~
 
-dataServer <- function(id, data_1, data_2) {
+dataServer <- function(id, btn1, data_1, data_2) {
   moduleServer(id, function(input, output, session) {
 
     output$observed <- DT::renderDataTable(server = FALSE,{
