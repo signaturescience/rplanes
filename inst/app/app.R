@@ -7,15 +7,14 @@ library(rplanes)
 library(lubridate)
 
 # list module files and iterate sourcing them to use within the app.
-#module_sources <- list.files(path = here::here("inst/app/modules"), full.names = TRUE)
 module_sources <- list.files(path = system.file("app/modules/", package = "rplanes"), full.names = TRUE)
 sapply(module_sources, source)
 
 
 # UI SIDE ####
 
-ui <- navbarPage(title = "Rplanes Explorer",
-                 inverse = T, # invert color of navigation top bar to black
+ui <- navbarPage(title = "rplanes Explorer",
+                 inverse = TRUE, # invert color of navigation top bar to black
                  useShinyjs(),  # Set up shinyjs
                  tabPanel(title = "Plots",
                           fluidPage(
@@ -23,18 +22,18 @@ ui <- navbarPage(title = "Rplanes Explorer",
                                           sidebarPanel(width = 3,
                                                        prettyRadioButtons("choice", "Choose Dataset", choices = c("Custom", "Example"), selected = "Custom",  status = "warning", inline = TRUE, icon = icon("check"), bigger = TRUE),
                                                        shinyjs::hidden(div(id = "choice_custom",
-                                                                           fileInput("upload_1", label = "Upload Observed Data", multiple = F, accept = ".csv"),
-                                                                           fileInput("upload_2", label = "Upload Comparison", multiple = F, accept = ".csv")
+                                                                           fileInput("upload_1", label = "Upload Observed Data", multiple = FALSE, accept = ".csv"),
+                                                                           fileInput("upload_2", label = "Upload Comparison", multiple = FALSE, accept = ".csv")
                                                        )),
-                                                       awesomeRadio("status", "Type of signal to be evaluated", choices = c("Forecast", "Observed"), selected= "Forecast", inline = T, status = "warning"),
-                                                       awesomeRadio("rez", "Resolution", choices = c("Weekly" = "weeks", "Daily" = "days", "Monthly" = "months"), inline = T, status = "warning"),
+                                                       awesomeRadio("status", "Type of signal to be evaluated", choices = c("Forecast", "Observed"), selected= "Forecast", inline = TRUE, status = "warning"),
+                                                       awesomeRadio("rez", "Resolution", choices = c("Weekly" = "weeks", "Daily" = "days", "Monthly" = "months"), inline = TRUE, status = "warning"),
                                                        textInput("outcome", label = "Outcome", value = ""),
                                                        shinyjs::hidden(div(id = "forc_opt",
                                                                            numericInput("horizon", "Forecast Horizon", value = 4, min = 1, max = 100, step = 1))),
                                                        materialSwitch("opts", label = "Modify Defaults", value = FALSE, status = "success"),
                                                        shinyjs::hidden(div(id = "add_options",
                                                                            textInput("width", label = "Prediction Interval", value = "95"),
-                                                                           pickerInput(inputId = "score", label = "PLANES Component(s)", choices = "", options = list(`actions-box` = TRUE), multiple = T),
+                                                                           pickerInput(inputId = "score", label = "PLANES Component(s)", choices = "", options = list(`actions-box` = TRUE), multiple = TRUE),
                                                                            inputsUI("tab2")
                                                        )),
                                                        actionBttn("run", "Analyze", style = "unite", color = "danger"),
@@ -60,7 +59,6 @@ ui <- navbarPage(title = "Rplanes Explorer",
                           )), # plots tab
                  tabPanel(title = "Help",
                           htmltools::includeHTML(system.file("app/help_tab.html", package = "rplanes")))
-                          #htmltools::includeHTML(here::here("inst/app/help_tab.html"))),
 ) # UI end
 
 
@@ -98,26 +96,6 @@ server <- function(input, output, session){
       updatePickerInput(session = session, inputId = "score", choices = score_opt, selected = c("Coverage" = "cover", "Difference" = "diff", "Repeat" = "repeat", "Taper" = "taper", "Trend" = "trend"))
     }
   })
-
-    # Update the resolution choice depending on the type of data in the observed dataset (data_1)
-    # This ensures no error when data is weekly the resolution weekly will be selected.
-    # TODO: Perhaps we can do away with this selection, making this as part of the backend instead. Leaving this for now.
-
-    # observe({
-    #
-    #   req(input$upload_1)
-    #   duration = lubridate::interval(start = ymd(data_1()$date[1]), end = ymd(data_1()$date[2])) %>% as.period(unit = "day")
-    #   x = duration@day
-    #   if(x == 7){
-    #     y = list("Weekly" = "weeks")
-    #   } else if(x < 7){
-    #     y = list("Daily" = "days")
-    #   } else {
-    #     y = list("Monthly" = "months")
-    #   }
-    #
-    #   updateAwesomeRadio(session = session, inputId = "rez", choices = y)
-    # })
 
     # pass in actionBttn to module plots
     btn1 <- reactive({ input$run })
@@ -179,13 +157,13 @@ server <- function(input, output, session){
 
 
     prepped_seed <- reactive({
-        df = data_1() %>% dplyr::filter(location %in% unique(data_2()$location))
+        df <- data_1() %>% dplyr::filter(location %in% unique(data_2()$location))
         if(input$status == "Forecast"){
-            date = unique(df$date)[unique(df$date) < min(data_2()$target_end_date)]
-            date = tail(date, 1)
+            date <- unique(df$date)[unique(df$date) < min(data_2()$target_end_date)]
+            date <- tail(date, 1)
         } else {
-            date = unique(df$date)[unique(df$date) < min(data_2()$date)]
-            date = tail(date, 1)
+            date <- unique(df$date)[unique(df$date) < min(data_2()$date)]
+            date <- tail(date, 1)
         }
         if(input$choice == "Example") {
           signal <- to_signal(df, outcome = "flu.admits", type = "observed", resolution = input$rez)

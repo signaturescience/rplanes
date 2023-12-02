@@ -113,62 +113,32 @@ plotServer <- function(id, score, data_1, locations, seed, forecast, btn1, statu
       )
       })
 
-    # # label-header for plot tab
-    # output$label <- renderText({
-    #   if(input$plot_type == "cover"){
-    #     "Coverage Plot"
-    #   } else if(input$plot_type == "diff") {
-    #     "Difference Plot"
-    #   } else if(input$plot_type == "repeat"){
-    #     "Repeat Plot"
-    #   } else if(input$plot_type == "taper"){
-    #     "Taper Plot"
-    #   } else {
-    #     "Trend Plot"
-    #   }
-    # })
-
-    # # label-header for table tab
-    # output$label2 <- renderText({
-    #   if(input$plot_type == "cover"){
-    #     "Coverage Table"
-    #   } else if(input$plot_type == "diff") {
-    #     "Difference Table"
-    #   } else if(input$plot_type == "repeat"){
-    #     "Repeat Table"
-    #   } else if(input$plot_type == "taper"){
-    #     "Taper Table"
-    #   } else {
-    #     "Trend Table"
-    #   }
-    # })
-
     plot_df <- reactive({
       cut_date <- seed()[[1]]$meta$cut_date
-      dates = unique(as.character(data_1()$date))
-      dates = dates[dates <= cut_date]
+      dates <- unique(as.character(data_1()$date))
+      dates <- dates[dates <= cut_date]
 
-      values_obs = seed()[[input$loc]]$all_values
+      values_obs <- seed()[[input$loc]]$all_values
 
-      observed_df = data.frame(date = dates,
+      observed_df <- data.frame(date = dates,
                                point = values_obs,
                                type = "Observed")
 
       forecast_df <- forecast()$data
-      forecast_df$date = as.character(forecast_df$date)
+      forecast_df$date <- as.character(forecast_df$date)
       if (status() == "Forecast"){
         forecast_df = forecast_df %>%
           dplyr::filter(location %in% input$loc) %>%
           dplyr::mutate(type = "Forecast") %>%
           dplyr::select(location, date, point, lower, upper, type)
       } else {
-        forecast_df = forecast_df %>%
+        forecast_df <- forecast_df %>%
           dplyr::filter(location %in% input$loc) %>%
           dplyr::mutate(type = "Comparison") %>%
           dplyr::rename(point = outcome()) %>%
           dplyr::select(location, date, point, type)
       }
-      df_plot = bind_rows(observed_df, forecast_df) %>%
+      df_plot <- bind_rows(observed_df, forecast_df) %>%
         dplyr::mutate(date = as.Date(date, format = "%Y-%m-%d"))
       df_plot
     })
@@ -274,62 +244,6 @@ plotServer <- function(id, score, data_1, locations, seed, forecast, btn1, statu
         labs(x = NULL, y = NULL)
     })
 
-  #   # Handler to download the plot
-  #   output$plot_dwn <- downloadHandler(
-  #     filename = function(){paste0(input$loc, "_", input$plot_type, "_plot.png")},
-  #     content = function(file){
-  #       ggplot2::ggsave(file, plot = plotting(), width = 14, height = 6, units = "in", device = "png")
-  #     }
-  #   )
-  #
-  #   table_df <- reactive({
-  #     if (input$plot_type == "cover"){
-  #       df <- data.frame(Location = input$loc,
-  #                        last_observed_value = coverage()$last_value,
-  #                        lower_bounds = coverage()$bounds$lower,
-  #                        upper_bounds = coverage()$bounds$upper,
-  #                        out_bounds = coverage()$indicator) %>%
-  #         dplyr::rename(`Last Observed Value` = last_observed_value, `Lower Boundry` = lower_bounds, `Upper Boundry` = upper_bounds, `Last Value out of Boundry` = out_bounds)
-  #     } else if(input$plot_type == "diff"){
-  #       df <- data.frame(Location = input$loc,
-  #                        Values = difference()$values,
-  #                        Difference = c(NA, difference()$evaluated_differences),
-  #                        Max_difference = difference()$maximum_difference) %>%
-  #         dplyr::mutate(`Diff > Max` = Difference > Max_difference ) %>%
-  #         dplyr::rename(`Difference between Successive Value` = Difference, `Max Difference Observed in Data` = Max_difference, `Difference > Max Observed`= `Diff > Max`)
-  #     } else if(input$plot_type == "repeat"){
-  #       validate(need(!is.na(repeats()$repeats[1,1]), message = "No Repeats detected."))
-  #       df <- repeats()$repeats %>%
-  #           dplyr::mutate(Repeat = TRUE) %>%
-  #         dplyr::select(location, date, point, Repeat) %>%
-  #         dplyr::rename(Location = location, Date = date, Value = point)
-  #
-  #     } else if(input$plot_type == "taper"){
-  #       df <-  plot_df() %>%
-  #         dplyr::filter(type == "Forecast") %>%
-  #         dplyr::mutate(widths = taper()$widths) %>%
-  #         dplyr::mutate(tapering = (widths - dplyr::lag(widths)) < 0) %>%
-  #         tidyr::replace_na(list(tapering = FALSE)) %>%
-  #         dplyr::select(location, date, lower, upper, widths, tapering) %>%
-  #         dplyr::mutate_if(is.numeric, round, 1) %>%
-  #         dplyr::rename(Location = location, Date = date, `Lower Boundry`= lower, `Upper Boundry`=upper, Width = widths, `Width is Decreasing` = tapering)
-  #     } else if(input$plot_type == "trend"){
-  #       df <- trend()
-  #     }
-  #     df
-  #
-  #   }) %>%
-  #     bindEvent(input$loc, input$plot_type)
-  #
-  #   output$plane_table <- DT::renderDT({
-  #     table_df() %>% DT::datatable(rownames = F, filter = "none", escape = F, extensions =c("Buttons", 'Scroller'), options = list(dom = 'Brtip',
-  #                                                                                                                                  deferRender = TRUE,
-  #                                                                                                                                  scrollY = 200,
-  #                                                                                                                                  scroller = TRUE,
-  #                                                                                                                                  columnDefs = list(list(className = 'dt-center', targets = "_all")),
-  #                                                                                                                                  buttons = list('copy', list(extend = "collection", buttons = c("csv", "excel", "pdf"), text = "Download"))))
-  #   })
-  #
   })
 }
 
