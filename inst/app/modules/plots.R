@@ -40,7 +40,7 @@ plotUI <- function(id){
 # Server Side ####
 #~~~~~~~~~~~~~~~~~~~~~~~~
 
-plotServer <- function(id, score, data_1, locations, seed, forecast, btn1, status, outcome, btn2) {
+plotServer <- function(id, score, data_1, locations, seed, signal_to_eval, btn1, status, outcome, btn2) {
   moduleServer(id, function(input, output, session) {
 
     observe({
@@ -72,7 +72,7 @@ plotServer <- function(id, score, data_1, locations, seed, forecast, btn1, statu
       } else {
         comp_args <- list(trend = list(sig_lvl = input$sig), `repeat` = list(prepend = input$pre, tolerance = input$tol))
       }
-      scores <- plane_score(forecast(), seed(), components = score(), args = comp_args)
+      scores <- plane_score(signal_to_eval(), seed(), components = score(), args = comp_args)
       scores
     })
 
@@ -124,21 +124,29 @@ plotServer <- function(id, score, data_1, locations, seed, forecast, btn1, statu
                                point = values_obs,
                                type = "Observed")
 
-      forecast_df <- forecast()$data
-      forecast_df$date <- as.character(forecast_df$date)
+      eval_df <- signal_to_eval()$data
+      eval_df$date <- as.character(eval_df$date)
+
       if (status() == "Forecast"){
-        forecast_df <- forecast_df %>%
+        eval_df <- eval_df %>%
           dplyr::filter(location %in% input$loc) %>%
-          dplyr::mutate(type = "Forecast") %>%
-          dplyr::select(location, date, point, lower, upper, type)
+          dplyr::select(location, date, point, lower, upper)
       } else {
-        forecast_df <- forecast_df %>%
+
+        ## need to parse cut date from seed to filter evaluation data for observed signal
+        cut_date <- purrr::map(seed(), ~.x$meta$cut_date) %>% unlist() %>% as.Date(origin = "1970-01-01") %>% unique(.)
+        eval_df <- eval_df %>%
+          dplyr::filter(date > cut_date) %>%
           dplyr::filter(location %in% input$loc) %>%
-          dplyr::mutate(type = "Comparison") %>%
           dplyr::rename(point = outcome()) %>%
-          dplyr::select(location, date, point, type)
+          dplyr::select(location, date, point)
       }
-      df_plot <- bind_rows(observed_df, forecast_df) %>%
+
+      eval_df <-
+        eval_df %>%
+        mutate(type = "Evaluated")
+
+      df_plot <- bind_rows(observed_df, eval_df) %>%
         dplyr::mutate(date = as.Date(date, format = "%Y-%m-%d"))
       df_plot
     })
@@ -176,8 +184,8 @@ plotServer <- function(id, score, data_1, locations, seed, forecast, btn1, statu
     plotting <- reactive({
 
       if(input$plot_type == "cover"){
-        date_min <- plot_df() %>% dplyr::filter(type == "Forecast") %>% pull(date) %>% min()
-        date_max <- plot_df() %>% dplyr::filter(type == "Forecast") %>% pull(date) %>% max()
+        date_min <- plot_df() %>% dplyr::filter(type == "Evaluated") %>% pull(date) %>% min()
+        date_max <- plot_df() %>% dplyr::filter(type == "Evaluated") %>% pull(date) %>% max()
         p <- plot_df() %>%
           dplyr::mutate(date = as.Date(date, format = "%Y-%m-%d")) %>%
           ggplot(aes(x = date, y = point)) +

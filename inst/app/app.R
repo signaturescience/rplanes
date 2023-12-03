@@ -21,11 +21,14 @@ ui <- navbarPage(title = "rplanes Explorer",
                             sidebarLayout(position = "left",
                                           sidebarPanel(width = 3,
                                                        prettyRadioButtons("choice", "Choose Dataset", choices = c("Custom", "Example"), selected = "Custom",  status = "warning", inline = TRUE, icon = icon("check"), bigger = TRUE),
-                                                       shinyjs::hidden(div(id = "choice_custom",
-                                                                           fileInput("upload_1", label = "Upload Observed Data", multiple = FALSE, accept = ".csv"),
-                                                                           fileInput("upload_2", label = "Upload Comparison", multiple = FALSE, accept = ".csv")
-                                                       )),
+                                                       shinyjs::hidden(div(id = "choice_custom1",
+                                                                           fileInput("upload_1", label = "Upload Observed Data", multiple = FALSE, accept = ".csv"))),
+                                                       shinyjs::hidden(div(id = "choice_custom2",
+                                                                           fileInput("upload_2", label = "Upload Forecast Data", multiple = FALSE, accept = ".csv"))),
                                                        awesomeRadio("status", "Type of signal to be evaluated", choices = c("Forecast", "Observed"), selected= "Forecast", inline = TRUE, status = "warning"),
+                                                       shinyjs::hidden(div(id = "choice_nobs",
+                                                                           numericInput("n_obs_eval", "Number of Observed Values to Evaluate", value = 1, min = 1, max = Inf, step = 1))),
+
                                                        awesomeRadio("rez", "Resolution", choices = c("Weekly" = "weeks", "Daily" = "days", "Monthly" = "months"), inline = TRUE, status = "warning"),
                                                        textInput("outcome", label = "Outcome", value = ""),
                                                        shinyjs::hidden(div(id = "forc_opt",
@@ -68,7 +71,8 @@ server <- function(input, output, session){
 
   observe({
     # unhide the upload custom dataset when choosing "Custom" radiobutton
-    shinyjs::toggle(id = "choice_custom", condition = {input$choice %in% "Custom"})
+    shinyjs::toggle(id = "choice_custom1", condition = {input$choice == "Custom"})
+    shinyjs::toggle(id = "choice_custom2", condition = {input$status == "Forecast" & input$choice == "Custom"})
     # unhide additional options upon switch
     shinyjs::toggle(id = "add_options", condition = {input$opts == TRUE})
     shinyjs::toggle(id = "forc_opt", condition = {input$status == "Forecast"})
@@ -84,6 +88,8 @@ server <- function(input, output, session){
     shinyjs::toggle(id = "instructions1", condition = {input$run != TRUE})
     shinyjs::toggle(id = "instructions2", condition = {input$run != TRUE})
     shinyjs::toggle(id = "raw_data", condition = {input$run == TRUE})
+    ## toggle the number of obs picker if the signal type is 'Observed'
+    shinyjs::toggle(id = "choice_nobs", condition = {input$status == "Observed"})
     })
 
   # update scoring options based on user input of observed or forecast comparison
@@ -157,49 +163,59 @@ server <- function(input, output, session){
 
 
     prepped_seed <- reactive({
-        df <- data_1() %>% dplyr::filter(location %in% unique(data_2()$location))
         if(input$status == "Forecast"){
+            df <- data_1() %>% dplyr::filter(location %in% unique(data_2()$location))
             date <- unique(df$date)[unique(df$date) < min(data_2()$target_end_date)]
             date <- tail(date, 1)
-        } else {
-            date <- unique(df$date)[unique(df$date) < min(data_2()$date)]
-            date <- tail(date, 1)
+
+            ## handle outcome name for example data set if selected
+            if(input$choice == "Example") {
+              signal <- to_signal(df, outcome = "flu.admits", type = "observed", resolution = input$rez)
+            } else {
+              signal <- to_signal(df, outcome = input$outcome, type = "observed", resolution = input$rez)
+            }
+
+        } else if (input$status == "Observed"){
+            signal <- to_signal(data_1(), outcome = input$outcome, type = "observed", resolution = input$rez)
+            date <- min(tail(data_1()$date,input$n_obs_eval)-1)
         }
-        if(input$choice == "Example") {
-          signal <- to_signal(df, outcome = "flu.admits", type = "observed", resolution = input$rez)
-        } else {
-          signal <- to_signal(df, outcome = input$outcome, type = "observed", resolution = input$rez)
-        }
-        prepped_seed  <- plane_seed(signal, cut_date = date)
-        prepped_seed
+      ## prep the seed with the cut date
+      prepped_seed  <- plane_seed(signal, cut_date = date)
+      prepped_seed
     })
 
-    prepped_forecast <- reactive({
+    ## conditionally prepare signal for data to be evaluated
+    prepped_signal <- reactive({
         if (input$choice == "Example"){
-            forc <- read_forecast(system.file("extdata/forecast", "2022-10-31-SigSci-TSENS.csv", package = "rplanes"), pi_width = as.numeric(input$width)) %>%
+            prepped <- read_forecast(system.file("extdata/forecast", "2022-10-31-SigSci-TSENS.csv", package = "rplanes"), pi_width = as.numeric(input$width)) %>%
                 to_signal(., outcome = "flu.admits", type = "forecast", horizon = 4, resolution = "weekly")
         } else if (input$status == "Forecast"){
-            forc <- read_forecast(input$upload_2$datapath, pi_width = as.numeric(input$width)) %>%
+            prepped <- read_forecast(input$upload_2$datapath, pi_width = as.numeric(input$width)) %>%
                 filter(location %in% unique(data_1()$location)) %>%
                 to_signal(., outcome = input$outcome, type = "forecast", horizon = input$horizon, resolution = input$rez)
-        } else {
-            df <- read.csv(input$upload_2$datapath)
-            df$date <- as.Date(df$date)
-            forc <- df %>%
-                filter(location %in% unique(data_1()$location)) %>%
-                to_signal(., outcome = input$outcome, type = "observed", horizon = input$horizon, resolution = input$rez)
+        } else if (input$status == "Observed"){
+          ## if the data is an observed signal use the data uploaded
+          ## the prepped seed will have a cut date defined by the number of points to evaluate
+          ## therefore we can just use the uploaded data as-is
+            prepped <- to_signal(data_1(), outcome = input$outcome, type = "observed", horizon = input$horizon, resolution = input$rez)
         }
-        forc
+        prepped
     })
 
     # get all intersecting locations between the datasets to use as input$loc in plots module
     locations <- reactive({
+      ## conditionally get locations either as intersection of observed (i.e., seed) and forecast locations
+      ## or if the signal is observed then just use observed locations
+      if(input$status == "Forecast") {
         generics::intersect(data_1()$location, data_2()$location)
+      } else if (input$status == "Observed") {
+        unique(data_1()$location)
+      }
     })
 
     dataServer("tab1", data_1 = data_1, data_2 = data_2 )
 
-    plotServer("tab2", score = score, data_1 = data_1, locations = locations, seed = prepped_seed, forecast = prepped_forecast, btn1 = btn1, status = status, outcome = outcome, btn2 = btn2)
+    plotServer("tab2", score = score, data_1 = data_1, locations = locations, seed = prepped_seed, signal_to_eval = prepped_signal, btn1 = btn1, status = status, outcome = outcome, btn2 = btn2)
 
     # reset all inputs including the ones in the modules
     observeEvent(input$reset,{
