@@ -33,7 +33,6 @@ Imports:
 Suggests:
     DT,
     ggplot2,
-    ggrepel,
     htmltools,
     knitr,
     MMWRweek,

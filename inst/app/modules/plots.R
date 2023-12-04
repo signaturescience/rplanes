@@ -151,48 +151,73 @@ plotServer <- function(id, score, data_1, locations, seed, signal_to_eval, btn1,
       df_plot
     })
 
+    ## TODO: turn this into a function so we don't repeat ourselves ...
     coverage <- reactive({
       item <- paste0(input$loc, "-cover")
-      cover <- scoring()$full_results[[item]]
-      cover
+      res <- scoring()$full_results[[item]]
+      res
     })
 
     difference <- reactive({
       item <- paste0(input$loc, "-diff")
-      diff <- scoring()$full_results[[item]]
-      diff
+      res <- scoring()$full_results[[item]]
+      res
     })
 
     repeats <- reactive({
       item <- paste0(input$loc, "-repeat")
-      df <- scoring()$full_results[[item]]
-      df
+      res <- scoring()$full_results[[item]]
+      res
     })
 
     taper <- reactive({
       item <- paste0(input$loc, "-taper")
-      df <- scoring()$full_results[[item]]
-      df
+      res <- scoring()$full_results[[item]]
+      res
     })
 
     trend <- reactive({
       item <- paste0(input$loc, "-trend")
-      df <- scoring()$full_results[[item]]$output
-      df
+      res <- scoring()$full_results[[item]]
+      res
     })
 
     plotting <- reactive({
 
       if(input$plot_type == "cover"){
-        date_min <- plot_df() %>% dplyr::filter(type == "Evaluated") %>% pull(date) %>% min()
-        date_max <- plot_df() %>% dplyr::filter(type == "Evaluated") %>% pull(date) %>% max()
+        # date_min <- plot_df() %>% dplyr::filter(type == "Evaluated") %>% pull(date) %>% min()
+        # date_max <- plot_df() %>% dplyr::filter(type == "Evaluated") %>% pull(date) %>% max()
+
+        last_obs_date <-
+          plot_df() %>%
+          dplyr::filter(type == "Observed") %>%
+          dplyr::pull(date) %>%
+          max(.)
+
+        last_obs_val <-
+          plot_df() %>%
+          dplyr::filter(date == last_obs_date) %>%
+          dplyr::pull(point)
+
+        first_eval_date <-
+          plot_df() %>%
+          dplyr::filter(type == "Evaluated") %>%
+          dplyr::pull(date) %>%
+          min(.)
+
+        cover_dat <-
+          plot_df() %>%
+          dplyr::filter(date >= last_obs_date & date <= first_eval_date) %>%
+          dplyr::mutate(flag = ifelse(type == "Observed" & !dplyr::between(last_obs_val,coverage()$bounds$lower, coverage()$bounds$upper), TRUE, FALSE))
+
         p <- plot_df() %>%
-          dplyr::mutate(date = as.Date(date, format = "%Y-%m-%d")) %>%
           ggplot(aes(x = date, y = point)) +
           geom_point(aes(color = type), size = 3) +
+          geom_point(data = cover_dat %>% dplyr::filter(flag), aes(date, point, alpha = "Not Covered by PI"), shape = 5, size = 6, stroke=2, color = 'darkred') +
+          geom_segment(aes(x = min(cover_dat$date), xend = max(cover_dat$date), y = last_obs_val, yend = last_obs_val), alpha = 0.5, lty = "dotted") +
+          geom_ribbon(aes(date, ymin = lower, ymax = upper), alpha = 0.5) +
           geom_line(alpha = 0.3) +
-          labs(title = "Plane Cover", subtitle = paste0("For location: ", input$loc), x = "", y = "Value") +
-          annotate("rect", xmin = date_min, xmax = date_max, ymin = coverage()$bounds$lower, ymax = coverage()$bounds$upper, alpha = 0.1, fill = "blue") +
+          labs(title = paste0("Coverage", ifelse(coverage()$indicator, " (Flagged)", " (Not Flagged)")), subtitle = paste0("Location: ", input$loc), x = "", y = "Value") +
           theme(legend.title=element_blank())
       } else if(input$plot_type == "diff"){
         df_plot2 <- plot_df() %>%
@@ -201,8 +226,8 @@ plotServer <- function(id, score, data_1, locations, seed, signal_to_eval, btn1,
         p <- df_plot2 %>%
           ggplot(aes(x = date, y = point)) +
           geom_point(aes(color = type), size = 4) +
-          geom_point(data = df_plot2 %>% dplyr::filter(flag == TRUE), pch=21, size=7, color="red") +
-          labs(title = "Plane Diff", x = "", y = "Value", subtitle = paste0("For location: ", input$loc), caption = paste0("Point greater than ", difference()$maximum_difference, " is circled in red.")) +
+          geom_point(data = df_plot2 %>% dplyr::filter(flag == TRUE), aes(date, point, alpha = "Difference"), shape = 5, size = 6, stroke=2, color = 'darkred')  +
+          labs(title = paste0("Difference", ifelse(difference()$indicator, " (Flagged)", " (Not Flagged)")),, x = "", y = "Value", subtitle = paste0("Location: ", input$loc), caption = paste0("Any point-to-point difference greater than ", difference()$maximum_difference, " is highlighted in red diamond.")) +
           geom_line(alpha = 0.3) +
           theme(legend.title=element_blank())
       } else if(input$plot_type == "repeat"){
@@ -211,7 +236,7 @@ plotServer <- function(id, score, data_1, locations, seed, signal_to_eval, btn1,
           geom_point(data = plot_df(), aes(date, point, color = type), size = 4) +
           geom_point(data = repeat_tbl, aes(date, point, alpha = "Repeat"), shape = 5, size = 6, stroke=2, color = 'darkred') +
           geom_line(data = plot_df(), aes(date, point), alpha = 0.3) +
-          labs(title = "Plane Repeat", x = "", y = "Value", subtitle = paste0("For location: ", input$loc)) +
+          labs(title = paste0("Repeat", ifelse(repeats()$indicator, " (Flagged)", " (Not Flagged)")), x = "", y = "Value", subtitle = paste0("Location: ", input$loc)) +
           theme(legend.title=element_blank())
       } else if(input$plot_type == "taper"){
         p <- plot_df() %>%
@@ -219,17 +244,19 @@ plotServer <- function(id, score, data_1, locations, seed, signal_to_eval, btn1,
           geom_point(aes(color = type), size = 4) +
           geom_ribbon(aes(date, ymin = lower, ymax = upper), alpha = 0.5) +
           geom_line(alpha = 0.3) +
-          labs(title = "Plane Taper", x = "", y = "Value", subtitle = paste0("For location: ", input$loc)) +
+          labs(title = paste0("Taper", ifelse(taper()$indicator, " (Flagged)", " (Not Flagged)")), x = "", y = "Value", subtitle = paste0("Location: ", input$loc)) +
           theme(legend.title=element_blank())
       } else {
-        p <- trend() %>%
-          dplyr::mutate(label = dplyr::case_when(Flagged == TRUE ~ "Flagged Change Point",
-                                          TRUE ~ NA)) %>%
-          ggplot(aes(x = Date, y = Value)) +
-          geom_point(aes(color = Type), size = 4) +
+
+        trend_df <- trend()$output
+
+        p <-
+          plot_df() %>%
+          ggplot(aes(x = date, y = point)) +
+          geom_point(aes(color = type), size = 4) +
+          geom_point(data = trend_df %>% dplyr::filter(Flagged) %>% dplyr::rename(date = Date, point = Value), aes(date, point, alpha = "Trend Change Point"), shape = 5, size = 6, stroke=2, color = 'darkred') +
           geom_line(alpha = 0.3) +
-          ggrepel::geom_label_repel(aes(label=label, size = 10), color = "black", fill= NA, box.padding = 1, nudge_y = 1.2, segment.linetype = 1, arrow = arrow(length = unit(0.015, "npc"), type = "closed"), na.rm = T, show.legend = F) +
-          labs(title = "Plane Trend", x = "", y = "Value", subtitle = paste0("For location: ", input$loc), caption = paste0("Using a significance of ", input$sig)) +
+          labs(title = paste0("Trend", ifelse(trend()$indicator, " (Flagged)", " (Not Flagged)")), x = "", y = "Value", subtitle = paste0("Location: ", input$loc), caption = paste0("Using a significance of ", input$sig, ".\nFlagged change points are highlighted in red diamond.")) +
           theme(legend.title=element_blank())
       }
       p
