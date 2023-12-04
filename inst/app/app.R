@@ -21,11 +21,11 @@ ui <- navbarPage(title = "rplanes Explorer",
                             sidebarLayout(position = "left",
                                           sidebarPanel(width = 3,
                                                        prettyRadioButtons("choice", "Choose Dataset", choices = c("Custom", "Example"), selected = "Custom",  status = "warning", inline = TRUE, icon = icon("check"), bigger = TRUE),
-                                                       shinyjs::hidden(div(id = "choice_custom1",
-                                                                           fileInput("upload_1", label = "Upload Observed Data", multiple = FALSE, accept = ".csv"))),
-                                                       shinyjs::hidden(div(id = "choice_custom2",
-                                                                           fileInput("upload_2", label = "Upload Forecast Data", multiple = FALSE, accept = ".csv"))),
                                                        awesomeRadio("status", "Type of signal to be evaluated", choices = c("Forecast", "Observed"), selected= "Forecast", inline = TRUE, status = "warning"),
+                                                       shinyjs::hidden(div(id = "choice_obs_upload",
+                                                                           fileInput("upload_1", label = "Upload Observed Data", multiple = FALSE, accept = ".csv"))),
+                                                       shinyjs::hidden(div(id = "choice_forc_upload",
+                                                                           fileInput("upload_2", label = "Upload Forecast Data", multiple = FALSE, accept = ".csv"))),
                                                        shinyjs::hidden(div(id = "choice_nobs",
                                                                            numericInput("n_obs_eval", "Number of Observed Values to Evaluate", value = 1, min = 1, max = Inf, step = 1))),
 
@@ -80,8 +80,8 @@ server <- function(input, output, session){
 
   observe({
     # unhide the upload custom dataset when choosing "Custom" radiobutton
-    shinyjs::toggle(id = "choice_custom1", condition = {input$choice == "Custom"})
-    shinyjs::toggle(id = "choice_custom2", condition = {input$status == "Forecast" & input$choice == "Custom"})
+    shinyjs::toggle(id = "choice_obs_upload", condition = {input$choice == "Custom"})
+    shinyjs::toggle(id = "choice_forc_upload", condition = {input$status == "Forecast" & input$choice == "Custom"})
     # unhide additional options upon switch
     shinyjs::toggle(id = "add_options", condition = {input$opts == TRUE})
     shinyjs::toggle(id = "forc_opt", condition = {input$status == "Forecast"})

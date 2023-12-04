@@ -5,18 +5,18 @@
 inputsUI <- function(id){
   ns <- NS(id)
   tagList(
-    shinyjs::hidden(div(id = ns("args1"),
-                        numericInput(ns("sig"), "Choice of Significance for Trend", value = 0.1, min = 0, max = 1, step = 0.01))),
-    shinyjs::hidden(div(id = ns("args2"),
-                        numericInput(ns("tol"), label = "Choice of Tolerance", value = 0, min = 0, max = 50, step = 1),
-                        numericInput(ns("pre"), label = "Prepend Values",  value = 0, min = 0, max = 365, step = 1)))
+    shinyjs::hidden(div(id = ns("args_trend"),
+                        numericInput(ns("sig"), "Choice of Significance (Trend)", value = 0.1, min = 0, max = 1, step = 0.01))),
+    shinyjs::hidden(div(id = ns("args_repeat"),
+                        numericInput(ns("tol"), label = "Choice of Tolerance (Repeat)", value = 0, min = 0, max = 50, step = 1),
+                        numericInput(ns("pre"), label = "Prepend Values (Repeat)",  value = 0, min = 0, max = 365, step = 1)))
   )
 }
 
 plotUI <- function(id){
   ns <- NS(id)
   tagList(
-    shinyjs::hidden(div(id = ns("args3"),
+    shinyjs::hidden(div(id = ns("scoring_results"),
                         fluidRow(
                           tags$h3("Overall Scoring"),
                           column(width = 4,
@@ -54,9 +54,9 @@ plotServer <- function(id, score, data_1, locations, seed, signal_to_eval, btn1,
 
     # unhide the locations options and function arguments depending on scoring selection
     observe({
-      shinyjs::toggle(id = "args1", condition = {"trend" %in% score()})
-      shinyjs::toggle(id = "args2", condition = {"repeat" %in% score()})
-      shinyjs::toggle(id = "args3", condition = {btn1()})
+      shinyjs::toggle(id = "args_trend", condition = {"trend" %in% score()})
+      shinyjs::toggle(id = "args_repeat", condition = {"repeat" %in% score()})
+      shinyjs::toggle(id = "scoring_results", condition = {btn1()})
     })
 
     # run the scoring using logic to modify the args parameter in plane_score for the repeats function
