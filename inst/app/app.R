@@ -22,6 +22,9 @@ ui <- navbarPage(title = "rplanes Explorer",
                                           sidebarPanel(width = 3,
                                                        prettyRadioButtons("choice", "Choose Dataset", choices = c("Custom", "Example"), selected = "Custom",  status = "warning", inline = TRUE, icon = icon("check"), bigger = TRUE),
                                                        awesomeRadio("status", "Type of signal to be evaluated", choices = c("Forecast", "Observed"), selected= "Forecast", inline = TRUE, status = "warning"),
+                                                       shinyjs::hidden(div(id = "example_info",
+                                                                           HTML("<strong>The example data includes 4 week-ahead forecasts for flu hospitalizations in the United States.</strong>" ),
+                                                                           tags$hr())),
                                                        shinyjs::hidden(div(id = "choice_obs_upload",
                                                                            fileInput("upload_1", label = "Upload Observed Data", multiple = FALSE, accept = ".csv"))),
                                                        shinyjs::hidden(div(id = "choice_forc_upload",
@@ -82,6 +85,8 @@ server <- function(input, output, session){
     # unhide the upload custom dataset when choosing "Custom" radiobutton
     shinyjs::toggle(id = "choice_obs_upload", condition = {input$choice == "Custom"})
     shinyjs::toggle(id = "choice_forc_upload", condition = {input$status == "Forecast" & input$choice == "Custom"})
+    ## show the example description text when the choice is example
+    shinyjs::toggle(id = "example_info", condition = {input$choice == "Example"})
     # unhide additional options upon switch
     shinyjs::toggle(id = "add_options", condition = {input$opts == TRUE})
     shinyjs::toggle(id = "forc_opt", condition = {input$status == "Forecast"})
