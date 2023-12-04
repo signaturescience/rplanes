@@ -151,7 +151,7 @@ plotServer <- function(id, score, data_1, locations, seed, signal_to_eval, btn1,
       df_plot
     })
 
-    ## TODO: turn this into a function so we don't repeat ourselves ...
+    ## parsing the scoring list for each component / location
     coverage <- reactive({
       item <- paste0(input$loc, "-cover")
       res <- scoring()$full_results[[item]]
@@ -184,31 +184,36 @@ plotServer <- function(id, score, data_1, locations, seed, signal_to_eval, btn1,
 
     plotting <- reactive({
 
+      ## conditionally render different plots for each individual component
       if(input$plot_type == "cover"){
-        # date_min <- plot_df() %>% dplyr::filter(type == "Evaluated") %>% pull(date) %>% min()
-        # date_max <- plot_df() %>% dplyr::filter(type == "Evaluated") %>% pull(date) %>% max()
 
+        ## get the date of the last observed data to find the last observed value ...
+        ## ... and to use in the coverage data to create plot line segment
         last_obs_date <-
           plot_df() %>%
           dplyr::filter(type == "Observed") %>%
           dplyr::pull(date) %>%
           max(.)
 
+        ## get last observed value
         last_obs_val <-
           plot_df() %>%
           dplyr::filter(date == last_obs_date) %>%
           dplyr::pull(point)
 
+        ## find the first evaluated date for coverage data below
         first_eval_date <-
           plot_df() %>%
           dplyr::filter(type == "Evaluated") %>%
           dplyr::pull(date) %>%
           min(.)
 
+        ## create coverage data with two points (last observed, first evaluated)
         cover_dat <-
           plot_df() %>%
           dplyr::filter(date >= last_obs_date & date <= first_eval_date) %>%
-          dplyr::mutate(flag = ifelse(type == "Observed" & !dplyr::between(last_obs_val,coverage()$bounds$lower, coverage()$bounds$upper), TRUE, FALSE))
+          ## determine whether or not flag is raised
+          dplyr::mutate(flag = ifelse(type == "Observed" & coverage()$indicator, TRUE, FALSE))
 
         p <- plot_df() %>%
           ggplot(aes(x = date, y = point)) +
@@ -236,7 +241,7 @@ plotServer <- function(id, score, data_1, locations, seed, signal_to_eval, btn1,
           geom_point(data = plot_df(), aes(date, point, color = type), size = 4) +
           geom_point(data = repeat_tbl, aes(date, point, alpha = "Repeat"), shape = 5, size = 6, stroke=2, color = 'darkred') +
           geom_line(data = plot_df(), aes(date, point), alpha = 0.3) +
-          labs(title = paste0("Repeat", ifelse(repeats()$indicator, " (Flagged)", " (Not Flagged)")), x = "", y = "Value", subtitle = paste0("Location: ", input$loc)) +
+          labs(title = paste0("Repeat", ifelse(repeats()$indicator, " (Flagged)", " (Not Flagged)")), x = "", y = "Value", subtitle = paste0("Location: ", input$loc), caption = "Flagged repeats that exceed the tolerance are highlighted in red diamond.") +
           theme(legend.title=element_blank())
       } else if(input$plot_type == "taper"){
         p <- plot_df() %>%
@@ -248,6 +253,7 @@ plotServer <- function(id, score, data_1, locations, seed, signal_to_eval, btn1,
           theme(legend.title=element_blank())
       } else {
 
+        ## get the output data tibble from trend for change points below
         trend_df <- trend()$output
 
         p <-
