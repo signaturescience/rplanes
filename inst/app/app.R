@@ -69,6 +69,15 @@ ui <- navbarPage(title = "rplanes Explorer",
 
 server <- function(input, output, session){
 
+  ## initiate reactive value for logic in toggling instructions
+  rv <- reactiveValues(value = 0)
+
+  observeEvent(input$run, {
+    ## increment the value after the analyze button has been clicked
+    inc_value <- rv$value + 1
+    rv$value <- inc_value
+  })
+
   observe({
     # unhide the upload custom dataset when choosing "Custom" radiobutton
     shinyjs::toggle(id = "choice_custom1", condition = {input$choice == "Custom"})
@@ -85,9 +94,9 @@ server <- function(input, output, session){
     shinyjs::toggle(id = "outcome", condition = {input$choice != "Example"})
     ## toggle contents of scoring / data tabs
     ## if the analysis hasn't been run yet then show basic instructions
-    shinyjs::toggle(id = "instructions1", condition = {input$run != TRUE})
-    shinyjs::toggle(id = "instructions2", condition = {input$run != TRUE})
-    shinyjs::toggle(id = "raw_data", condition = {input$run == TRUE})
+    shinyjs::toggle(id = "instructions1", condition = {rv$value == 0})
+    shinyjs::toggle(id = "instructions2", condition = {rv$value == 0})
+    shinyjs::toggle(id = "raw_data", condition = {rv$value > 0 })
     ## toggle the number of obs picker if the signal type is 'Observed'
     shinyjs::toggle(id = "choice_nobs", condition = {input$status == "Observed"})
     })
