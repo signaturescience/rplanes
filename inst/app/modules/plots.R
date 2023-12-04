@@ -222,7 +222,7 @@ plotServer <- function(id, score, data_1, locations, seed, signal_to_eval, btn1,
           geom_segment(aes(x = min(cover_dat$date), xend = max(cover_dat$date), y = last_obs_val, yend = last_obs_val), alpha = 0.5, lty = "dotted") +
           geom_ribbon(aes(date, ymin = lower, ymax = upper), alpha = 0.5) +
           geom_line(alpha = 0.3) +
-          labs(title = paste0("Coverage", ifelse(coverage()$indicator, " (Flagged)", " (Not Flagged)")), subtitle = paste0("Location: ", input$loc), x = "", y = "Value") +
+          labs(title = paste0("Coverage", ifelse(coverage()$indicator, " (Flagged)", " (Not Flagged)")), subtitle = paste0("Location: ", input$loc), x = "", y = "Value", caption = "Evaluated points not covered by the first horizon forecast PI are highlighted in red diamond.") +
           theme(legend.title=element_blank())
       } else if(input$plot_type == "diff"){
         df_plot2 <- plot_df() %>%
