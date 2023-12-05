@@ -64,7 +64,8 @@ ui <- navbarPage(title = "rplanes Explorer",
 
                           )), # plots tab
                  tabPanel(title = "Help",
-                          htmltools::includeHTML(system.file("app/help_tab.html", package = "rplanes")))
+                          includeMarkdown(system.file("app/help.md", package = "rplanes")))
+                          # htmltools::includeHTML(system.file("app/help_tab.html", package = "rplanes")))
 ) # UI end
 
 
