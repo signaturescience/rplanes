@@ -698,7 +698,7 @@ plane_trend <- function(location, input, seed, sig_lvl = 0.1) {
 #' This function evaluates the shape of the trajectory of the forecast signal and compares that shape to existing shapes in observed data. If the shape is flagged as a novel shape, a flag is raised, and the signal is considered implausible. See details for further information.
 #'
 #' @param location Character vector with location code; the location must appear in input and seed
-#' @param input Input signal data to be scored; object must be one of [forecast][to_signal()] or [observed][to_signal()]
+#' @param input Input signal data to be scored; object must be one of [forecast][to_signal()]
 #' @param seed Prepared [seed][plane_seed()]
 #'
 #' @return
