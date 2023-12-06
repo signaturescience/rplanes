@@ -4,12 +4,14 @@
 \alias{read_forecast}
 \title{Read in forecast file}
 \usage{
-read_forecast(file, pi_width = 95)
+read_forecast(file, pi_width = 95, format = "legacy")
 }
 \arguments{
 \item{file}{Path to csv file to read}
 
 \item{pi_width}{Width of prediction interval as integer; default \code{95} corresponds to 95\% prediction interval}
+
+\item{format}{Format of the probabilistic format file; must be one of \code{"legacy"} or \code{"hubverse"} (see Details for more information); default is \code{"legacy"}}
 }
 \value{
 A \code{tibble} with the following columns:

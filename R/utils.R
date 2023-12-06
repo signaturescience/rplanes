@@ -50,6 +50,7 @@ is_forecast <- function(x) {
 #'
 #' @param file Path to csv file to read
 #' @param pi_width Width of prediction interval as integer; default `95` corresponds to 95% prediction interval
+#' @param format Format of the probabilistic format file; must be one of `"legacy"` or `"hubverse"` (see Details for more information); default is `"legacy"`
 #'
 #' @return A `tibble` with the following columns:
 #'
@@ -67,7 +68,7 @@ is_forecast <- function(x) {
 #' fp <- system.file("extdata/forecast/2022-10-31-SigSci-TSENS.csv", package = "rplanes")
 #' read_forecast(fp)
 #'
-read_forecast <- function(file, pi_width=95) {
+read_forecast <- function(file, pi_width=95, format = "legacy") {
   ## use .pi_width argument to construct vector of quantiles. If quantiles not in quant_list, stop.
   width <- q_boundary(pi_width)
   # list of quantiles used in forecasts
@@ -78,43 +79,57 @@ read_forecast <- function(file, pi_width=95) {
   ## suppress message about readr guessing column types
   df <- readr::read_csv(file, show_col_types = FALSE)
 
-  tmp_data <- df %>%
-    dplyr::mutate(quantile = ifelse(is.na(.data$quantile), 0.5, .data$quantile))  %>%
-    dplyr::mutate(epiweek = lubridate::epiweek(.data$target_end_date),
-                  epiyear = lubridate::epiyear(.data$target_end_date)) %>%
-    dplyr::filter(.data$type == "point" | .data$quantile %in% width) %>%
-    ## str_extract between 1 to 3 digits, to get horizon from target value
-    dplyr::mutate(horizon = stringr::str_extract(.data$target, pattern = "\\d{1,3}"))
+  if(format == "legacy") {
+    tmp_data <- df %>%
+      dplyr::mutate(quantile = ifelse(is.na(.data$quantile), 0.5, .data$quantile))  %>%
+      dplyr::mutate(epiweek = lubridate::epiweek(.data$target_end_date),
+                    epiyear = lubridate::epiyear(.data$target_end_date)) %>%
+      dplyr::filter(.data$type == "point" | .data$quantile %in% width) %>%
+      ## str_extract between 1 to 3 digits, to get horizon from target value
+      dplyr::mutate(horizon = stringr::str_extract(.data$target, pattern = "\\d{1,3}"))
 
-  if (sum(stringr::str_count(unique(df$type), "quantile|point")) == 2){
-    point_test <- df %>%
-      dplyr::mutate(quantile = ifelse(is.na(.data$quantile), 0.5, .data$quantile)) %>%
-      dplyr::filter(.data$quantile == 0.5) %>%
-      dplyr::group_by(.data$forecast_date, .data$location, .data$target) %>%
-      dplyr::mutate(not_equal = ifelse(.data$value[.data$type == "point"] != .data$value[.data$type == "quantile"], TRUE, FALSE)) %>%
-      dplyr::filter(.data$type == "quantile" & .data$not_equal == TRUE) %>%
-      dplyr::ungroup()
+    if (sum(stringr::str_count(unique(df$type), "quantile|point")) == 2){
+      point_test <- df %>%
+        dplyr::mutate(quantile = ifelse(is.na(.data$quantile), 0.5, .data$quantile)) %>%
+        dplyr::filter(.data$quantile == 0.5) %>%
+        dplyr::group_by(.data$forecast_date, .data$location, .data$target) %>%
+        dplyr::mutate(not_equal = ifelse(.data$value[.data$type == "point"] != .data$value[.data$type == "quantile"], TRUE, FALSE)) %>%
+        dplyr::filter(.data$type == "quantile" & .data$not_equal == TRUE) %>%
+        dplyr::ungroup()
 
-    tmp_data2 <- tmp_data  %>%
-      # remove rows with quantile types whose values don't equal the point values, keeping the point value.
-      dplyr::anti_join(point_test, by = c("forecast_date", "target", "location", "type", "quantile")) %>%
-      ## NOTE: as of tidyselect v1.2.0 the .data pronoun is deprecated for select-ing
-      dplyr::select("location", date = "target_end_date", "horizon", "quantile", "value") %>%
-      dplyr::arrange(.data$location,.data$date,.data$horizon,.data$quantile) %>%
-      dplyr::distinct_all() %>%
-      tidyr::spread(.data$quantile, .data$value) %>%
-      purrr::set_names(c("location","date","horizon","lower","point","upper"))
+      prepped <- tmp_data  %>%
+        # remove rows with quantile types whose values don't equal the point values, keeping the point value.
+        dplyr::anti_join(point_test, by = c("forecast_date", "target", "location", "type", "quantile")) %>%
+        ## NOTE: as of tidyselect v1.2.0 the .data pronoun is deprecated for select-ing
+        dplyr::select("location", date = "target_end_date", "horizon", "quantile", "value") %>%
+        dplyr::arrange(.data$location,.data$date,.data$horizon,.data$quantile) %>%
+        dplyr::distinct_all() %>%
+        tidyr::spread(.data$quantile, .data$value) %>%
+        purrr::set_names(c("location","date","horizon","lower","point","upper"))
 
-  } else {
-    tmp_data2 <- tmp_data %>%
-      dplyr::select("location", date = "target_end_date", "horizon", "quantile", "value") %>%
+    } else {
+      prepped <- tmp_data %>%
+        dplyr::select("location", date = "target_end_date", "horizon", "quantile", "value") %>%
+        dplyr::arrange(.data$location, .data$date, .data$horizon, .data$quantile) %>%
+        dplyr::distinct_all() %>%
+        tidyr::spread(.data$quantile, .data$value) %>%
+        purrr::set_names(c("location","date","horizon","lower","point","upper"))
+    }
+  } else if (format == "hubverse") {
+    prepped <-
+      df %>%
+      dplyr::filter(output_type == "quantile") %>%
+      dplyr::filter(output_type_id %in% width) %>%
+      dplyr::select("location", date = "target_end_date", "horizon", quantile = "output_type_id", "value") %>%
       dplyr::arrange(.data$location, .data$date, .data$horizon, .data$quantile) %>%
       dplyr::distinct_all() %>%
       tidyr::spread(.data$quantile, .data$value) %>%
       purrr::set_names(c("location","date","horizon","lower","point","upper"))
+  } else {
+    stop("Format must be one of either 'legacy' or 'hubverse'.")
   }
 
-  return(tmp_data2)
+  return(prepped)
 }
 
 
