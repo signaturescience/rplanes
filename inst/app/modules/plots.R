@@ -6,9 +6,9 @@ inputsUI <- function(id){
   ns <- NS(id)
   tagList(
     shinyjs::hidden(div(id = ns("args_trend"),
-                        numericInput(ns("sig"), "Choice of Significance (Trend)", value = 0.1, min = 0, max = 1, step = 0.01))),
+                        numericInput(ns("sig"), "Significance (Trend)", value = 0.1, min = 0, max = 1, step = 0.01))),
     shinyjs::hidden(div(id = ns("args_repeat"),
-                        numericInput(ns("tol"), label = "Choice of Tolerance (Repeat)", value = 0, min = 0, max = 50, step = 1),
+                        numericInput(ns("tol"), label = "Tolerance (Repeat)", value = 0, min = 0, max = 50, step = 1),
                         numericInput(ns("pre"), label = "Prepend Values (Repeat)",  value = 0, min = 0, max = 365, step = 1)))
   )
 }
@@ -18,14 +18,15 @@ plotUI <- function(id){
   tagList(
     shinyjs::hidden(div(id = ns("scoring_results"),
                         fluidRow(
-                          tags$h3("Overall Scoring"),
+                          tags$h3("Overall"),
                           column(width = 4,
-                                 plotOutput(ns("score_plot")) %>% shinycssloaders::withSpinner(type = 6, size=2, color = "#246479")),
+                                 tags$div(style="height:50px"),
+                                 plotOutput(ns("score_plot"), height = "500px") %>% shinycssloaders::withSpinner(type = 6, size=2, color = "#246479", image.height = "500px", proxy.height = "500px")),
                           column(width = 8,
                                  DT::DTOutput(ns("score_table")))
                         ),
                         fluidRow(
-                          tags$h3("Individual Scoring"),
+                          tags$h3("Individual Locations and Components"),
                           column(width = 3,
                                  pickerInput(ns("loc"), "Location", choices = "", options =  list(`live-search` = TRUE))),
                           column(width = 9,

@@ -16,7 +16,7 @@ sapply(module_sources, source)
 ui <- navbarPage(title = "rplanes Explorer",
                  inverse = TRUE, # invert color of navigation top bar to black
                  useShinyjs(),  # Set up shinyjs
-                 tabPanel(title = "Plots",
+                 tabPanel(title = "Analysis",
                           fluidPage(
                             sidebarLayout(position = "left",
                                           sidebarPanel(width = 3,
@@ -47,7 +47,7 @@ ui <- navbarPage(title = "rplanes Explorer",
                                           ),
                                           mainPanel(
                                             tabsetPanel(id = "tabs1",
-                                                        tabPanel("Scores",
+                                                        tabPanel("Scoring",
                                                                  shinyjs::hidden(div(id = "instructions1",
                                                                                      includeMarkdown((system.file("app/instructions.md", package = "rplanes"))))),
 
