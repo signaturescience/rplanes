@@ -228,7 +228,7 @@ server <- function(input, output, session){
       }
     })
 
-    dataServer("tab1", data_1 = data_1, data_2 = data_2 )
+    dataServer("tab1", data_1 = data_1, data_2 = data_2, signal_type = input$status, n_obs_eval = input$n_obs_eval)
 
     plotServer("tab2", score = score, data_1 = data_1, locations = locations, seed = prepped_seed, signal_to_eval = prepped_signal, btn1 = btn1, status = status, outcome = outcome, btn2 = btn2)
 

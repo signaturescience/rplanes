@@ -6,13 +6,13 @@ dataUI <- function(id){
   ns <- NS(id)
   tagList(
     wellPanel(
-      h3(HTML("<span style='color: #008B8B;'>Observed Signal Data Set</span>")),
+      h3(HTML("<span style='color: #008B8B;'>Observed Data Used in Seed</span>")),
       fluidRow(column(width = 9), DT::dataTableOutput(ns("observed")))
 
       ),
     wellPanel(
-      h3(HTML("<span style='color: #008B8B;'>Data Set to be Evaluated</span>")),
-      fluidRow(column(width = 9, DT::dataTableOutput(ns("forecast"))))
+      h3(HTML("<span style='color: #008B8B;'>Data Set Evaluated</span>")),
+      fluidRow(column(width = 9), DT::dataTableOutput(ns("evaluated")))
   )
   )
 }
@@ -21,11 +21,22 @@ dataUI <- function(id){
 # Server Side ####
 #~~~~~~~~~~~~~~~~~~~~~~~~
 
-dataServer <- function(id, btn1, data_1, data_2) {
+dataServer <- function(id, btn1, data_1, data_2, signal_type, n_obs_eval) {
   moduleServer(id, function(input, output, session) {
 
+
     output$observed <- DT::renderDataTable(server = FALSE,{
-      DT::datatable(data_1(), extensions = "Buttons",
+
+      ## conditional logic to handle observed signal and cut date if needed
+      if(signal_type == "Observed") {
+        cut_date <- min(tail(data_1()$date,n_obs_eval))
+        dat <- data_1() %>%
+          dplyr::filter(date < cut_date)
+      } else {
+        dat <- data_1()
+      }
+
+      DT::datatable(dat, extensions = "Buttons",
                     filter = "top",
                     selection = "none", #this is to avoid select rows if you click on the rows
                     rownames = FALSE,
@@ -40,8 +51,17 @@ dataServer <- function(id, btn1, data_1, data_2) {
                     class = "display")
     })
 
-    output$forecast <- DT::renderDataTable(server = FALSE,{
-      DT::datatable(data_2(), extensions = "Buttons",
+    output$evaluated <- DT::renderDataTable(server = FALSE,{
+
+      ## conditional logic to handle observed signal and cut date if needed
+      if(signal_type == "Observed") {
+        cut_date <- min(tail(data_1()$date,n_obs_eval))
+        dat <- data_1() %>%
+          dplyr::filter(date >= cut_date)
+      } else {
+        dat <- data_2()
+      }
+      DT::datatable(dat, extensions = "Buttons",
                     filter = "top",
                     selection = "none", #this is to avoid select rows if you click on the rows
                     rownames = FALSE,
