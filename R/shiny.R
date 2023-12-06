@@ -1,22 +1,22 @@
-#' @title RPLANES explorer app launcher
+#' @title `rplanes` explorer app launcher
 #'
 #' @description
 #'
-#' The Rplanes explorer app allows a user to interactively use their own data sets, or an internal example data set, to explore the various functions developed for plausibility analysis.
+#' The `rplanes` explorer app allows a user to interactively upload their own data (or view an internal example) to explore the plausibility analysis functionality.
 #'
 #' @param ... Additional arguments to be passed to [shiny::runApp]
 #'
-#' @return This function starts the Rplanes Shiny app.
+#' @return This function operates as a side-effect and starts the `rplanes` Shiny app.
 #'
 #' @export
 #'
 #' @examples
 #' \dontrun{
 #' # Launch the explorer app
-#' app_launcher(host = "0.0.0.0",
-#'              launch.browser = TRUE,
-#'              port = 80)
+#' rplanes_launcher(host = "0.0.0.0",
+#'                  launch.browser = TRUE,
+#'                  port = 80)
 #' }
-app_launcher <- function(...){
+rplanes_launcher <- function(...){
   shiny::runApp(appDir = system.file("app", package="rplanes"), ... )
 }
