@@ -1,0 +1,90 @@
+---
+title: "rplanes Explorer"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{rplanes Explorer}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  warning = FALSE,
+  message = FALSE,
+  comment = "#>"
+)
+```
+
+```{r setup}
+library(rplanes)
+
+more <- function (.data, fill = ".", extra_rows = 4) {
+    .data <- tibble::as_tibble(.data)
+    filler <- matrix(fill, ncol = ncol(.data), nrow = extra_rows)
+    filler <- tibble::as_tibble(filler, .name_repair = "minimal")
+    names(filler) <- names(.data)
+    rbind(.data, filler)
+}
+```
+
+# Overview
+
+`rplanes` features a Shiny app that allows users to interact with package functions to perform plausibility analysis for epidemiological signals. The "`rplanes` Explorer" app is developed and maintained as part of the R package. Users can launch the app locally or use it on a hosted Shiny server by running the `rplanes_launcher()` function.
+
+# Analysis steps
+
+The application allows users to run plausibility analysis with several steps:
+
+1. Select the type of signal to be evaluated
+2. Upload data to use for the plausibility analysis seed
+3. Upload data containing the signal to be evaluated (or for an observed signal identify the number of points to evaluate)
+4. Enter the resolution, outcome, and forecast horizon (if applicable)
+5. Optionally modify default parameters used for analysis
+6. Click "Analyze"
+
+# Example data
+
+The app includes example data to help users familiarize themselves with the plausibility analysis features. The example is based on observed data originally obtained from [healthdata.gov](https://healthdata.gov/Hospital/COVID-19-Reported-Patient-Impact-and-Hospital-Capa/g62h-syeh) and is the flu admissions ("previous_day_admission_influenza_confirmed" field) aggregated by location and epidemiological week. The data includes all states and national resolution for the United States. A selection of the observed data used in the example is provided below:
+
+```{r, echo=FALSE, eval=TRUE}
+hosp <- read.csv(system.file("extdata/observed/hdgov_hosp_weekly.csv", package = "rplanes"))
+
+hosp %>%
+  head(9) %>%
+  more(extra_rows = 1) %>%
+  knitr::kable()
+```
+
+
+The example forecast data set evaluated was selected from the [CDC FluSight hospitalization forecasts submitted during the 2021-2022 and 2022-2023 influenza seasons](https://github.com/cdcepi/Flusight-forecast-data). A selection of the forecast data used in the example is provided below:
+
+
+```{r}
+fp <- system.file("extdata/forecast/2022-10-31-SigSci-TSENS.csv", package = "rplanes")
+
+read.csv(fp) %>%
+  head(9) %>%
+  more(extra_rows = 1) %>%
+  knitr::kable()
+```
+
+
+# Usage
+
+## Inputs and outputs
+
+The app includes inputs for the type of signal to be evaluated, file uploads (as needed), and parameter modifications. Once analysis is complete, the output of the analysis is displayed visually to the user as a collection of plots and tables. The "Help" tab on the app includes more detailed information on all of the inputs and outputs for the explorer app.
+
+## Launching the app
+
+The app is delivered as a function in the `rplanes` package. To launch the app, users can run the `rplanes_launcher()` function. Note that this function wraps `shiny::runApp()` and inherits any arguments. For example, adding an argument for `launch.browser = TRUE` will open up the app in a web browser and setting `port = 80` will run the app at port `80` in the localhost.
+
+```{r, eval=FALSE, echo=TRUE}
+library(rplanes)
+rplanes_launcher(host = "0.0.0.0", launch.browser = TRUE, port = 80)
+```
+
+
+
+
