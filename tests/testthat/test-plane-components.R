@@ -260,4 +260,18 @@ test_that("plane_trend flags known changepoints and is sensitive to changes in s
 })
 
 
+test_that("plane_shape flags novel shapes", {
 
+  prepped_forecast <- read_forecast(system.file("extdata/forecast/2022-10-31-SigSci-TSENS.csv",
+                                                package = "rplanes")) %>%
+    to_signal(., outcome = "flu.admits", type = "forecast", horizon = 4)
+
+  prepped_seed3 <- plane_seed(prepped_observed, cut_date = "2022-10-29") # need this cut date to test plane_shape
+
+  ## We know there is a novel shape at location 13 that should be flagged:
+  expect_true(plane_shape(location = "13", input = prepped_forecast, seed = prepped_seed3))
+
+  ## We know that location 2 doesn't have any novel shapes that should be flagged:
+  expect_false(plane_shape(location = "02", input = prepped_forecast, seed = prepped_seed3))
+
+})
