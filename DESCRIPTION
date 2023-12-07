@@ -13,33 +13,41 @@ Authors@R:
       person(given = "Amy",
              family = "Benefield",
              role = "aut"))
-Description: The 'rplanes' package provides functionality to prepare data and and analyze plausibility of both forecasted and reported epidemiological signals. The functions implement a set of plausbility algorithms that are agnostic to geographic and time resolutions and are calculated independently then presented as a combined score. 
+Description: The 'rplanes' package provides functionality to prepare data and and analyze plausibility of both forecasted and reported epidemiological signals. The functions implement a set of plausbility algorithms that are agnostic to geographic and time resolutions and are calculated independently then presented as a combined score.
 License: MIT + file LICENSE
+URL: https://signaturescience.github.io/rplanes/
+Depends: 
+    R (>= 2.10)
+Imports: 
+    dplyr,
+    dtw,
+    ecp,
+    lubridate,
+    magrittr,
+    purrr,
+    readr,
+    rlang,
+    stringr,
+    tibble,
+    tidyr,
+    utils
+Suggests:
+    DT,
+    ggplot2,
+    markdown,
+    knitr,
+    MMWRweek,
+    rmarkdown,
+    shiny,
+    shinyjs,
+    shinyWidgets,
+    shinycssloaders,
+    testthat (>= 3.0.0),
+    tools
+VignetteBuilder: 
+    knitr
+Config/testthat/edition: 3
 Encoding: UTF-8
 LazyData: true
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.2.3
-Imports: 
-    dplyr,
-    dtw,
-    magrittr,
-    purrr,
-    rlang,
-    tidyr,
-    stringr,
-    readr,
-    lubridate,
-    ecp,
-    tibble,
-    utils
-Suggests:
-    testthat (>= 3.0.0),
-    MMWRweek,
-    knitr,
-    rmarkdown,
-    ggplot2
-Depends: 
-    R (>= 2.10)
-Config/testthat/edition: 3
-URL: https://signaturescience.github.io/rplanes/
-VignetteBuilder: knitr
