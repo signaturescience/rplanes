@@ -704,11 +704,10 @@ plane_trend <- function(location, input, seed, sig_lvl = 0.1) {
 #'
 #' @return
 #'
-#' An **indicator** `logical` designating whether or not the shape of the evaluated signal is novel.
+#' A `list` with the following values:
 #'
-#' - If indicator = `TRUE` = novel shape = implausible
+#' - **indicator**: Logical as to whether or not the the shape of the evaluated signal is novel (`TRUE` if shape is novel, `FALSE` if a familiar shape exists in the seed).
 #'
-#' - If indicator = `FALSE` = familiar shape found in the seed = plausible
 #'
 #' @details
 #'

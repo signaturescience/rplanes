@@ -14,10 +14,9 @@ plane_shape(location, input, seed)
 \item{seed}{Prepared \link[=plane_seed]{seed}}
 }
 \value{
-An \strong{indicator} \code{logical} designating whether or not the shape of the evaluated signal is novel.
+A \code{list} with the following values:
 \itemize{
-\item If indicator = \code{TRUE} = novel shape = implausible
-\item If indicator = \code{FALSE} = familiar shape found in the seed = plausible
+\item \strong{indicator}: Logical as to whether or not the the shape of the evaluated signal is novel (\code{TRUE} if shape is novel, \code{FALSE} if a familiar shape exists in the seed).
 }
 }
 \description{
