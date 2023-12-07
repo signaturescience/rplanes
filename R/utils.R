@@ -350,3 +350,24 @@ q_boundary <- function(pi_width) {
   lower_upper <- 0.5 + (c(-1,1)*half_width)
   round(c(lower_upper[1], 0.5, lower_upper[2]), 3)
 }
+
+
+#' Sliding windows
+#'
+#' @description
+#'
+#' This helper function is used within `plane_shape()` to generate sliding windows from a vector and return a data frame where each row is a subset (a sliding window) of a time series. The length of the time series (and therefore number of columns) is equal to window_size. The number of windows is equal to `length(vector) - window_size + 1`. If you have a time series of length 38 and a window size of length 4, then there will be 35 windowed time series (rows), with 4 time stamps each (columns).
+#'
+#'
+#' @param vector A numeric or integer vector that is the time series to be used to create sliding windows
+#' @param window_size The size of the windowed time series desired
+#'
+#' @return
+#'
+#' A `data.frame` where each row is a subset (a sliding window) of a time series.
+
+create_sliding_windows_df <- function(vector, window_size) {
+  num_windows <- length(vector) - window_size + 1
+  windows <- purrr::map(1:num_windows, ~ vector[.x:(.x + window_size - 1)])
+  as.data.frame(matrix(unlist(windows), nrow = num_windows, byrow = TRUE))
+}
