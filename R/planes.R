@@ -433,7 +433,8 @@ plane_score <- function(input, seed, components = "all", args = NULL) {
          diff = list(.function = plane_diff),
          taper = list(.function = plane_taper),
          `repeat` = list(.function = plane_repeat),
-         trend = list(.function = plane_trend)
+         trend = list(.function = plane_trend),
+         shape = list(.function = plane_shape)
     )
 
   ## verify components for signal type ... some won't apply to observed
@@ -854,7 +855,7 @@ plane_shape <- function(location, input, seed) {
   ## if any of the shape check results are FALSE then this will return FALSE (no flag)
   novel_shape <- all(novel_shape_check)
 
-  return(indicator = novel_shape)
+  return(list(indicator = novel_shape))
 
 }
 
