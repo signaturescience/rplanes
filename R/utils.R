@@ -326,36 +326,19 @@ q_boundary <- function(pi_width) {
 }
 
 
-#' Sliding Windows Helper Function
+#' Sliding windows
 #'
 #' @description
 #'
-#' This helper function is used within plane_shape to generate sliding windows from a vector and return a data frame where each row is a subset (a sliding window) of a time series. The length of the time series' (and therefore number of columns) = window_size. The number of windows is equal to `length(vector) - window_size + 1`. If you have a time series of length 38 and a window size of length 4, then there will be 35 windowed time series (rows), with 4 time stamps each (columns).
+#' This helper function is used within `plane_shape()` to generate sliding windows from a vector and return a data frame where each row is a subset (a sliding window) of a time series. The length of the time series (and therefore number of columns) is equal to window_size. The number of windows is equal to `length(vector) - window_size + 1`. If you have a time series of length 38 and a window size of length 4, then there will be 35 windowed time series (rows), with 4 time stamps each (columns).
 #'
-#' If you have a time series vector:
 #'
-#' `ts <- c(1, 2, 3, 4, 5, 6, 7)`,
-#'
-#'and you run:
-#'
-#' `create_sliding_windows_df(vector = ts, window_size = 3)`,
-#'
-#' the output will be a data frame:
-#'
-#' |**V1**|**V2**| **V3**|
-#' | - |:--:| --:|
-#' | 1 | 2  |  3 |
-#' | 2 | 3  |  4 |
-#' | 3 | 4  | 5 |
-#' | 4 | 5 | 6 |
-#' | 5 | 6 |  7 |
-#'
-#' @param vector A numeric or integer vector that is the time series for which you want to create sliding windows
-#' @param window_size The size of the windowed time series you want.
+#' @param vector A numeric or integer vector that is the time series to be used to create sliding windows
+#' @param window_size The size of the windowed time series desired
 #'
 #' @return
 #'
-#' a `dataframe` where each row is a subset (a sliding window) of a time series.
+#' A `data.frame` where each row is a subset (a sliding window) of a time series.
 
 create_sliding_windows_df <- function(vector, window_size) {
   num_windows <- length(vector) - window_size + 1

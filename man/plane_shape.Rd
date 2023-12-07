@@ -21,18 +21,18 @@ An \strong{indicator} \code{logical} designating whether or not the shape of the
 }
 }
 \description{
-This function evaluates the shape of the trajectory of the forecast signal and compares that shape to existing shapes in observed data. If the shape is flagged as a novel shape, a flag is raised, and the signal is considered implausible. See details for further information.
+This function evaluates the shape of the trajectory of the forecast signal and compares that shape to existing shapes in observed data. If the shape is identified as novel, a flag is raised, and the signal is considered implausible. See the Details section for further information.
 }
 \details{
-This function uses a Dynamic Time Warping (DTW) algorithm to identify shapes within the trusted, observed seed data and then compares the shape of the forecast input signal to the observed shapes. This is done in three broad steps:
+This function uses a Dynamic Time Warping (DTW) algorithm to identify shapes within the data used to generate the seed and then compares the shape of the forecast input signal to the observed shapes. This is done in three broad steps:
 \enumerate{
-\item The prepared \link[=plane_seed]{seed} data is divided into a set of sliding windows with a step size of one - each representing a section of the overall time series. The length of these windows is determined by the horizon length of the input data signal (e.g., 2 weeks). If your seed data was a vector, \code{ts <- c(1, 2, 3, 4, 5)}, and your horizon length was 2, then the sliding windows for your observed seed data would be: c(1, 2), c(2, 3), c(3, 4), and c(4, 5). Each sliding window is a subset of the total trajectory shape of the observed data.
+\item The prepared \link[=plane_seed]{seed} data is divided into a set of sliding windows with a step size of one, each representing a section of the overall time series. The length of these windows is determined by the horizon length of the input data signal (e.g., 2 weeks). If your seed data was a vector, \code{c(1, 2, 3, 4, 5)}, and your horizon length was 2, then the sliding windows for your observed seed data would be: \code{c(1, 2)}, \code{c(2, 3)}, \code{c(3, 4)}, and \code{c(4, 5)}. Each sliding window is a subset of the total trajectory shape of the observed data.
 \item Shape-based DTW distances are calculated for every 1x1 combination of the observed sliding windows and are stored in a distance matrix. We use these distances to calibrate our function for identifying outlying shapes in forecast data.
 \itemize{
 \item We find the minimum distances for each windowed time series to use as a baseline for "observed distances" between chunks of the larger observed time series.
-\item We then calculate the maximum of those minimum distance across the observed time series. This will be our \strong{threshold}. If the minimum of the forecast:observed distance matrix is greater than the greatest, minimum observed:observed distance, then we can infer that the forecast is an unfamiliar, novel shape.
+\item We then calculate the maximum of those minimum distance across the observed time series. This will be our \strong{threshold}. If the minimum of the forecast:observed distance matrix is greater than the greatest minimum observed:observed distance, then we can infer that the forecast is unfamiliar (i.e., a novel shape).
 }
-\item We calculate the shape-based DTW distances between the forecast signal and every observed sliding window. If the distance between the forecast and \strong{any} observed sliding window is less than or equal to our threshold defined above, then this shape is not novel and no flag is raised (\strong{indicator} = \code{FALSE}).
+\item We calculate the shape-based DTW distances between the forecast signal (including the point estimate, lower, and upper bounds) and every observed sliding window. If the distance between the forecast and \strong{any} observed sliding window is less than or equal to our threshold defined above, then this shape is not novel and no flag is raised (\strong{indicator} = \code{FALSE}).
 }
 }
 \examples{
@@ -45,23 +45,21 @@ tmp_hosp <-
  dplyr::select(date, location, flu.admits) \%>\%
  dplyr::mutate(date = as.Date(date))
 
- prepped_observed <- to_signal(tmp_hosp,
+prepped_observed <- to_signal(tmp_hosp,
                                outcome = "flu.admits",
                                type = "observed",
                                resolution = "weeks")
 
- prepped_forecast <- read_forecast(system.file("extdata/forecast/2022-10-31-SigSci-TSENS.csv",
+prepped_forecast <- read_forecast(system.file("extdata/forecast/2022-10-31-SigSci-TSENS.csv",
                                                 package = "rplanes")) \%>\%
    to_signal(., outcome = "flu.admits", type = "forecast", horizon = 4)
 
 prepped_seed <- plane_seed(prepped_observed, cut_date = "2022-10-29")
 
 # First, an example where the shape is novel and a flag is raised:
-
 plane_shape(location = "13", input = prepped_forecast, seed = prepped_seed)
 
 # Next, an example where a flag is not raised:
-
 plane_shape(location = "06", input = prepped_forecast, seed = prepped_seed)
 
 

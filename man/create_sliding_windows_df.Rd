@@ -2,35 +2,18 @@
 % Please edit documentation in R/utils.R
 \name{create_sliding_windows_df}
 \alias{create_sliding_windows_df}
-\title{Sliding Windows Helper Function}
+\title{Sliding windows}
 \usage{
 create_sliding_windows_df(vector, window_size)
 }
 \arguments{
-\item{vector}{A numeric or integer vector that is the time series for which you want to create sliding windows}
+\item{vector}{A numeric or integer vector that is the time series to be used to create sliding windows}
 
-\item{window_size}{The size of the windowed time series you want.}
+\item{window_size}{The size of the windowed time series desired}
 }
 \value{
-a \code{dataframe} where each row is a subset (a sliding window) of a time series.
+A \code{data.frame} where each row is a subset (a sliding window) of a time series.
 }
 \description{
-This helper function is used within plane_shape to generate sliding windows from a vector and return a data frame where each row is a subset (a sliding window) of a time series. The length of the time series' (and therefore number of columns) = window_size. The number of windows is equal to \code{length(vector) - window_size + 1}. If you have a time series of length 38 and a window size of length 4, then there will be 35 windowed time series (rows), with 4 time stamps each (columns).
-
-If you have a time series vector:
-
-\code{ts <- c(1, 2, 3, 4, 5, 6, 7)},
-
-and you run:
-
-\code{create_sliding_windows_df(vector = ts, window_size = 3)},
-
-the output will be a data frame:\tabular{lcr}{
-   \strong{V1} \tab \strong{V2} \tab \strong{V3} \cr
-   1 \tab 2 \tab 3 \cr
-   2 \tab 3 \tab 4 \cr
-   3 \tab 4 \tab 5 \cr
-   4 \tab 5 \tab 6 \cr
-   5 \tab 6 \tab 7 \cr
-}
+This helper function is used within \code{plane_shape()} to generate sliding windows from a vector and return a data frame where each row is a subset (a sliding window) of a time series. The length of the time series (and therefore number of columns) is equal to window_size. The number of windows is equal to \code{length(vector) - window_size + 1}. If you have a time series of length 38 and a window size of length 4, then there will be 35 windowed time series (rows), with 4 time stamps each (columns).
 }
