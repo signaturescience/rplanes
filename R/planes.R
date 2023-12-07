@@ -479,10 +479,15 @@ plane_score <- function(input, seed, components = "all", args = NULL) {
   ## grab full list of component results
   full_results <- purrr::map(retl, purrr::pluck)
 
+  ## separator regex
+  ## this should create something like "-(?=[diff|trend|taper])"
+  ## when applied below that will split *only on hyphens that are followed by diff or trend or taper
+  sep_rx <- paste0("-(?=[", paste0(components,collapse = "|"), "])")
+
   ## pull out summary tibble components and locations from the returned list above
   loc_tbl <-
     dplyr::tibble(loc_component = names(retl), indicator = purrr::map_lgl(retl, "indicator")) %>%
-    tidyr::separate(.data$loc_component, into = c("location", "component"), sep = "-")
+    tidyr::separate(.data$loc_component, into = c("location", "component"), sep = sep_rx)
 
   which_flags <-
     loc_tbl %>%
