@@ -55,6 +55,9 @@ seed_engine <- function(input, location, cut_date=NULL) {
   ## get all values for repeat
   all_vals <- tmp_obs
 
+  ## get any zeros
+  any_zeros <- any(tmp_obs == 0)
+
   ## get max repeats
   max_repeats <-
     tmp_data %>%
@@ -80,6 +83,7 @@ seed_engine <- function(input, location, cut_date=NULL) {
       all_values = all_vals,
       max_repeats = max_repeats,
       last_value = last_val,
+      any_zeros = any_zeros,
       ## TODO: add other metadata to this list
       meta = list(cut_date = cut_date, resolution = input$resolution, date_range = list(min = min(tmp_data$date), max = max(tmp_data$date)))
     )
