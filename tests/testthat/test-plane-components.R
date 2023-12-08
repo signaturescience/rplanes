@@ -269,9 +269,66 @@ test_that("plane_shape flags novel shapes", {
   prepped_seed3 <- plane_seed(prepped_observed, cut_date = "2022-10-29") # need this cut date to test plane_shape
 
   ## We know there is a novel shape at location 13 that should be flagged:
-  expect_true(plane_shape(location = "13", input = prepped_forecast, seed = prepped_seed3))
+  expect_true(plane_shape(location = "13", input = prepped_forecast, seed = prepped_seed3)$indicator)
 
   ## We know that location 2 doesn't have any novel shapes that should be flagged:
-  expect_false(plane_shape(location = "02", input = prepped_forecast, seed = prepped_seed3))
+  expect_false(plane_shape(location = "02", input = prepped_forecast, seed = prepped_seed3)$indicator)
+
+})
+
+test_that("plane_zero handles zeros correctly", {
+
+  ## create some data to test
+  ## make a point estimate zero
+  point_est <- c(0,600,700,800)
+  prepped_forecast <-
+    dplyr::tibble(
+      location = "US",
+      date = seq(as.Date("2022-05-14"), as.Date("2022-06-04"), by = 7),
+      horizon = 1:4,
+      lower = point_est - 20,
+      point = point_est,
+      upper = point_est + 20
+    ) %>%
+    to_signal(outcome = "flu.admits", type = "forecast", horizon = 4)
+
+  ## US has no zeros => would expect TRUE
+  expect_true(plane_zero(location = "US", input = prepped_forecast, seed = prepped_seed)$indicator)
+
+  ## create some data to test
+  ## make no point estimate zero
+  point_est <- c(500,600,700,800)
+  prepped_forecast <-
+    dplyr::tibble(
+      location = "US",
+      date = seq(as.Date("2022-05-14"), as.Date("2022-06-04"), by = 7),
+      horizon = 1:4,
+      lower = point_est - 20,
+      point = point_est,
+      upper = point_est + 20
+    ) %>%
+    to_signal(outcome = "flu.admits", type = "forecast", horizon = 4)
+
+  ## US has no zeros => would expect FALSE if no zeros in eval
+  expect_false(plane_zero(location = "US", input = prepped_forecast, seed = prepped_seed)$indicator)
+
+
+  ## create some data to test
+  ## make all point estimates zero
+  point_est <- c(0,0,0,0)
+  prepped_forecast <-
+    dplyr::tibble(
+      location = "02",
+      date = seq(as.Date("2022-05-14"), as.Date("2022-06-04"), by = 7),
+      horizon = 1:4,
+      lower = point_est + 10,
+      point = point_est,
+      upper = point_est
+    ) %>%
+    to_signal(outcome = "flu.admits", type = "forecast", horizon = 4)
+
+  ## alaska has zeros => would expect FALSE if no zeros in eval
+  expect_false(plane_zero(location = "02", input = prepped_forecast, seed = prepped_seed)$indicator)
+
 
 })
