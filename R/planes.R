@@ -386,7 +386,7 @@ plane_repeat <- function(location, input, seed, tolerance = NULL, prepend = NULL
 #'
 #' @param input Input signal data to be scored; object must be one of [forecast][to_signal()] or [observed][to_signal()]
 #' @param seed Prepared [seed][plane_seed()]
-#' @param components Character vector specifying components. Must be either "all" or any combination of "cover", "diff", "taper", "trend", and "repeat". Default is `"all"` and will use all available components for the given signal
+#' @param components Character vector specifying components. Must be either `"all"` or any combination of `"cover"`, `"diff"`, `"taper"`, `"trend"`, `"repeat"`, `"shape"`, and `"zero"`. Default is `"all"` and will use all available components for the given signal
 #' @param args Named list of arguments for component functions. List elements must be named to match the given component and arguments passed as a nested list (e.g., `args = list(trend = list(sig_lvl = 0.05))`). Default is `NULL` and defaults for all components will be used
 #'
 #'
@@ -434,11 +434,12 @@ plane_score <- function(input, seed, components = "all", args = NULL) {
          taper = list(.function = plane_taper),
          `repeat` = list(.function = plane_repeat),
          trend = list(.function = plane_trend),
-         shape = list(.function = plane_shape)
+         shape = list(.function = plane_shape),
+         zero = list(.function = plane_zero)
     )
 
   ## verify components for signal type ... some won't apply to observed
-  allowed_observed <- c("repeat","diff")
+  allowed_observed <- c("repeat","diff","zero")
 
   ## handle condition when "all" components are requested
   ## observed data will only have a subset (the allowed compoments above)
@@ -863,3 +864,94 @@ plane_shape <- function(location, input, seed) {
 
 }
 
+#' Zero Component
+#'
+#' @description
+#'
+#' This function checks for the presence of any value(s) equal to zero in the evaluated signal. If there are any zeros found then, the function will internally assess the [seed][plane_seed()] to find whether or not the input data had zeros anywhere else in the time series. If so, the function will consider the evaluated zero plausible and no flagged will be raised (i.e., indicator returned as `FALSE`). If not, the function will consider the evaluated zero implausible and a flagged will be raised (i.e., indicator returned as `TRUE`).
+#'
+#' @param location Character vector with location code; the location must appear in input and seed
+#' @param input Input signal data to be scored; object must be one of [forecast][to_signal()] or [observed][to_signal()]
+#' @param seed Prepared [seed][plane_seed()]
+#'
+#' @return
+#'
+#' A `list` with the following values:
+#'
+#' - **indicator**: Logical as to whether or not there are zeros in evaluated signal but not in seed data.
+#'
+#' @export
+#'
+#' @examples
+#' ## read in example observed data and prep observed signal
+#' hosp <- read.csv(system.file("extdata/observed/hdgov_hosp_weekly.csv", package = "rplanes"))
+#' hosp$date <- as.Date(hosp$date, format = "%Y-%m-%d")
+#' prepped_observed <- to_signal(hosp, outcome = "flu.admits", type = "observed", resolution = "weeks")
+#'
+#' ## read in example forecast and prep forecast signal
+#' fp <- system.file("extdata/forecast/2022-10-31-SigSci-TSENS.csv", package = "rplanes")
+#' prepped_forecast <- read_forecast(fp) %>%
+#'   to_signal(., outcome = "flu.admits", type = "forecast", horizon = 4)
+#'
+#' ## prepare seed with cut date
+#' prepped_seed <- plane_seed(prepped_observed, cut_date = "2022-10-29")
+#'
+#' ## run plane component
+#' plane_zero(location = "10", input = prepped_forecast, seed = prepped_seed)
+#' plane_zero(location = "51", input = prepped_forecast, seed = prepped_seed)
+#'
+plane_zero <- function(location, input, seed) {
+
+  ## double check that location is in seed before proceeding
+  if(!location %in% names(seed)) {
+    stop(sprintf("%s does not appear in the seed object. Check that the seed was prepared with the location specified.", location))
+  }
+
+  tmp_seed <- seed[[location]]
+
+  ## check for class of input to see if it is observed
+  ## if so ... filter on seed dates to so that we're comparing the observed of interest to seed vals
+  if(is_observed(input)) {
+    tmp_dat <-
+      input$data %>%
+      dplyr::filter(.data$location == .env$location) %>%
+      dplyr::filter(.data$date > as.Date(tmp_seed$meta$cut_date, format = "%Y-%m-%d"))
+
+    ## check that dates are valid (i.e., no observed data doesnt overlap with seed
+    valid_dates(seed_date = tmp_seed$meta$date_range$max, signal_date = min(tmp_dat$date), resolution = tmp_seed$meta$resolution)
+
+    ## pull the outcome values to be evaluated
+    tmp_vals <-
+      tmp_dat %>%
+      dplyr::pull(input$outcome)
+
+  } else if(is_forecast(input)) {
+    ## return the forecast data (with the filter on cut date)
+    tmp_dat <-
+      input$data %>%
+      dplyr::filter(.data$location == .env$location) %>%
+      dplyr::filter(.data$date > as.Date(tmp_seed$meta$cut_date, format = "%Y-%m-%d"))
+
+    ## check that dates are valid (i.e., no observed data doesnt overlap with seed
+    valid_dates(seed_date = tmp_seed$meta$date_range$max, signal_date = min(tmp_dat$date), resolution = tmp_seed$meta$resolution)
+
+    ## after all the checks ...
+    ## pull the point estimates
+    tmp_vals <-
+      tmp_dat %>%
+      dplyr::pull("point")
+
+  }
+
+  ## if there are no zeros in the seed (i.e., if any zeros is FALSE) ...
+  ## ... then check if any evaluated points are 0
+  ## otherwise set indicator to FALSE (and don't raise a flag)
+  if(!tmp_seed$any_zeros) {
+    ind <- any(tmp_vals == 0)
+  } else {
+    ind <- FALSE
+  }
+
+  return(list(indicator = ind))
+
+}
