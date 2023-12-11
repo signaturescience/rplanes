@@ -868,7 +868,7 @@ plane_shape <- function(location, input, seed) {
 #'
 #' @description
 #'
-#' This function checks for the presence of any value(s) equal to zero in the evaluated signal. If there are any zeros found then, the function will internally assess the [seed][plane_seed()] to find whether or not the input data had zeros anywhere else in the time series. If so, the function will consider the evaluated zero plausible and no flagged will be raised (i.e., indicator returned as `FALSE`). If not, the function will consider the evaluated zero implausible and a flagged will be raised (i.e., indicator returned as `TRUE`).
+#' This function checks for the presence of any value(s) equal to zero in the evaluated signal. If there are any zeros found, then the function will internally assess the [seed][plane_seed()] to find whether or not the input data had zeros anywhere else in the time series. If so, the function will consider the evaluated zero plausible and no flag will be raised (i.e., indicator returned as `FALSE`). If not, the function will consider the evaluated zero implausible and a flag will be raised (i.e., indicator returned as `TRUE`).
 #'
 #' @param location Character vector with location code; the location must appear in input and seed
 #' @param input Input signal data to be scored; object must be one of [forecast][to_signal()] or [observed][to_signal()]
