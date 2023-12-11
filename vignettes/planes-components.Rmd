@@ -792,10 +792,10 @@ prepped_forecast <-
     location = "01",
     date = seq(as.Date("2022-06-11"), as.Date("2022-07-02"), by = 7),
     horizon = 1:4,
-    lower = point_est - c(10, 20, 30, 40),
+    lower = point_est - 10,
     ## make an unusual shape in hospitalizations to trigger shape component
     point = point_est,
-    upper = point_est + c(10, 20, 30, 40),
+    upper = point_est + 10,
   ) %>%
   to_signal(outcome = "flu.admits", type = "forecast", horizon = 4)
 ```
@@ -846,10 +846,10 @@ prepped_forecast <-
     location = "01",
     date = seq(as.Date("2022-06-11"), as.Date("2022-07-02"), by = 7),
     horizon = 1:4,
-    lower = point_est - c(10, 20, 30, 40),
+    lower = point_est - 10,
     ## make an normal, familiar shape in hospitalizations to not trigger shape component
     point = point_est,
-    upper = point_est + c(10, 20, 30, 40),
+    upper = point_est + 10,
   ) %>%
   to_signal(outcome = "flu.admits", type = "forecast", horizon = 4)
 ```
@@ -890,8 +890,136 @@ shape_dat %>%
 
 
 
+
 ## Zero - `plane_zero()`
+
+This function checks for the presence of any value(s) equal to zero in the evaluated signal. If there are any zeros found, then the function will internally assess the seed to find whether or not the input data had zeros anywhere else in the time series. If so, the function will consider the evaluated zero plausible and no flags will be raised (i.e., indicator returned as FALSE). If not, the function will consider the evaluated zero implausible and a flag will be raised (i.e., indicator returned as TRUE). This function can be used on either forecast or observed signals.
+
 
 ### Flagged as implausible
 
+In the example below, we add a zero to the signal point estimate to a location for which the seed has no zeros:
+```{r}
+point_est <- c(31, 30, 31, 0)
+
+prepped_forecast <-
+  tibble(
+    location = "01",
+    date = seq(as.Date("2022-06-11"), as.Date("2022-07-02"), by = 7),
+    horizon = 1:4,
+    lower = point_est - 1,
+    ## add zeros in hospitalizations to trigger zero component
+    point = point_est,
+    upper = point_est + 1,
+  ) %>%
+  to_signal(outcome = "flu.admits", type = "forecast", horizon = 4)
+```
+
+
+```{r, echo=TRUE, eval=FALSE}
+prepped_forecast$data
+```
+
+```{r, echo=FALSE, eval=TRUE}
+prepped_forecast$data %>%
+  knitr::kable(.)
+```
+
+The seed stores a logical indicating whether any zeros are present in the seed data, and there are none in this example:
+```{r}
+prepped_seed$`01`$any_zeros
+```
+
+We would then expect an implausibility flag to be raised for this location:
+```{r}
+plane_zero(location = "01", input = prepped_forecast, seed = prepped_seed)
+```
+The indicator is `TRUE`, meaning that the forecast signal is implausible, because there are zeros in the forecast signal but not in the observed seed.
+
+We can visualize this below. The signal in red (a forecast in this example) has a zero around July 1st (red diamond), but there were no zeros found in the seed data in blue.
+
+```{r}
+zero_dat <- 
+  prepped_forecast$data %>%
+  mutate(type = "forecast") %>%
+  rename(flu.admits = point) %>%
+  bind_rows(observed_signal$data %>% filter(location == "01") %>% filter(date <= "2022-06-04") %>% mutate(type="observed"), . )
+
+zero_flags <- zero_dat %>%
+  filter(flu.admits == 0)
+
+zero_dat %>%
+  ggplot(mapping = aes(x = date, y = flu.admits)) +
+  geom_line(lty = "dotted") +
+  geom_line(aes(colour = type)) +
+    geom_point(data = zero_flags, mapping = aes(x = date, y = flu.admits), shape=23, size=4, color = "black", fill = "red") +
+  geom_point(aes(colour = type)) +
+  xlab("Date") +
+  ylab("Flu hospitalizations") +
+  ggtitle("Zero component\nFlagged")
+```
+
 ### Not flagged as implausible
+
+This function will only trigger an implausibility flag if there is a zero in the signal (either observed or forecast) and there is not one in the seed. In other words, no flag will be raised when: (1) there are no zeros in the signal or (2) there are any zeros in the seed.
+
+Let's look at an example where there are zeros in the signal (location "02") and in the seed. No flag should be triggered:
+```{r}
+point_est <- c(0, 6, 2, 3)
+
+prepped_forecast <-
+  tibble(
+    location = "02",
+    date = seq(as.Date("2022-06-11"), as.Date("2022-07-02"), by = 7),
+    horizon = 1:4,
+    lower = point_est - 1,
+    ## add zeros in hospitalizations
+    point = point_est,
+    upper = point_est + 1,
+  ) %>%
+  to_signal(outcome = "flu.admits", type = "forecast", horizon = 4)
+```
+
+
+```{r, echo=TRUE, eval=FALSE}
+prepped_forecast$data
+```
+
+```{r, echo=FALSE, eval=TRUE}
+prepped_forecast$data %>%
+  knitr::kable(.)
+```
+
+The seed stores a logical indicating whether any zeros are present in the seed data, and there are zeros in this example:
+```{r}
+prepped_seed$`02`$any_zeros
+```
+
+We then would not expect an implausibility flag to be raised for this location:
+```{r}
+plane_zero(location = "02", input = prepped_forecast, seed = prepped_seed)
+```
+The indicator is `FALSE`, meaning that the forecast signal is plausible, because there are zeros in the forecast signal and in the observed seed.
+
+We can visualize this below. The signal in red (a forecast in this example) has a zero around early-mid June (diamond), but there were also zeros (diamonds) found in the seed data in blue.
+
+```{r}
+zero_dat <- 
+  prepped_forecast$data %>%
+  mutate(type = "forecast") %>%
+  rename(flu.admits = point) %>%
+  bind_rows(observed_signal$data %>% filter(location == "02") %>% filter(date <= "2022-06-04") %>% mutate(type="observed"), . )
+
+zero_flags <- zero_dat %>%
+  filter(flu.admits == 0)
+
+zero_dat %>%
+  ggplot(mapping = aes(x = date, y = flu.admits)) +
+  geom_line(lty = "dotted") +
+  geom_line(aes(colour = type)) +
+  geom_point(data = zero_flags, mapping = aes(x = date, y = flu.admits), shape=23, size=4, color = "black") +
+  geom_point(aes(colour = type)) +
+  xlab("Date") +
+  ylab("Flu hospitalizations") +
+  ggtitle("Zero component\nNot Flagged")
+```
