@@ -81,17 +81,17 @@ The difference component checks the point-to-point differences for evaluated sig
 The example below uses a forecasted signal in which the 1 week-ahead forecast dramatically jumps from the most recent observed data:
 
 ```{r}
-point_est <- c(100,120,140,160)
+point_est <- c(100, 120, 140, 160)
 
 prepped_forecast <-
   tibble(
     location = "01",
     date = seq(as.Date("2022-06-11"), as.Date("2022-07-02"), by = 7),
     horizon = 1:4,
-    lower = point_est - c(10,20,30,40),
+    lower = point_est - c(10, 20, 30, 40),
     ## make a large jump in hospitalizations to trigger diff component
     point = point_est,
-    upper = point_est + c(10,20,30,40),
+    upper = point_est + c(10, 20, 30, 40),
   ) %>%
   to_signal(outcome = "flu.admits", type = "forecast", horizon = 4)
 ```
@@ -144,16 +144,16 @@ diff_dat %>%
 The next example will include data that does not "jump" in absolute difference beyond what has been observed in the time series previously:
 
 ```{r}
-point_est <- c(28,31,34,37)
+point_est <- c(28, 31, 34, 37)
 
 prepped_forecast <-
   tibble(
     location = "01",
     date = seq(as.Date("2022-06-11"), as.Date("2022-07-02"), by = 7),
     horizon = 1:4,
-    lower = point_est - c(5,10,15,20),
+    lower = point_est - c(5, 10, 15, 20),
     point = point_est,
-    upper = point_est + c(5,10,15,20),
+    upper = point_est + c(5, 10, 15, 20),
   ) %>%
   to_signal(outcome = "flu.admits", type = "forecast", horizon = 4)
 ```
@@ -210,16 +210,16 @@ We can create forecast data that includes a prediction interval that does not co
 
 ```{r}
 ## make sure the 1 week-ahead point estimate and PI do not cover the last reported obs
-point_est <- c(60,62,64,66)
+point_est <- c(60, 62, 64, 66)
 
 prepped_forecast <-
   tibble(
     location = "01",
     date = seq(as.Date("2022-06-11"), as.Date("2022-07-02"), by = 7),
     horizon = 1:4,
-    lower = point_est - c(2,4,6,8),
+    lower = point_est - c(2, 4, 6, 8),
     point = point_est,
-    upper = point_est + c(2,4,6,8)
+    upper = point_est + c(2, 4, 6, 8)
   ) %>%
   to_signal(outcome = "flu.admits", type = "forecast", horizon = 4)
 ```
@@ -270,7 +270,7 @@ We can put together an example where the prediction interval for the first horiz
 
 ```{r}
 ## make sure the 1 week-ahead point estimate and PI cover the last reported obs
-point_est <- c(28,31,34,37)
+point_est <- c(28, 31, 34, 37)
 
 prepped_forecast <-
   tibble(
@@ -331,7 +331,7 @@ The taper component checks whether or not the prediction interval for the evalua
 Here we create a mock forecast that will have a narrowing prediction interval:
 
 ```{r}
-point_est <- c(30,33,36,39)
+point_est <- c(30, 33, 36, 39)
 
 prepped_forecast <-
   tibble(
@@ -339,9 +339,9 @@ prepped_forecast <-
     date = seq(as.Date("2022-06-11"), as.Date("2022-07-02"), by = 7),
     horizon = 1:4,
     ## make the lower and upper bounds get narrower as horizon increases
-    lower = point_est - c(20,15,10,5),
+    lower = point_est - c(20, 15, 10, 5),
     point = point_est,
-    upper = point_est + c(20,15,10,5)
+    upper = point_est + c(20, 15, 10, 5)
   ) %>%
   to_signal(outcome = "flu.admits", type = "forecast", horizon = 4)
 ```
@@ -386,7 +386,7 @@ taper_dat %>%
 Now we can look at an example where the forecasted prediction interval increases in width as horizons progress:
 
 ```{r}
-point_est <- c(30,33,36,39)
+point_est <- c(30, 33, 36, 39)
 
 prepped_forecast <-
   tibble(
@@ -394,9 +394,9 @@ prepped_forecast <-
     date = seq(as.Date("2022-06-11"), as.Date("2022-07-02"), by = 7),
     horizon = 1:4,
     ## make the lower and upper bounds get wider as horizon increases
-    lower = point_est - c(5,10,15,20),
+    lower = point_est - c(5, 10, 15, 20),
     point = point_est,
-    upper = point_est + c(5,10,15,20)
+    upper = point_est + c(5, 10, 15, 20)
   ) %>%
   to_signal(outcome = "flu.admits", type = "forecast", horizon = 4)
 ```
@@ -452,16 +452,16 @@ We can mock up some example data that repeats the same point estimate:
 
 ```{r}
 ## make sure the point estimates repeat
-point_est <- c(55,55,55,55)
+point_est <- c(55, 55, 55, 55)
 
 prepped_forecast <-
   tibble(
     location = "01",
     date = seq(as.Date("2022-06-11"), as.Date("2022-07-02"), by = 7),
     horizon = 1:4,
-    lower = point_est - c(5,10,15,20),
+    lower = point_est - c(5, 10, 15, 20),
     point = point_est,
-    upper = point_est + c(5,10,15,20)
+    upper = point_est + c(5, 10, 15, 20)
     ) %>%
   to_signal(outcome = "flu.admits", type = "forecast", horizon = 4)
 ```
@@ -521,16 +521,16 @@ Here we prepare mock forecast data that does not have repeating point estimates:
 
 ```{r}
 ## make sure the point estimates do not repeat
-point_est <- c(55,57,59,61)
+point_est <- c(55, 57, 59, 61)
 
 prepped_forecast <-
   tibble(
     location = "01",
     date = seq(as.Date("2022-06-11"), as.Date("2022-07-02"), by = 7),
     horizon = 1:4,
-    lower = point_est - c(5,10,15,20),
+    lower = point_est - c(5, 10, 15, 20),
     point = point_est,
-    upper = point_est + c(5,10,15,20)
+    upper = point_est + c(5, 10, 15, 20)
     ) %>%
     to_signal(outcome = "flu.admits", type = "forecast", horizon = 4)
 ```
@@ -589,16 +589,16 @@ For more on the trend algorithm methods see `?plane_trend()`.
 Here we create some example data that doubles with each forecasted horizon:
 
 ```{r}
-point_est <- c(25,50,100,200)
+point_est <- c(25, 50, 100, 200)
 
 prepped_forecast <-
   tibble(
     location = "01",
     date = seq(as.Date("2022-06-11"), as.Date("2022-07-02"), by = 7),
     horizon = 1:4,
-    lower = point_est - c(5,10,20,40),
+    lower = point_est - c(5, 10, 20, 40),
     point = point_est,
-    upper = point_est + c(5,10,20,40),
+    upper = point_est + c(5, 10, 20, 40),
   ) %>%
   to_signal(outcome = "flu.admits", type = "forecast", horizon = 4)
 ```
@@ -656,16 +656,16 @@ plane_trend(location = "01", input = prepped_forecast, seed = prepped_seed, sig_
 We can also make example data that reflects a consistent trend with the seed:
 
 ```{r}
-point_est <- c(40,41,40,43)
+point_est <- c(40, 41, 40, 43)
 
 prepped_forecast <-
   tibble(
     location = "01",
     date = seq(as.Date("2022-06-11"), as.Date("2022-07-02"), by = 7),
     horizon = 1:4,
-    lower = point_est - c(5,10,15,20),
+    lower = point_est - c(5, 10, 15, 20),
     point = point_est,
-    upper = point_est + c(5,10,15,20),
+    upper = point_est + c(5, 10, 15, 20),
   ) %>%
   to_signal(outcome = "flu.admits", type = "forecast", horizon = 4)
 ```
@@ -715,17 +715,17 @@ To demonstrate this, we can look at location "06". For this example, we need to 
 
 ```{r}
 ## create seed with cut date
-prepped_seed <- plane_seed(observed_signal, cut_date = "2022-10-29")
-point_est <- c(40,41,40,43)
+prepped_seed2 <- plane_seed(observed_signal, cut_date = "2022-10-29")
+point_est <- c(40, 41, 40, 43)
 
 prepped_forecast <-
   tibble(
     location = "06",
     date = seq(as.Date("2022-11-05"), as.Date("2022-11-26"), by = 7),
     horizon = 1:4,
-    lower = point_est - c(5,10,15,20),
+    lower = point_est - c(5, 10, 15, 20),
     point = point_est,
-    upper = point_est + c(5,10,15,20),
+    upper = point_est + c(5, 10, 15, 20),
   ) %>%
   to_signal(outcome = "flu.admits", type = "forecast", horizon = 4)
 ```
@@ -742,7 +742,7 @@ prepped_forecast$data %>%
 In this case we would not expect an implausibility flag to be raised, but we do see a change point:
 
 ```{r}
-plane_trend(location = "06", input = prepped_forecast, seed = prepped_seed, sig_lvl = 0.1)
+plane_trend(location = "06", input = prepped_forecast, seed = prepped_seed2, sig_lvl = 0.1)
 ```
 
 Note that on 2022-09-17, a change point was detected, but because it was not in our forecast, nor was it the last observed data point there was no flag raised.
@@ -757,7 +757,7 @@ trend_dat <-
   bind_rows(observed_signal$data %>% filter(location == "06") %>% filter(date <= "2022-10-29") %>% mutate(type="observed"), . )
 
 trend_flags <-
-  plane_trend(location = "06", input = prepped_forecast, seed = prepped_seed, sig_lvl = 0.1)$output %>%
+  plane_trend(location = "06", input = prepped_forecast, seed = prepped_seed2, sig_lvl = 0.1)$output %>%
   filter(Changepoint == TRUE)
 
 ggplot(data = trend_dat, mapping = aes(x = date, y = flu.admits)) +
@@ -770,3 +770,128 @@ ggplot(data = trend_dat, mapping = aes(x = date, y = flu.admits)) +
   ylab("Flu hospitalizations") +
   ggtitle(paste("Trend component\nNot flagged but change point in seed"))
 ```
+
+
+
+## Shape - `plane_shape()`
+
+The shape component evaluates the shape of the trajectory of the forecast signal and compares that shape to existing shapes in the observed seed data. If the shape is identified as novel, a flag is raised, and the signal is considered implausible. 
+
+This function uses Dynamic Time Warping (DTW) to identify shapes and flag novel shapes. This function works in three broad steps. First, the prepared seed data is divided into a set of sliding windows, each representing a subset of the total trajectory shape of the observed data. Second, shape-based DTW distances are calculated for every combination of the observed sliding windows, and these distances are used to calibrate a distance threshold that will define whether or not a signal shape is novel. Third, we calculate DTW distances between the forecast signal and each of the observed sliding windows. If any of those distances are less than the defined threshold, the shape is not novel, no flag is raised, and the forecast is considered plausible.
+
+For more information on the shape algorithm, see `?plane_shape()`.
+
+### Flagged as implausible
+
+In the example below, we set the point estimates and prediction intervals of the forecast signal to a shape that is novel compared to the seed data (see plot below).
+```{r}
+point_est <- c(60, 60, 60, 10)
+
+prepped_forecast <-
+  tibble(
+    location = "01",
+    date = seq(as.Date("2022-06-11"), as.Date("2022-07-02"), by = 7),
+    horizon = 1:4,
+    lower = point_est - c(10, 20, 30, 40),
+    ## make an unusual shape in hospitalizations to trigger shape component
+    point = point_est,
+    upper = point_est + c(10, 20, 30, 40),
+  ) %>%
+  to_signal(outcome = "flu.admits", type = "forecast", horizon = 4)
+```
+
+
+```{r, echo=TRUE, eval=FALSE}
+prepped_forecast$data
+```
+
+```{r, echo=FALSE, eval=TRUE}
+prepped_forecast$data %>%
+  knitr::kable(.)
+```
+
+We would expect an implausibility flag to be raised for this example:
+```{r}
+plane_shape(location = "01", input = prepped_forecast, seed = prepped_seed)
+```
+The indicator is `TRUE`, meaning that the forecast is implausible, because the shape is novel relative to the seed data.
+
+We can visualize the shape differences and see why this shape is flagged. The forecast in the plot below (red line) clearly looks different than any shape in the observed seed data (blue line):
+
+```{r}
+shape_dat <- 
+  prepped_forecast$data %>%
+  mutate(type = "forecast") %>%
+  rename(flu.admits = point) %>%
+  bind_rows(observed_signal$data %>% filter(location == "01") %>% filter(date <= "2022-06-04") %>% mutate(type="observed"), . )
+
+shape_dat %>%
+  ggplot(mapping = aes(x = date, y = flu.admits)) +
+  geom_line(lty = "dotted") +
+  geom_line(aes(colour = type)) +
+  geom_point(aes(colour = type)) +
+  xlab("Date") +
+  ylab("Flu hospitalizations") +
+  ggtitle("Shape component\nFlagged")
+```
+
+### Not flagged as implausible
+
+Next we'll look at an example of a forecast with a familiar shape that shouldn't trigger a flag:
+```{r}
+point_est <- c(35, 18, 30, 20)
+
+prepped_forecast <-
+  tibble(
+    location = "01",
+    date = seq(as.Date("2022-06-11"), as.Date("2022-07-02"), by = 7),
+    horizon = 1:4,
+    lower = point_est - c(10, 20, 30, 40),
+    ## make an normal, familiar shape in hospitalizations to not trigger shape component
+    point = point_est,
+    upper = point_est + c(10, 20, 30, 40),
+  ) %>%
+  to_signal(outcome = "flu.admits", type = "forecast", horizon = 4)
+```
+
+
+```{r, echo=TRUE, eval=FALSE}
+prepped_forecast$data
+```
+
+```{r, echo=FALSE, eval=TRUE}
+prepped_forecast$data %>%
+  knitr::kable(.)
+```
+
+We would not expect an implausibility flag to be raised for this example:
+```{r}
+plane_shape(location = "01", input = prepped_forecast, seed = prepped_seed)
+```
+The indicator is `FALSE`, meaning that the forecast is considered plausible, because the shape is familiar relative to the seed data.
+
+We can visualize the shape similarities/differences and see why this shape is not flagged. The forecast in the plot below (red line) looks very similar to the shape that we see in the observed seed data (blue line) between mid April and mid June:
+```{r}
+shape_dat <- 
+  prepped_forecast$data %>%
+  mutate(type = "forecast") %>%
+  rename(flu.admits = point) %>%
+  bind_rows(observed_signal$data %>% filter(location == "01") %>% filter(date <= "2022-06-04") %>% mutate(type="observed"), . )
+
+shape_dat %>%
+  ggplot(mapping = aes(x = date, y = flu.admits)) +
+  geom_line(lty = "dotted") +
+  geom_line(aes(colour = type)) +
+  geom_point(aes(colour = type)) +
+  xlab("Date") +
+  ylab("Flu hospitalizations") +
+  ggtitle("Shape component\n Not Flagged")
+```
+
+
+
+## Zero - `plane_zero()`
+
+### Flagged as implausible
+
+### Not flagged as implausible
