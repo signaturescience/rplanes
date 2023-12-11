@@ -239,6 +239,23 @@ test_that("plane_score handles components for signals appropriately", {
 
 })
 
+test_that("plane_score handles weights", {
+
+  prepped_forecast <-
+    read_forecast(system.file("extdata/forecast/2022-10-31-SigSci-TSENS.csv", package = "rplanes")) %>%
+    to_signal(., outcome = "flu.admits", type = "forecast", horizon = 4)
+
+  prepped_seed <- plane_seed(prepped_observed, cut_date = "2022-10-29")
+
+  ## check that the score function weights sum up as expected
+  res <- plane_score(prepped_forecast, prepped_seed, components = c("diff","repeat"), weights = c("diff" = 4, "repeat"= 1))
+  expect_equal(res$scores_summary$`02`$weights_denominator, 5)
+
+  ## check that weight names are enforced
+  expect_error(plane_score(prepped_forecast, prepped_seed, components = c("diff","repeat"), weights = c("diff" = 4, "foo"= 1)))
+  expect_error(plane_score(prepped_forecast, prepped_seed, components = c("diff","repeat"), weights = c("diff" = 4, "cover"= 1)))
+
+})
 
 test_that("plane_trend flags known changepoints and is sensitive to changes in sig.lvl", {
 
