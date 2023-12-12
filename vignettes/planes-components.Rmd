@@ -129,11 +129,18 @@ diff_dat <-
   rename(flu.admits = point) %>%
   bind_rows(observed_signal$data %>% filter(location == "01") %>% filter(date <= "2022-06-04") %>% mutate(type="observed"), . )
 
+diff_flags <-
+  diff_dat %>%
+  filter(type == "forecast") %>%
+  filter(date == min(date))
+
 diff_dat %>%
   ggplot(mapping = aes(x = date, y = flu.admits)) +
   geom_line(lty = "dotted") +
   geom_line(aes(colour = type)) +
   geom_point(aes(colour = type)) +
+  geom_point(data = diff_flags, mapping = aes(x = date, y = flu.admits), shape=23, size=4, color = "black") +
+  geom_ribbon(aes(ymin = lower, ymax = upper, fill = type), alpha = 0.2) +
   xlab("Date") +
   ylab("Flu hospitalizations") +
   ggtitle("Difference component\nFlagged")
@@ -195,6 +202,7 @@ diff_dat %>%
   geom_line(lty = "dotted") +
   geom_line(aes(colour = type)) +
   geom_point(aes(colour = type)) +
+  geom_ribbon(aes(ymin = lower, ymax = upper, fill = type), alpha = 0.2) +
   xlab("Date") +
   ylab("Flu hospitalizations") +
   ggtitle("Difference component\nNot flagged")
@@ -254,10 +262,16 @@ cover_dat <-
   rename(flu.admits = point) %>%
   bind_rows(observed_signal$data %>% filter(location == "01") %>% filter(date <= "2022-06-04") %>% mutate(type="observed"), . )
 
+cov_flags <-
+  cover_dat %>%
+  filter(type == "observed") %>%
+  filter(date == max(date))
+
 ggplot(data = cover_dat, mapping = aes(x = date, y = flu.admits)) +
   geom_line(lty="dotted") +
   geom_line(aes(colour = type)) +
   geom_point(aes(colour = type)) +
+  geom_point(data = cov_flags, mapping = aes(x = date, y = flu.admits), shape=23, size=4, color = "black") +
   geom_ribbon(aes(ymin = lower, ymax = upper, fill = type), alpha = 0.2) +
   xlab("Date") +
   ylab("Flu hospitalizations") +
@@ -370,11 +384,16 @@ taper_dat <-
   rename(flu.admits = point) %>%
   bind_rows(observed_signal$data %>% filter(location == "01") %>% filter(date <= "2022-06-04") %>% mutate(type="observed"), . )
 
+taper_flags <-
+  taper_dat %>%
+  filter(type == "forecast")
+
 taper_dat %>%
   ggplot(data = taper_dat, mapping = aes(x = date, y = flu.admits)) +
   geom_line(lty="dotted") +
   geom_line(aes(colour = type)) +
   geom_point(aes(colour = type)) +
+  geom_point(data = taper_flags, mapping = aes(x = date, y = flu.admits), shape=23, size=4, color = "black") +
   geom_ribbon(aes(ymin = lower, ymax = upper, fill = type), alpha = 0.2) +
   xlab("Date") +
   ylab("Flu Hospital Admissions") +
@@ -496,11 +515,16 @@ repeat_dat <-
   rename(flu.admits = point) %>%
   bind_rows(observed_signal$data %>% filter(location == "01") %>% filter(date <= "2022-06-04") %>% mutate(type="observed"), . )
 
+repeat_flags <-
+  repeat_dat %>%
+  filter(type == "forecast")
+
 repeat_dat %>%
   ggplot(data = repeat_dat, mapping = aes(x = date, y = flu.admits)) +
   geom_line(lty="dotted") +
   geom_line(aes(colour = type)) +
   geom_point(aes(colour = type)) +
+  geom_point(data = repeat_flags, mapping = aes(x = date, y = flu.admits), shape=23, size=4, color = "black") +
   geom_ribbon(aes(ymin = lower, ymax = upper,fill = type), alpha = 0.2) +
   xlab("Date") +
   ylab("Flu hospitalizations") +
@@ -825,11 +849,17 @@ shape_dat <-
   rename(flu.admits = point) %>%
   bind_rows(observed_signal$data %>% filter(location == "01") %>% filter(date <= "2022-06-04") %>% mutate(type="observed"), . )
 
+shape_flags <-
+  shape_dat %>%
+  filter(type == "forecast")
+
 shape_dat %>%
   ggplot(mapping = aes(x = date, y = flu.admits)) +
   geom_line(lty = "dotted") +
   geom_line(aes(colour = type)) +
   geom_point(aes(colour = type)) +
+  geom_ribbon(aes(ymin = lower, ymax = upper, fill = type), alpha = 0.2) +
+  geom_point(data = shape_flags, mapping = aes(x = date, y = flu.admits), shape=23, size=4, color = "black") +
   xlab("Date") +
   ylab("Flu hospitalizations") +
   ggtitle("Shape component\nFlagged")
@@ -878,11 +908,13 @@ shape_dat <-
   rename(flu.admits = point) %>%
   bind_rows(observed_signal$data %>% filter(location == "01") %>% filter(date <= "2022-06-04") %>% mutate(type="observed"), . )
 
+
 shape_dat %>%
   ggplot(mapping = aes(x = date, y = flu.admits)) +
   geom_line(lty = "dotted") +
   geom_line(aes(colour = type)) +
   geom_point(aes(colour = type)) +
+  geom_ribbon(aes(ymin = lower, ymax = upper, fill = type), alpha = 0.2) +
   xlab("Date") +
   ylab("Flu hospitalizations") +
   ggtitle("Shape component\n Not Flagged")
@@ -907,10 +939,10 @@ prepped_forecast <-
     location = "01",
     date = seq(as.Date("2022-06-11"), as.Date("2022-07-02"), by = 7),
     horizon = 1:4,
-    lower = point_est - 1,
+    lower = c(26,24,24,0),
     ## add zeros in hospitalizations to trigger zero component
     point = point_est,
-    upper = point_est + 1,
+    upper = c(36,36,38,15)
   ) %>%
   to_signal(outcome = "flu.admits", type = "forecast", horizon = 4)
 ```
@@ -952,8 +984,9 @@ zero_dat %>%
   ggplot(mapping = aes(x = date, y = flu.admits)) +
   geom_line(lty = "dotted") +
   geom_line(aes(colour = type)) +
-    geom_point(data = zero_flags, mapping = aes(x = date, y = flu.admits), shape=23, size=4, color = "black", fill = "red") +
+  geom_point(data = zero_flags, mapping = aes(x = date, y = flu.admits), shape=23, size=4, color = "black") +
   geom_point(aes(colour = type)) +
+  geom_ribbon(aes(ymin = lower, ymax = upper, fill = type), alpha = 0.2) +
   xlab("Date") +
   ylab("Flu hospitalizations") +
   ggtitle("Zero component\nFlagged")
@@ -972,10 +1005,10 @@ prepped_forecast <-
     location = "02",
     date = seq(as.Date("2022-06-11"), as.Date("2022-07-02"), by = 7),
     horizon = 1:4,
-    lower = point_est - 1,
+    lower = c(0,5,0,1),
     ## add zeros in hospitalizations
     point = point_est,
-    upper = point_est + 1,
+    upper = c(1,7,4,5),
   ) %>%
   to_signal(outcome = "flu.admits", type = "forecast", horizon = 4)
 ```
@@ -1019,6 +1052,7 @@ zero_dat %>%
   geom_line(aes(colour = type)) +
   geom_point(data = zero_flags, mapping = aes(x = date, y = flu.admits), shape=23, size=4, color = "black") +
   geom_point(aes(colour = type)) +
+  geom_ribbon(aes(ymin = lower, ymax = upper, fill = type), alpha = 0.2) +
   xlab("Date") +
   ylab("Flu hospitalizations") +
   ggtitle("Zero component\nNot Flagged")
