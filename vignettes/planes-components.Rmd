@@ -27,18 +27,18 @@ library(dplyr)
 
 ## Overview
 
-The `rplanes` package currently has a set of five components that each perform plausibility analysis of epidemiological signals (PLANES). Each of the individual components assesses different characteristics of the evaluated signal, resolving to a binary indicator (i.e., `TRUE` or `FALSE` as to whether or not the signal is *implausible*). All components are wrapped via the `plane_score()` function to generate an overall score based on the number of components for which a flag is raised. 
+The `rplanes` package currently has a set of seven components that each perform plausibility analysis of epidemiological signals (PLANES). Each of the individual components assesses different characteristics of the evaluated signal, resolving to a binary indicator (i.e., `TRUE` or `FALSE` as to whether or not the signal is *implausible*). All components are wrapped via the `plane_score()` function to generate an overall score based on the number of components for which a flag is raised. 
 
-Here we provide a narrative walk through of each of the individual PLANES components. The full list of components, along with the corresponding functions and parameters (if applicable), is provided in the table below. It is important to emphasize that `rplanes` is designed to work for both *forecasted* and *observed* epidemiological signals. However, not all of the components will work on both types of signals. Several components (including coverage, taper, and trend) can only be used to assess plausibility of forecasts.
+Here we provide a narrative walk through of each of the individual PLANES components. The full list of components, along with the corresponding functions and parameters (if applicable), is provided in the table below. It is important to emphasize that `rplanes` is designed to work for both *forecasted* and *observed* epidemiological signals. However, not all of the components will work on both types of signals. Several components (including coverage, taper, trend, and shape) can only be used to assess plausibility of forecasts.
 
 ```{r, eval=TRUE, echo=FALSE}
 tibble(
-  `Component` = c("Difference","Coverage","Taper","Repeat","Trend"),
-  `Description` = c("Point-to-point difference","Prediction interval covers the most recent observation","Prediction interval narrows as horizon increases","Values repeat more than expected","Signal exhibits change in trend compared to recent observations"),
-  `Function` = c("plane_diff()","plane_cover()","plane_taper()","plane_repeat()","plane_trend()"),
-  `Forecast` = c("YES","YES","YES","YES","YES"),
-  `Observed` = c("YES","NO","NO","YES","NO"),
-  `Parameters` = c("None","None","None","Tolerated number of repeats; Number of observations to prepend","Significance level for trend change")
+  `Component` = c("Difference","Coverage","Taper","Repeat","Trend", "Shape", "Zero"),
+  `Description` = c("Point-to-point difference","Prediction interval covers the most recent observation","Prediction interval narrows as horizon increases","Values repeat more than expected","Signal exhibits change in trend compared to recent observations", "Shape of signal trajectory has not been observed in seed data", "Zeros found in signal when not in seed"),
+  `Function` = c("plane_diff()","plane_cover()","plane_taper()","plane_repeat()","plane_trend()", "plane_shape()", "plane_zero()"),
+  `Forecast` = c("YES","YES","YES","YES","YES", "YES", "YES"),
+  `Observed` = c("YES","NO","NO","YES","NO", "NO", "YES"),
+  `Parameters` = c("None","None","None","Tolerated number of repeats; Number of observations to prepend","Significance level for trend change", "None", "None")
 ) %>%
   knitr::kable()
 ```
