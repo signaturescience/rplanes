@@ -20,7 +20,7 @@ A \code{list} with the following values:
 }
 }
 \description{
-This function checks for the presence of any value(s) equal to zero in the evaluated signal. If there are any zeros found then, the function will internally assess the \link[=plane_seed]{seed} to find whether or not the input data had zeros anywhere else in the time series. If so, the function will consider the evaluated zero plausible and no flagged will be raised (i.e., indicator returned as \code{FALSE}). If not, the function will consider the evaluated zero implausible and a flagged will be raised (i.e., indicator returned as \code{TRUE}).
+This function checks for the presence of any value(s) equal to zero in the evaluated signal. If there are any zeros found, then the function will internally assess the \link[=plane_seed]{seed} to find whether or not the input data had zeros anywhere else in the time series. If so, the function will consider the evaluated zero plausible and no flag will be raised (i.e., indicator returned as \code{FALSE}). If not, the function will consider the evaluated zero implausible and a flag will be raised (i.e., indicator returned as \code{TRUE}).
 }
 \examples{
 ## read in example observed data and prep observed signal
