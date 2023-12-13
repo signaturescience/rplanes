@@ -371,3 +371,34 @@ create_sliding_windows_df <- function(vector, window_size) {
   windows <- purrr::map(1:num_windows, ~ vector[.x:(.x + window_size - 1)])
   as.data.frame(matrix(unlist(windows), nrow = num_windows, byrow = TRUE))
 }
+
+
+#' Validate location
+#'
+#' @description
+#'
+#' This unexported helper is used inside of the individual plausibility component functions (e.g., `plane_diff()`) to validate that the location specified appears in both the input signal and seed.
+#'
+#'
+#' @param location Character vector with location code; the location must appear in input and seed
+#' @param input Input signal data to be scored; object must be [forecast][to_signal()]
+#' @param seed Prepared [seed][plane_seed()]
+#'
+#' @return The validation will return with a `stop()` if the location is not found in the seed or input signal. Otherwise the function will invisibly return `TRUE` indicating that the location is valid.
+#'
+#'
+valid_location <- function(location, input, seed) {
+
+  ## double check that location is in seed before proceeding
+  if(!location %in% names(seed)) {
+    stop(sprintf("%s does not appear in the seed object. Check that the seed was prepared with the location specified.", location))
+  }
+
+  if(!location %in% input$data$location) {
+    stop(sprintf("%s does not appear in the input object. Check that the input was prepared with the location specified.", location))
+  }
+
+  ## if the validation proceeds this far return TRUE
+  return(invisible(TRUE))
+
+}

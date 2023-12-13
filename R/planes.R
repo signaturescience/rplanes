@@ -39,10 +39,8 @@
 #'
 plane_diff <- function(location, input, seed) {
 
-  ## double check that location is in seed before proceeding
-  if(!location %in% names(seed)) {
-    stop(sprintf("%s does not appear in the seed object. Check that the seed was prepared with the location specified.", location))
-  }
+  ## double check that location is in seed and input before proceeding
+  valid_location(location, input, seed)
 
   tmp_seed <- seed[[location]]
 
@@ -133,10 +131,8 @@ plane_diff <- function(location, input, seed) {
 #' plane_cover(location = "47", input = prepped_forecast, seed = prepped_seed)
 plane_cover <- function(location, input, seed) {
 
-  ## double check that location is in seed before proceeding
-  if(!location %in% names(seed)) {
-    stop(sprintf("%s does not appear in the seed object. Check that the seed was prepared with the location specified.", location))
-  }
+  ## double check that location is in seed and input before proceeding
+  valid_location(location, input, seed)
 
   tmp_seed <- seed[[location]]
 
@@ -221,6 +217,9 @@ plane_cover <- function(location, input, seed) {
 #' plane_taper(location = "44", input = prepped_forecast, seed = prepped_seed)
 plane_taper <- function(location, input, seed) {
 
+  ## double check that location is in seed and input before proceeding
+  valid_location(location, input, seed)
+
   ## NOTE: do we need seed here? maybe not?
 
   if(is_observed(input)) {
@@ -293,10 +292,9 @@ plane_taper <- function(location, input, seed) {
 #'
 plane_repeat <- function(location, input, seed, tolerance = NULL, prepend = NULL){
 
-  ## double check that location is in seed before proceeding
-  if(!location %in% names(seed)) {
-    stop(sprintf("%s does not appear in the seed object. Check that the seed was prepared with the location specified.", location))
-  }
+  ## double check that location is in seed and input before proceeding
+  valid_location(location, input, seed)
+
   tmp_seed <- seed[[location]]
 
   ## by default tolerance is NULL
@@ -627,10 +625,9 @@ plane_score <- function(input, seed, components = "all", args = NULL, weights = 
 #' plane_trend(location = "06", input = prepped_forecast, seed = prepped_seed, sig_lvl = .05)
 #'
 plane_trend <- function(location, input, seed, sig_lvl = 0.1) {
-  ## double check that location is in seed before proceeding
-  if(!location %in% names(seed)) {
-    stop(sprintf("%s does not appear in the seed object. Check that the seed was prepared with the location specified.", location))
-  }
+
+  ## double check that location is in seed and input before proceeding
+  valid_location(location, input, seed)
 
   tmp_seed <- seed[[location]]
 
@@ -790,9 +787,8 @@ plane_trend <- function(location, input, seed, sig_lvl = 0.1) {
 #'
 plane_shape <- function(location, input, seed) {
 
-  if(!location %in% names(seed)) {
-    stop(sprintf("%s does not appear in the seed object. Check that the seed was prepared with the location specified.", location))
-  }
+  ## double check that location is in seed and input before proceeding
+  valid_location(location, input, seed)
 
   # The observed data:
   tmp_seed <- seed[[location]]
@@ -925,10 +921,8 @@ plane_shape <- function(location, input, seed) {
 #'
 plane_zero <- function(location, input, seed) {
 
-  ## double check that location is in seed before proceeding
-  if(!location %in% names(seed)) {
-    stop(sprintf("%s does not appear in the seed object. Check that the seed was prepared with the location specified.", location))
-  }
+  ## double check that location is in seed and input before proceeding
+  valid_location(location, input, seed)
 
   tmp_seed <- seed[[location]]
 

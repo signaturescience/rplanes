@@ -181,6 +181,7 @@ test_that("plane_score returns summary based on components specified", {
 
   prepped_forecast <-
     read_forecast(system.file("extdata/forecast/2022-10-31-SigSci-TSENS.csv", package = "rplanes")) %>%
+    dplyr::filter(location %in% c("02","04","05","13","US")) %>%
     to_signal(., outcome = "flu.admits", type = "forecast", horizon = 4)
 
   prepped_seed <- plane_seed(prepped_observed, cut_date = "2022-10-29")
@@ -243,6 +244,7 @@ test_that("plane_score handles weights", {
 
   prepped_forecast <-
     read_forecast(system.file("extdata/forecast/2022-10-31-SigSci-TSENS.csv", package = "rplanes")) %>%
+    dplyr::filter(location %in% c("02","04","05","13","US")) %>%
     to_signal(., outcome = "flu.admits", type = "forecast", horizon = 4)
 
   prepped_seed <- plane_seed(prepped_observed, cut_date = "2022-10-29")
@@ -262,6 +264,7 @@ test_that("plane_trend flags known changepoints and is sensitive to changes in s
   prepped_seed2 <- plane_seed(prepped_observed, cut_date = "2022-10-29") # need this cut date to test plane_trend
 
   prepped_forecast <- read_forecast(system.file("extdata/forecast/2022-10-31-SigSci-TSENS.csv", package = "rplanes")) %>%
+    dplyr::filter(location %in% c("02","04","05","13","US")) %>%
     to_signal(., outcome = "flu.admits", type = "forecast", horizon = 4)
 
   ## We know there is a changepoint at location 5 that should be flagged:
