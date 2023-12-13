@@ -46,7 +46,7 @@ plotServer <- function(id, score, data_1, locations, seed, signal_to_eval, btn1,
 
     observe({
       updatePickerInput(session = session, inputId = "loc", choices = locations())
-      choice <- c("Coverage" = "cover", "Difference" = "diff", "Repeat" = "repeat", "Taper" = "taper", "Trend" = "trend")
+      choice <- c("Coverage" = "cover", "Difference" = "diff", "Repeat" = "repeat", "Taper" = "taper", "Trend" = "trend", "Shape" = "shape", "Zero" = "zero")
       plot_choice <- choice[choice %in% score()]
       updateAwesomeRadio(session = session, inputId = "plot_type", choices = plot_choice, inline = TRUE, status = "warning")
     })
@@ -183,6 +183,18 @@ plotServer <- function(id, score, data_1, locations, seed, signal_to_eval, btn1,
       res
     })
 
+    shape <- reactive({
+      item <- paste0(input$loc, "-shape")
+      res <- scoring()$full_results[[item]]
+      res
+    })
+
+    zero <- reactive({
+      item <- paste0(input$loc, "-zero")
+      res <- scoring()$full_results[[item]]
+      res
+    })
+
     plotting <- reactive({
 
       ## conditionally render different plots for each individual component
@@ -233,7 +245,7 @@ plotServer <- function(id, score, data_1, locations, seed, signal_to_eval, btn1,
           ggplot(aes(x = date, y = point)) +
           geom_point(aes(color = type), size = 4) +
           geom_point(data = df_plot2 %>% dplyr::filter(flag == TRUE), aes(date, point, alpha = "Difference"), shape = 5, size = 6, stroke=2, color = 'darkred')  +
-          labs(title = paste0("Difference", ifelse(difference()$indicator, " (Flagged)", " (Not Flagged)")),, x = "", y = "Value", subtitle = paste0("Location: ", input$loc), caption = paste0("Any point-to-point difference greater than ", difference()$maximum_difference, " is highlighted in red diamond.")) +
+          labs(title = paste0("Difference", ifelse(difference()$indicator, " (Flagged)", " (Not Flagged)")),, x = "", y = "Value", subtitle = paste0("Location: ", input$loc), caption = paste0("Flagged point-to-point difference greater than ", difference()$maximum_difference, " is highlighted in red diamond.")) +
           geom_line(alpha = 0.3) +
           theme(legend.title=element_blank())
       } else if(input$plot_type == "repeat"){
@@ -252,7 +264,7 @@ plotServer <- function(id, score, data_1, locations, seed, signal_to_eval, btn1,
           geom_line(alpha = 0.3) +
           labs(title = paste0("Taper", ifelse(taper()$indicator, " (Flagged)", " (Not Flagged)")), x = "", y = "Value", subtitle = paste0("Location: ", input$loc)) +
           theme(legend.title=element_blank())
-      } else {
+      } else if (input$plot_type == "trend") {
 
         ## get the output data tibble from trend for change points below
         trend_df <- trend()$output
@@ -265,6 +277,33 @@ plotServer <- function(id, score, data_1, locations, seed, signal_to_eval, btn1,
           geom_line(alpha = 0.3) +
           labs(title = paste0("Trend", ifelse(trend()$indicator, " (Flagged)", " (Not Flagged)")), x = "", y = "Value", subtitle = paste0("Location: ", input$loc), caption = paste0("Using a significance of ", input$sig, ".\nFlagged change points are highlighted in red diamond.")) +
           theme(legend.title=element_blank())
+      } else if (input$plot_type == "shape") {
+
+        shape_df <-
+          plot_df() %>%
+          dplyr::filter(type == "Evaluated")
+
+        p <- ggplot() +
+          geom_point(data = plot_df(), aes(date, point, color = type), size = 4) +
+          geom_point(data = shape_df, aes(date, point, alpha = "Shape"), shape = 5, size = 6, stroke=2, color = 'darkred') +
+          geom_line(data = plot_df(), aes(date, point), alpha = 0.3) +
+          labs(title = paste0("Shape", ifelse(shape()$indicator, " (Flagged)", " (Not Flagged)")), x = "", y = "Value", subtitle = paste0("Location: ", input$loc), caption = "Flagged shapes are highlighted in red diamond.") +
+          theme(legend.title=element_blank())
+
+      } else if (input$plot_type == "zero") {
+
+        zero_df <-
+          plot_df() %>%
+          dplyr::filter(type == "Evaluated") %>%
+          dplyr::filter(value == 0)
+
+        p <- ggplot() +
+          geom_point(data = plot_df(), aes(date, point, color = type), size = 4) +
+          geom_point(data = zero_df, aes(date, point, alpha = "Zero"), shape = 5, size = 6, stroke=2, color = 'darkred') +
+          geom_line(data = plot_df(), aes(date, point), alpha = 0.3) +
+          labs(title = paste0("Repeat", ifelse(zero()$indicator, " (Flagged)", " (Not Flagged)")), x = "", y = "Value", subtitle = paste0("Location: ", input$loc), caption = "Flagged zeros are highlighted in red diamond.") +
+          theme(legend.title=element_blank())
+
       }
       p
     }) %>%

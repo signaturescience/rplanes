@@ -110,11 +110,11 @@ server <- function(input, output, session){
   # update scoring options based on user input of observed or forecast comparison
   observe({
     if(input$status == "Observed"){
-      score_opt = c("Difference" = "diff", "Repeat" = "repeat")
-      updatePickerInput(session = session, inputId = "score", choices = score_opt, selected = c("diff", "repeat"))
+      score_opt = c("Difference" = "diff", "Repeat" = "repeat", "Zero" = "zero")
+      updatePickerInput(session = session, inputId = "score", choices = score_opt, selected = c("diff", "repeat", "zero"))
     } else {
-      score_opt = c("Coverage" = "cover", "Difference" = "diff", "Repeat" = "repeat", "Taper" = "taper", "Trend" = "trend")
-      updatePickerInput(session = session, inputId = "score", choices = score_opt, selected = c("Coverage" = "cover", "Difference" = "diff", "Repeat" = "repeat", "Taper" = "taper", "Trend" = "trend"))
+      score_opt = c("Coverage" = "cover", "Difference" = "diff", "Repeat" = "repeat", "Taper" = "taper", "Trend" = "trend", "Shape" = "shape", "Zero" = "zero")
+      updatePickerInput(session = session, inputId = "score", choices = score_opt, selected = c("Coverage" = "cover", "Difference" = "diff", "Repeat" = "repeat", "Taper" = "taper", "Trend" = "trend",  "Shape" = "shape", "Zero" = "zero"))
     }
   })
 
