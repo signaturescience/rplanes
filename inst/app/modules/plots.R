@@ -2,17 +2,6 @@
 # UI Side ####
 #~~~~~~~~~~~~~~~~~~~~~~~~
 
-# inputsUI <- function(id){
-#   ns <- NS(id)
-#   tagList(
-#     shinyjs::hidden(div(id = ns("args_trend"),
-#                         numericInput(ns("sig"), "Significance (Trend)", value = 0.1, min = 0, max = 1, step = 0.01))),
-#     shinyjs::hidden(div(id = ns("args_repeat"),
-#                         numericInput(ns("tol"), label = "Tolerance (Repeat)", value = 0, min = 0, max = 50, step = 1),
-#                         numericInput(ns("pre"), label = "Prepend Values (Repeat)",  value = 0, min = 0, max = 365, step = 1)))
-#   )
-# }
-
 plotUI <- function(id){
   ns <- NS(id)
   tagList(
@@ -91,7 +80,8 @@ plotServer <- function(id, scoring, components, data_1, seed, signal_to_eval, bt
                             c('10', '30', '50', 'All'))
         ),
         class = "display"
-      )
+      ) %>%
+        DT::formatRound(., columns = "score", digits = 3)
       })
 
     plot_df <- reactive({
