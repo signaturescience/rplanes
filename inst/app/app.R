@@ -6,6 +6,12 @@ library(dplyr)
 library(rplanes)
 library(lubridate)
 
+## helper for title casing
+tcase <- function(x) {
+  first_char <- substr(x,1,1)
+  chartr(first_char,toupper(first_char),x)
+}
+
 # list module files and iterate sourcing them to use within the app.
 module_sources <- list.files(path = system.file("app/modules/", package = "rplanes"), full.names = TRUE)
 sapply(module_sources, source)
@@ -23,12 +29,15 @@ ui <- navbarPage(title = "rplanes Explorer",
                                                        prettyRadioButtons("choice", "Choose Dataset", choices = c("Custom", "Example"), selected = "Custom",  status = "warning", inline = TRUE, icon = icon("check"), bigger = TRUE),
                                                        awesomeRadio("status", "Type of signal to be evaluated", choices = c("Forecast", "Observed"), selected= "Forecast", inline = TRUE, status = "warning"),
                                                        shinyjs::hidden(div(id = "example_info",
-                                                                           HTML("<strong>The example data includes 4 week-ahead forecasts for flu hospitalizations in the United States.</strong>" ),
+                                                                           HTML("<strong>The example data includes 4 week-ahead forecasts for flu hospitalizations in select United States locations.</strong>" ),
                                                                            tags$hr())),
                                                        shinyjs::hidden(div(id = "choice_obs_upload",
                                                                            fileInput("upload_1", label = "Upload Observed Data", multiple = FALSE, accept = ".csv"))),
                                                        shinyjs::hidden(div(id = "choice_forc_upload",
                                                                            fileInput("upload_2", label = "Upload Forecast Data", multiple = FALSE, accept = ".csv"))),
+                                                       shinyjs::hidden(div(id = "choice_forc_format",
+                                                                           awesomeRadio("forecast_format", "Forecast file format", choices = c("Hubverse" = "hubverse", "Legacy" = "legacy"), selected = "hubverse", inline = TRUE, status = "warning"))),
+
                                                        shinyjs::hidden(div(id = "choice_nobs",
                                                                            numericInput("n_obs_eval", "Number of Observed Values to Evaluate", value = 1, min = 1, max = Inf, step = 1))),
 
@@ -39,8 +48,17 @@ ui <- navbarPage(title = "rplanes Explorer",
                                                        materialSwitch("opts", label = "Modify Defaults", value = FALSE, status = "success"),
                                                        shinyjs::hidden(div(id = "add_options",
                                                                            textInput("width", label = "Prediction Interval", value = "95"),
-                                                                           pickerInput(inputId = "score", label = "PLANES Component(s)", choices = "", options = list(`actions-box` = TRUE), multiple = TRUE),
-                                                                           inputsUI("tab2")
+                                                                           pickerInput(inputId = "components", label = "PLANES Component(s)", choices = "", options = list(`actions-box` = TRUE), multiple = TRUE),
+                                                                           awesomeRadio("custom_weights", "Weights", choices = c("Equal Weights", "Custom"), selected= "Equal Weights", inline = TRUE, status = "warning"),
+
+                                                                           shinyjs::hidden(div(id = "weight_choices",
+                                                                                               uiOutput("weights"),
+                                                                           )),
+                                                                           shinyjs::hidden(div(id = "args_trend",
+                                                                                               numericInput("sig", "Significance (Trend)", value = 0.1, min = 0, max = 1, step = 0.01))),
+                                                                           shinyjs::hidden(div(id = "args_repeat",
+                                                                                               numericInput("tol", label = "Tolerance (Repeat)", value = 0, min = 0, max = 50, step = 1),
+                                                                                               numericInput("pre", label = "Prepend Values (Repeat)",  value = 0, min = 0, max = 365, step = 1)))
                                                        )),
                                                        actionBttn("run", "Analyze", style = "unite", color = "danger"),
                                                        actionBttn("reset", "Reset", style = "stretch", color = "warning")
@@ -65,7 +83,6 @@ ui <- navbarPage(title = "rplanes Explorer",
                           )), # plots tab
                  tabPanel(title = "Help",
                           includeMarkdown(system.file("app/help.md", package = "rplanes")))
-                          # htmltools::includeHTML(system.file("app/help_tab.html", package = "rplanes")))
 ) # UI end
 
 
@@ -86,6 +103,7 @@ server <- function(input, output, session){
     # unhide the upload custom dataset when choosing "Custom" radiobutton
     shinyjs::toggle(id = "choice_obs_upload", condition = {input$choice == "Custom"})
     shinyjs::toggle(id = "choice_forc_upload", condition = {input$status == "Forecast" & input$choice == "Custom"})
+    shinyjs::toggle(id = "choice_forc_format", condition = {input$status == "Forecast" & input$choice == "Custom"})
     ## show the example description text when the choice is example
     shinyjs::toggle(id = "example_info", condition = {input$choice == "Example"})
     # unhide additional options upon switch
@@ -105,17 +123,29 @@ server <- function(input, output, session){
     shinyjs::toggle(id = "raw_data", condition = {rv$value > 0 })
     ## toggle the number of obs picker if the signal type is 'Observed'
     shinyjs::toggle(id = "choice_nobs", condition = {input$status == "Observed"})
+    shinyjs::toggle(id = "weight_choices", condition = {input$custom_weights == "Custom"})
+    shinyjs::toggle(id = "args_trend", condition = {"trend" %in% input$components})
+    shinyjs::toggle(id = "args_repeat", condition = {"repeat" %in% input$components})
     })
 
   # update scoring options based on user input of observed or forecast comparison
   observe({
     if(input$status == "Observed"){
-      score_opt = c("Difference" = "diff", "Repeat" = "repeat")
-      updatePickerInput(session = session, inputId = "score", choices = score_opt, selected = c("diff", "repeat"))
+      score_opt <- c("Difference" = "diff", "Repeat" = "repeat", "Zero" = "zero")
+      updatePickerInput(session = session, inputId = "components", choices = score_opt, selected = c("diff", "repeat", "zero"))
     } else {
-      score_opt = c("Coverage" = "cover", "Difference" = "diff", "Repeat" = "repeat", "Taper" = "taper", "Trend" = "trend")
-      updatePickerInput(session = session, inputId = "score", choices = score_opt, selected = c("Coverage" = "cover", "Difference" = "diff", "Repeat" = "repeat", "Taper" = "taper", "Trend" = "trend"))
+      score_opt <- c("Coverage" = "cover", "Difference" = "diff", "Repeat" = "repeat", "Taper" = "taper", "Trend" = "trend", "Shape" = "shape", "Zero" = "zero")
+      updatePickerInput(session = session, inputId = "components", choices = score_opt, selected = c("Coverage" = "cover", "Difference" = "diff", "Repeat" = "repeat", "Taper" = "taper", "Trend" = "trend",  "Shape" = "shape", "Zero" = "zero"))
     }
+  })
+
+  output$weights <- renderUI({
+    ## create a list of numeric inputs
+    ## each will have a label with selected component in title case
+    ## value will be set at 1 by default
+    ## id will be weight_ component to make it easy to find / parse as input for plane_score
+    components() %>%
+      purrr::map(., function(x) numericInput(inputId = paste0("weight_",x), label = paste0("Weight: ", tcase(x)), value = 1))
   })
 
     # pass in actionBttn to module plots
@@ -125,12 +155,15 @@ server <- function(input, output, session){
     # pass input$status, input$outcome, input$score to module plots
     status <- reactive({ input$status })
     outcome <- reactive({ input$outcome })
-    score <- reactive({ input$score })
+    components <- reactive({ input$components })
+
 
     data_1 <- reactive({
         if (input$choice == "Example") {
             # example observed data
-            df <- read.csv(system.file("extdata/observed", "hdgov_hosp_weekly.csv", package = "rplanes"))
+            df <- read.csv(system.file("extdata/observed", "hdgov_hosp_weekly.csv", package = "rplanes"))  %>%
+              ## truncate the example data for performance
+              dplyr::filter(location %in% c("US","02","06","09","12","15","22","25","28","32","37","45","48","51","54"))
         } else {
             # Uploading observed data
             req(input$upload_1)
@@ -140,6 +173,9 @@ server <- function(input, output, session){
                          validate("Invalid file; Please upload a .csv file"))
         }
         df$date <-  as.Date(df$date)
+        df <-
+          df %>%
+          arrange(location,date)
         df
     })
 
@@ -150,7 +186,9 @@ server <- function(input, output, session){
     data_2 <- reactive({
         if(input$choice == "Example") {
             # example forecast data
-            df <- read.csv(system.file("extdata/forecast", "2022-10-31-SigSci-TSENS.csv", package = "rplanes"))
+            df <- read.csv(system.file("extdata/forecast", "2022-10-31-SigSci-TSENS.csv", package = "rplanes"))  %>%
+              ## truncate the example data for performance
+              dplyr::filter(location %in% c("US","02","06","09","12","15","22","25","28","32","37","45","48","51","54"))
         } else {
             # Uploading forecast data
             req(input$upload_2)
@@ -160,15 +198,28 @@ server <- function(input, output, session){
                          validate("Invalid file; Please upload a .csv file"))
         }
         if(input$status == "Forecast"){
+
+          if(input$forecast_format == "legacy") {
             df$forecast_date <- as.Date(df$forecast_date, format = "%Y-%m-%d")
             df$target_end_date <- as.Date(df$target_end_date, format = "%Y-%m-%d")
             width <- round(rplanes:::q_boundary(as.numeric(input$width)), 2)
             quant_list <- round(c(0.01, 0.025, seq(0.05, 0.95, by = 0.05), 0.975, 0.99), 2)
             validate(need(all(width %in% quant_list), message = "Quantiles unavailable for width specified."))
             df <- df %>%
-                dplyr::mutate(quantile = ifelse(is.na(df$quantile), 0.5, df$quantile)) %>%
-                filter(quantile %in% width)
+              dplyr::mutate(quantile = ifelse(is.na(df$quantile), 0.5, df$quantile)) %>%
+              filter(quantile %in% width)
 
+          } else if (input$forecast_format == "hubverse") {
+            df$forecast_date <- as.Date(df$reference_date, format = "%Y-%m-%d")
+            df$target_end_date <- as.Date(df$target_end_date, format = "%Y-%m-%d")
+            width <- round(rplanes:::q_boundary(as.numeric(input$width)), 2)
+            quant_list <- round(c(0.01, 0.025, seq(0.05, 0.95, by = 0.05), 0.975, 0.99), 2)
+            validate(need(all(width %in% quant_list), message = "Quantiles unavailable for width specified."))
+            df <- df %>%
+              dplyr::mutate(quantile = ifelse(is.na(df$output_type_id), 0.5, df$output_type_id)) %>%
+              filter(quantile %in% width)
+
+          }
         } else {
             validate(need(is.convertible.to.date(df$date[1]), message = "Columns containing dates need to be formatted like: 2022-10-31"))
             df$date <- as.Date(df$date, format = "%Y-%m-%d")
@@ -203,9 +254,11 @@ server <- function(input, output, session){
     prepped_signal <- reactive({
         if (input$choice == "Example"){
             prepped <- read_forecast(system.file("extdata/forecast", "2022-10-31-SigSci-TSENS.csv", package = "rplanes"), pi_width = as.numeric(input$width)) %>%
+              ## truncate the example data for performance
+              dplyr::filter(location %in% c("US","02","06","09","12","15","22","25","28","32","37","45","48","51","54")) %>%
                 to_signal(., outcome = "flu.admits", type = "forecast", horizon = 4, resolution = "weekly")
         } else if (input$status == "Forecast"){
-            prepped <- read_forecast(input$upload_2$datapath, pi_width = as.numeric(input$width)) %>%
+            prepped <- read_forecast(input$upload_2$datapath, pi_width = as.numeric(input$width), format = input$forecast_format) %>%
                 filter(location %in% unique(data_1()$location)) %>%
                 to_signal(., outcome = input$outcome, type = "forecast", horizon = input$horizon, resolution = input$rez)
         } else if (input$status == "Observed"){
@@ -228,9 +281,38 @@ server <- function(input, output, session){
       }
     })
 
+    # run the scoring using logic to modify the args parameter in plane_score for the repeats function
+    # This applies to the repeats option, was not taking my direct inputs unless I specified it out into a list like below.
+    scoring <- eventReactive(input$run,{
+
+      if (input$tol == 0 & input$pre == 0){
+        comp_args <- list(trend = list(sig_lvl = input$sig), `repeat` = list(prepend = NULL, tolerance = NULL))
+      } else if (input$tol == 0){
+        comp_args <- list(trend = list(sig_lvl = input$sig), `repeat` = list(prepend = input$pre, tolerance = NULL))
+      } else if (input$pre == 0){
+        comp_args <- list(trend = list(sig_lvl = input$sig), `repeat` = list(prepend = NULL, tolerance = input$tol))
+      } else {
+        comp_args <- list(trend = list(sig_lvl = input$sig), `repeat` = list(prepend = input$pre, tolerance = input$tol))
+      }
+
+      ## handle weights
+      if(input$custom_weights != "Custom" | input$opts == FALSE) {
+        weight_vals <- NULL
+      } else {
+        weight_inputs <- paste0("weight_", input$components)
+
+        weight_vals <-
+          weight_inputs %>%
+          purrr::map_dbl(., function(x) input[[x]]) %>%
+          purrr::set_names(input$components)
+      }
+      scores <- plane_score(prepped_signal(), prepped_seed(), components = input$components, args = comp_args, weights = weight_vals)
+      scores
+    })
+
     dataServer("tab1", data_1 = data_1, data_2 = data_2, signal_type = input$status, n_obs_eval = input$n_obs_eval)
 
-    plotServer("tab2", score = score, data_1 = data_1, locations = locations, seed = prepped_seed, signal_to_eval = prepped_signal, btn1 = btn1, status = status, outcome = outcome, btn2 = btn2)
+    plotServer("tab2", scoring = scoring, components = components, data_1 = data_1, locations = locations, seed = prepped_seed, signal_to_eval = prepped_signal, btn1 = btn1, status = status, outcome = outcome, btn2 = btn2)
 
     # reset all inputs including the ones in the modules
     observeEvent(input$reset,{

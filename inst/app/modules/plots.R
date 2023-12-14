@@ -2,17 +2,6 @@
 # UI Side ####
 #~~~~~~~~~~~~~~~~~~~~~~~~
 
-inputsUI <- function(id){
-  ns <- NS(id)
-  tagList(
-    shinyjs::hidden(div(id = ns("args_trend"),
-                        numericInput(ns("sig"), "Significance (Trend)", value = 0.1, min = 0, max = 1, step = 0.01))),
-    shinyjs::hidden(div(id = ns("args_repeat"),
-                        numericInput(ns("tol"), label = "Tolerance (Repeat)", value = 0, min = 0, max = 50, step = 1),
-                        numericInput(ns("pre"), label = "Prepend Values (Repeat)",  value = 0, min = 0, max = 365, step = 1)))
-  )
-}
-
 plotUI <- function(id){
   ns <- NS(id)
   tagList(
@@ -41,40 +30,20 @@ plotUI <- function(id){
 # Server Side ####
 #~~~~~~~~~~~~~~~~~~~~~~~~
 
-plotServer <- function(id, score, data_1, locations, seed, signal_to_eval, btn1, status, outcome, btn2) {
+plotServer <- function(id, scoring, components, data_1, seed, signal_to_eval, btn1, status, locations, outcome, btn2) {
   moduleServer(id, function(input, output, session) {
 
     observe({
       updatePickerInput(session = session, inputId = "loc", choices = locations())
-      choice <- c("Coverage" = "cover", "Difference" = "diff", "Repeat" = "repeat", "Taper" = "taper", "Trend" = "trend")
-      plot_choice <- choice[choice %in% score()]
+      choice <- c("Coverage" = "cover", "Difference" = "diff", "Repeat" = "repeat", "Taper" = "taper", "Trend" = "trend", "Shape" = "shape", "Zero" = "zero")
+      plot_choice <- choice[choice %in% components()]
       updateAwesomeRadio(session = session, inputId = "plot_type", choices = plot_choice, inline = TRUE, status = "warning")
     })
 
 
-
-    # unhide the locations options and function arguments depending on scoring selection
+    # unhide the scoring results after the analyze button has been clicked
     observe({
-      shinyjs::toggle(id = "args_trend", condition = {"trend" %in% score()})
-      shinyjs::toggle(id = "args_repeat", condition = {"repeat" %in% score()})
       shinyjs::toggle(id = "scoring_results", condition = {btn1()})
-    })
-
-    # run the scoring using logic to modify the args parameter in plane_score for the repeats function
-    # This applies to the repeats option, was not taking my direct inputs unless I specified it out into a list like below.
-    scoring <- eventReactive(btn1(),{
-
-      if (input$tol == 0 & input$pre == 0){
-        comp_args <- list(trend = list(sig_lvl = input$sig), `repeat` = list(prepend = NULL, tolerance = NULL))
-      } else if (input$tol == 0){
-        comp_args <- list(trend = list(sig_lvl = input$sig), `repeat` = list(prepend = input$pre, tolerance = NULL))
-      } else if (input$pre == 0){
-        comp_args <- list(trend = list(sig_lvl = input$sig), `repeat` = list(prepend = NULL, tolerance = input$tol))
-      } else {
-        comp_args <- list(trend = list(sig_lvl = input$sig), `repeat` = list(prepend = input$pre, tolerance = input$tol))
-      }
-      scores <- plane_score(signal_to_eval(), seed(), components = score(), args = comp_args)
-      scores
     })
 
     output$score_table <- DT::renderDataTable(server = FALSE, {
@@ -111,7 +80,8 @@ plotServer <- function(id, score, data_1, locations, seed, signal_to_eval, btn1,
                             c('10', '30', '50', 'All'))
         ),
         class = "display"
-      )
+      ) %>%
+        DT::formatRound(., columns = "score", digits = 3)
       })
 
     plot_df <- reactive({
@@ -119,7 +89,7 @@ plotServer <- function(id, score, data_1, locations, seed, signal_to_eval, btn1,
       dates <- unique(as.character(data_1()$date))
       dates <- dates[dates <= cut_date]
 
-      values_obs <- seed()[[input$loc]]$all_values
+      values_obs <- seed()[[as.character(input$loc)]]$all_values
 
       observed_df <- data.frame(date = dates,
                                point = values_obs,
@@ -183,6 +153,18 @@ plotServer <- function(id, score, data_1, locations, seed, signal_to_eval, btn1,
       res
     })
 
+    shape <- reactive({
+      item <- paste0(input$loc, "-shape")
+      res <- scoring()$full_results[[item]]
+      res
+    })
+
+    zero <- reactive({
+      item <- paste0(input$loc, "-zero")
+      res <- scoring()$full_results[[item]]
+      res
+    })
+
     plotting <- reactive({
 
       ## conditionally render different plots for each individual component
@@ -233,7 +215,7 @@ plotServer <- function(id, score, data_1, locations, seed, signal_to_eval, btn1,
           ggplot(aes(x = date, y = point)) +
           geom_point(aes(color = type), size = 4) +
           geom_point(data = df_plot2 %>% dplyr::filter(flag == TRUE), aes(date, point, alpha = "Difference"), shape = 5, size = 6, stroke=2, color = 'darkred')  +
-          labs(title = paste0("Difference", ifelse(difference()$indicator, " (Flagged)", " (Not Flagged)")),, x = "", y = "Value", subtitle = paste0("Location: ", input$loc), caption = paste0("Any point-to-point difference greater than ", difference()$maximum_difference, " is highlighted in red diamond.")) +
+          labs(title = paste0("Difference", ifelse(difference()$indicator, " (Flagged)", " (Not Flagged)")),, x = "", y = "Value", subtitle = paste0("Location: ", input$loc), caption = paste0("Flagged point-to-point difference greater than ", difference()$maximum_difference, " is highlighted in red diamond.")) +
           geom_line(alpha = 0.3) +
           theme(legend.title=element_blank())
       } else if(input$plot_type == "repeat"){
@@ -252,7 +234,7 @@ plotServer <- function(id, score, data_1, locations, seed, signal_to_eval, btn1,
           geom_line(alpha = 0.3) +
           labs(title = paste0("Taper", ifelse(taper()$indicator, " (Flagged)", " (Not Flagged)")), x = "", y = "Value", subtitle = paste0("Location: ", input$loc)) +
           theme(legend.title=element_blank())
-      } else {
+      } else if (input$plot_type == "trend") {
 
         ## get the output data tibble from trend for change points below
         trend_df <- trend()$output
@@ -265,6 +247,45 @@ plotServer <- function(id, score, data_1, locations, seed, signal_to_eval, btn1,
           geom_line(alpha = 0.3) +
           labs(title = paste0("Trend", ifelse(trend()$indicator, " (Flagged)", " (Not Flagged)")), x = "", y = "Value", subtitle = paste0("Location: ", input$loc), caption = paste0("Using a significance of ", input$sig, ".\nFlagged change points are highlighted in red diamond.")) +
           theme(legend.title=element_blank())
+      } else if (input$plot_type == "shape") {
+
+        shape_df <-
+          plot_df() %>%
+          dplyr::filter(type == "Evaluated") %>%
+          dplyr::mutate(flag = ifelse(shape()$indicator, TRUE, FALSE))
+
+
+        p <- ggplot() +
+          geom_point(data = plot_df(), aes(date, point, color = type), size = 4) +
+          geom_point(data = shape_df %>% dplyr::filter(flag), aes(date, point, alpha = "Shape"), shape = 5, size = 6, stroke=2, color = 'darkred') +
+          geom_line(data = plot_df(), aes(date, point), alpha = 0.3) +
+          labs(title = paste0("Shape", ifelse(shape()$indicator, " (Flagged)", " (Not Flagged)")), x = "", y = "Value", subtitle = paste0("Location: ", input$loc), caption = "Flagged shapes are highlighted in red diamond.") +
+          theme(legend.title=element_blank())
+
+      } else if (input$plot_type == "zero") {
+
+        ## if there is a zero flagged then find the zero
+        ## otherwise create an empty tibble so we dont have change code in plotting
+        if(zero()$indicator) {
+          zero_df <-
+            plot_df() %>%
+            dplyr::filter(type == "Evaluated") %>%
+            dplyr::mutate(flag = ifelse(zero()$indicator, TRUE, FALSE)) %>%
+            dplyr::filter(value == 0)
+        } else {
+          zero_df <-
+            plot_df() %>%
+            dplyr::filter(type == "Evaluated") %>%
+            dplyr::mutate(flag = ifelse(zero()$indicator, TRUE, FALSE))
+        }
+
+        p <- ggplot() +
+          geom_point(data = plot_df(), aes(date, point, color = type), size = 4) +
+          geom_point(data = zero_df %>% dplyr::filter(flag), aes(date, point, alpha = "Zero"), shape = 5, size = 6, stroke=2, color = 'darkred') +
+          geom_line(data = plot_df(), aes(date, point), alpha = 0.3) +
+          labs(title = paste0("Zero", ifelse(zero()$indicator, " (Flagged)", " (Not Flagged)")), x = "", y = "Value", subtitle = paste0("Location: ", input$loc), caption = "Flagged zeros are highlighted in red diamond.") +
+          theme(legend.title=element_blank())
+
       }
       p
     }) %>%

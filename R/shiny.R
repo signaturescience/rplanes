@@ -13,10 +13,10 @@
 #' @examples
 #' \dontrun{
 #' # Launch the explorer app
-#' rplanes_launcher(host = "0.0.0.0",
+#' rplanes_explorer(host = "0.0.0.0",
 #'                  launch.browser = TRUE,
 #'                  port = 80)
 #' }
-rplanes_launcher <- function(...){
+rplanes_explorer <- function(...){
   shiny::runApp(appDir = system.file("app", package="rplanes"), ... )
 }

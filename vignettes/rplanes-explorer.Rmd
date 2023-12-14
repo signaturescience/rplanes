@@ -30,7 +30,7 @@ more <- function (.data, fill = ".", extra_rows = 4) {
 
 # Overview
 
-`rplanes` features a Shiny app that allows users to interact with package functions to perform plausibility analysis for epidemiological signals. The "`rplanes` Explorer" app is developed and maintained as part of the R package. Users can launch the app locally or use it on a hosted Shiny server by running the `rplanes_launcher()` function.
+`rplanes` features a Shiny app that allows users to interact with package functions to perform plausibility analysis for epidemiological signals. The "`rplanes` Explorer" app is developed and maintained as part of the R package. Users can launch the app locally or use it on a hosted Shiny server by running the `rplanes_explorer()` function.
 
 # Analysis steps
 
@@ -78,11 +78,11 @@ The app includes inputs for the type of signal to be evaluated, file uploads (as
 
 ## Launching the app
 
-The app is delivered as a function in the `rplanes` package. To launch the app, users can run the `rplanes_launcher()` function. Note that this function wraps `shiny::runApp()` and inherits any arguments. For example, adding an argument for `launch.browser = TRUE` will open up the app in a web browser and setting `port = 80` will run the app at port `80` in the localhost.
+The app is delivered as a function in the `rplanes` package. To launch the app, users can run the `rplanes_explorer()` function. Note that this function wraps `shiny::runApp()` and inherits any arguments. For example, adding an argument for `launch.browser = TRUE` will open up the app in a web browser and setting `port = 80` will run the app at port `80` in the localhost.
 
 ```{r, eval=FALSE, echo=TRUE}
 library(rplanes)
-rplanes_launcher(host = "0.0.0.0", launch.browser = TRUE, port = 80)
+rplanes_explorer(host = "0.0.0.0", launch.browser = TRUE, port = 80)
 ```
 
 

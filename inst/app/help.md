@@ -17,7 +17,7 @@ The `rplanes` Explorer is written as a Shiny web application to translate the R 
 <a name="example"></a>
 ## Example Data
 
-To demonstrate usage, the app features an example data set. Users can select the "Example" option to load pre-populated forecast data for plausibility analysis. This data set contains 4 week-ahead forecasts for incident flu hospitalizations in the United States (all 50 states and national resolution). The forecasts begin with the week ending 2022-11-05 and extend through the week of 2022-11-26. The baseline data used to generate the seed is loaded from [HHS Protect flu hospitalizations](https://healthdata.gov/Hospital/COVID-19-Reported-Patient-Impact-and-Hospital-Capa/g62h-syeh) that have been aggregated from daily to weekly reports at the state and national level. All of the data preparation is done internally. Users simply click "Analyze" to explore the kinds of outputs that `rplanes` generates.
+To demonstrate usage, the app features an example data set. Users can select the "Example" option to load pre-populated forecast data for plausibility analysis. This data set contains 4 week-ahead forecasts for incident flu hospitalizations in select United States locations. The forecasts begin with the week ending 2022-11-05 and extend through the week of 2022-11-26. The baseline data used to generate the seed is loaded from [HHS Protect flu hospitalizations](https://healthdata.gov/Hospital/COVID-19-Reported-Patient-Impact-and-Hospital-Capa/g62h-syeh) that have been aggregated from daily to weekly reports at the state and national level. All of the data preparation is done internally. Users simply click "Analyze" to explore the kinds of outputs that `rplanes` generates.
 
 <a name="analysis-steps"></a>
 ## Analysis Steps
@@ -52,7 +52,9 @@ Data must be uploaded to the app in `.csv` format. At minimum it must include co
 
 The choice of the type of signal to evaluate will determine how the user specifies data to be evaluated.
 
-If a forecast signal is selected, then the user must upload a `.csv` file containing forecast data. Forecasts must be a prepared in a "quantile" format with at minimum the following columns:
+If a forecast signal is selected, then the user must upload a `.csv` file containing forecast data. Forecasts must be a prepared in a "quantile" format. The format must be specified as "Legacy"[^1] or "Hubverse"[^2]. 
+
+For "Legacy", the file must at minimum have following columns:
 
 - *forecast_date*: The date on which the forecast was generated (`yyyy-mm-dd` format)
 - *location*: Location code for the given forecast
@@ -60,6 +62,17 @@ If a forecast signal is selected, then the user must upload a `.csv` file contai
 - *target_end_date*: The date corresponding to the forecasted target (`yyyy-mm-dd` format)
 - *type*: The type of forecast (either "point" or "quantile")
 - *quantile*: The quantile for the forecasted value; if the type is "point" then quantile is `NA`
+- *value*: The forecasted value for the given quantile, location, and target
+
+For "Hubverse", the file must at minimum have following columns:
+
+- *reference_date*: The date for the week on which the forecast was generated (`yyyy-mm-dd` format)
+- *location*: Location code for the given forecast
+- *horizon*: The number of time points ahead for the given forecast
+- *target*: Name of the forecast (e.g., "inc flu hospitalizations")
+- *target_end_date*: The date corresponding to the forecasted target (`yyyy-mm-dd` format)
+- *output_type*: The type of forecast (e.g., "quantile")
+- *output_type_id*: If the output type is set to "quantile" then this will contain quantile for the forecasted value
 - *value*: The forecasted value for the given quantile, location, and target
 
 If an observed signal is selected, then the user can select the number of most recent observations to evaluate. The number of values will determine the cutoff date to identify the baseline characteristics in the original uploaded observed data. In other words, there is no need to upload separate observed data to be evaluated since the initial upload will contain all data for seed *and* evaluation.
@@ -82,6 +95,7 @@ Users can optionally modify the following parameters:
 
 - **Prediction Interval**: The prediction interval defines the space between upper and lower bounds and internally maps to the appropriate quantiles (centered on the median) in the forecast evaluated.
 - **PLANES Components**: By default the app will run all components available for the given signal. As noted elsewhere in the `rplanes` documentation, not all components are available for evaluating observed signals. The user can optionally select specific components to use in the analysis.
+- **Weights**: Unless modified, the app will deliver an overall score based on equal weights for all components. This input allows users to modify that behavior. If custom weighting scheme is preferred, then the app will display numeric inputs for each component selected.
 - **Significance (Trend)**: The significance level to identify change points via the trend component. Default is `0.1`.
 - **Tolerance (Repeat)**: The number of tolerated repeats before flagging via the repeat component. Default is defined by the number of repeats observed for the given location in the seed.
 - **Prepend Values (Repeat)**: The number of values to prepend to the evaluated signal from the seed during analysis with the repeat component. The default behavior is to use the maximum number of repeats observed for the given location in the seed.
@@ -105,3 +119,6 @@ The raw data is also displayed for the users in two tables. The first shows the 
 The app is developed and maintained as part of the `rplanes` package, which is licensed under MIT License and Copyright (c) 2023 Signature Science LLC.
 
 Primary developers of the tool are VP Nagraj, Desiree Williams, and Amy Benefield.
+
+[^1]: https://github.com/cdcepi/Flusight-forecast-data/tree/master/data-forecasts#forecast-file-format
+[^2]: https://hubdocs.readthedocs.io/en/latest/user-guide/model-output.html
