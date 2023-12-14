@@ -119,7 +119,7 @@ plotServer <- function(id, score, data_1, locations, seed, signal_to_eval, btn1,
       dates <- unique(as.character(data_1()$date))
       dates <- dates[dates <= cut_date]
 
-      values_obs <- seed()[[input$loc]]$all_values
+      values_obs <- seed()[[as.character(input$loc)]]$all_values
 
       observed_df <- data.frame(date = dates,
                                point = values_obs,

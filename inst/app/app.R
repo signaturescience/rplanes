@@ -29,6 +29,9 @@ ui <- navbarPage(title = "rplanes Explorer",
                                                                            fileInput("upload_1", label = "Upload Observed Data", multiple = FALSE, accept = ".csv"))),
                                                        shinyjs::hidden(div(id = "choice_forc_upload",
                                                                            fileInput("upload_2", label = "Upload Forecast Data", multiple = FALSE, accept = ".csv"))),
+                                                       shinyjs::hidden(div(id = "choice_forc_format",
+                                                                           awesomeRadio("forecast_format", "Forecast file format", choices = c("Legacy" = "legacy", "Hubverse" = "hubverse"), selected = "legacy", inline = TRUE, status = "warning"))),
+
                                                        shinyjs::hidden(div(id = "choice_nobs",
                                                                            numericInput("n_obs_eval", "Number of Observed Values to Evaluate", value = 1, min = 1, max = Inf, step = 1))),
 
@@ -65,7 +68,6 @@ ui <- navbarPage(title = "rplanes Explorer",
                           )), # plots tab
                  tabPanel(title = "Help",
                           includeMarkdown(system.file("app/help.md", package = "rplanes")))
-                          # htmltools::includeHTML(system.file("app/help_tab.html", package = "rplanes")))
 ) # UI end
 
 
@@ -86,6 +88,7 @@ server <- function(input, output, session){
     # unhide the upload custom dataset when choosing "Custom" radiobutton
     shinyjs::toggle(id = "choice_obs_upload", condition = {input$choice == "Custom"})
     shinyjs::toggle(id = "choice_forc_upload", condition = {input$status == "Forecast" & input$choice == "Custom"})
+    shinyjs::toggle(id = "choice_forc_format", condition = {input$status == "Forecast" & input$choice == "Custom"})
     ## show the example description text when the choice is example
     shinyjs::toggle(id = "example_info", condition = {input$choice == "Example"})
     # unhide additional options upon switch
@@ -140,6 +143,9 @@ server <- function(input, output, session){
                          validate("Invalid file; Please upload a .csv file"))
         }
         df$date <-  as.Date(df$date)
+        df <-
+          df %>%
+          arrange(location,date)
         df
     })
 
@@ -160,15 +166,28 @@ server <- function(input, output, session){
                          validate("Invalid file; Please upload a .csv file"))
         }
         if(input$status == "Forecast"){
+
+          if(input$forecast_format == "legacy") {
             df$forecast_date <- as.Date(df$forecast_date, format = "%Y-%m-%d")
             df$target_end_date <- as.Date(df$target_end_date, format = "%Y-%m-%d")
             width <- round(rplanes:::q_boundary(as.numeric(input$width)), 2)
             quant_list <- round(c(0.01, 0.025, seq(0.05, 0.95, by = 0.05), 0.975, 0.99), 2)
             validate(need(all(width %in% quant_list), message = "Quantiles unavailable for width specified."))
             df <- df %>%
-                dplyr::mutate(quantile = ifelse(is.na(df$quantile), 0.5, df$quantile)) %>%
-                filter(quantile %in% width)
+              dplyr::mutate(quantile = ifelse(is.na(df$quantile), 0.5, df$quantile)) %>%
+              filter(quantile %in% width)
 
+          } else if (input$forecast_format == "hubverse") {
+            df$forecast_date <- as.Date(df$reference_date, format = "%Y-%m-%d")
+            df$target_end_date <- as.Date(df$target_end_date, format = "%Y-%m-%d")
+            width <- round(rplanes:::q_boundary(as.numeric(input$width)), 2)
+            quant_list <- round(c(0.01, 0.025, seq(0.05, 0.95, by = 0.05), 0.975, 0.99), 2)
+            validate(need(all(width %in% quant_list), message = "Quantiles unavailable for width specified."))
+            df <- df %>%
+              dplyr::mutate(quantile = ifelse(is.na(df$output_type_id), 0.5, df$output_type_id)) %>%
+              filter(quantile %in% width)
+
+          }
         } else {
             validate(need(is.convertible.to.date(df$date[1]), message = "Columns containing dates need to be formatted like: 2022-10-31"))
             df$date <- as.Date(df$date, format = "%Y-%m-%d")
@@ -205,7 +224,7 @@ server <- function(input, output, session){
             prepped <- read_forecast(system.file("extdata/forecast", "2022-10-31-SigSci-TSENS.csv", package = "rplanes"), pi_width = as.numeric(input$width)) %>%
                 to_signal(., outcome = "flu.admits", type = "forecast", horizon = 4, resolution = "weekly")
         } else if (input$status == "Forecast"){
-            prepped <- read_forecast(input$upload_2$datapath, pi_width = as.numeric(input$width)) %>%
+            prepped <- read_forecast(input$upload_2$datapath, pi_width = as.numeric(input$width), format = input$forecast_format) %>%
                 filter(location %in% unique(data_1()$location)) %>%
                 to_signal(., outcome = input$outcome, type = "forecast", horizon = input$horizon, resolution = input$rez)
         } else if (input$status == "Observed"){
