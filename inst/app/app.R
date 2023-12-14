@@ -6,6 +6,12 @@ library(dplyr)
 library(rplanes)
 library(lubridate)
 
+## helper for title casing
+tcase <- function(x) {
+  first_char <- substr(x,1,1)
+  chartr(first_char,toupper(first_char),x)
+}
+
 # list module files and iterate sourcing them to use within the app.
 module_sources <- list.files(path = system.file("app/modules/", package = "rplanes"), full.names = TRUE)
 sapply(module_sources, source)
@@ -42,8 +48,17 @@ ui <- navbarPage(title = "rplanes Explorer",
                                                        materialSwitch("opts", label = "Modify Defaults", value = FALSE, status = "success"),
                                                        shinyjs::hidden(div(id = "add_options",
                                                                            textInput("width", label = "Prediction Interval", value = "95"),
-                                                                           pickerInput(inputId = "score", label = "PLANES Component(s)", choices = "", options = list(`actions-box` = TRUE), multiple = TRUE),
-                                                                           inputsUI("tab2")
+                                                                           pickerInput(inputId = "components", label = "PLANES Component(s)", choices = "", options = list(`actions-box` = TRUE), multiple = TRUE),
+                                                                           awesomeRadio("custom_weights", "Weights", choices = c("Equal Weights", "Custom"), selected= "Equal Weights", inline = TRUE, status = "warning"),
+
+                                                                           shinyjs::hidden(div(id = "weight_choices",
+                                                                                               uiOutput("weights"),
+                                                                           )),
+                                                                           shinyjs::hidden(div(id = "args_trend",
+                                                                                               numericInput("sig", "Significance (Trend)", value = 0.1, min = 0, max = 1, step = 0.01))),
+                                                                           shinyjs::hidden(div(id = "args_repeat",
+                                                                                               numericInput("tol", label = "Tolerance (Repeat)", value = 0, min = 0, max = 50, step = 1),
+                                                                                               numericInput("pre", label = "Prepend Values (Repeat)",  value = 0, min = 0, max = 365, step = 1)))
                                                        )),
                                                        actionBttn("run", "Analyze", style = "unite", color = "danger"),
                                                        actionBttn("reset", "Reset", style = "stretch", color = "warning")
@@ -108,17 +123,29 @@ server <- function(input, output, session){
     shinyjs::toggle(id = "raw_data", condition = {rv$value > 0 })
     ## toggle the number of obs picker if the signal type is 'Observed'
     shinyjs::toggle(id = "choice_nobs", condition = {input$status == "Observed"})
+    shinyjs::toggle(id = "weight_choices", condition = {input$custom_weights == "Custom"})
+    shinyjs::toggle(id = "args_trend", condition = {"trend" %in% input$components})
+    shinyjs::toggle(id = "args_repeat", condition = {"repeat" %in% input$components})
     })
 
   # update scoring options based on user input of observed or forecast comparison
   observe({
     if(input$status == "Observed"){
-      score_opt = c("Difference" = "diff", "Repeat" = "repeat", "Zero" = "zero")
-      updatePickerInput(session = session, inputId = "score", choices = score_opt, selected = c("diff", "repeat", "zero"))
+      score_opt <- c("Difference" = "diff", "Repeat" = "repeat", "Zero" = "zero")
+      updatePickerInput(session = session, inputId = "components", choices = score_opt, selected = c("diff", "repeat", "zero"))
     } else {
-      score_opt = c("Coverage" = "cover", "Difference" = "diff", "Repeat" = "repeat", "Taper" = "taper", "Trend" = "trend", "Shape" = "shape", "Zero" = "zero")
-      updatePickerInput(session = session, inputId = "score", choices = score_opt, selected = c("Coverage" = "cover", "Difference" = "diff", "Repeat" = "repeat", "Taper" = "taper", "Trend" = "trend",  "Shape" = "shape", "Zero" = "zero"))
+      score_opt <- c("Coverage" = "cover", "Difference" = "diff", "Repeat" = "repeat", "Taper" = "taper", "Trend" = "trend", "Shape" = "shape", "Zero" = "zero")
+      updatePickerInput(session = session, inputId = "components", choices = score_opt, selected = c("Coverage" = "cover", "Difference" = "diff", "Repeat" = "repeat", "Taper" = "taper", "Trend" = "trend",  "Shape" = "shape", "Zero" = "zero"))
     }
+  })
+
+  output$weights <- renderUI({
+    ## create a list of numeric inputs
+    ## each will have a label with selected component in title case
+    ## value will be set at 1 by default
+    ## id will be weight_ component to make it easy to find / parse as input for plane_score
+    components() %>%
+      purrr::map(., function(x) numericInput(inputId = paste0("weight_",x), label = paste0("Weight: ", tcase(x)), value = 1))
   })
 
     # pass in actionBttn to module plots
@@ -128,7 +155,8 @@ server <- function(input, output, session){
     # pass input$status, input$outcome, input$score to module plots
     status <- reactive({ input$status })
     outcome <- reactive({ input$outcome })
-    score <- reactive({ input$score })
+    components <- reactive({ input$components })
+
 
     data_1 <- reactive({
         if (input$choice == "Example") {
@@ -253,9 +281,38 @@ server <- function(input, output, session){
       }
     })
 
+    # run the scoring using logic to modify the args parameter in plane_score for the repeats function
+    # This applies to the repeats option, was not taking my direct inputs unless I specified it out into a list like below.
+    scoring <- eventReactive(input$run,{
+
+      if (input$tol == 0 & input$pre == 0){
+        comp_args <- list(trend = list(sig_lvl = input$sig), `repeat` = list(prepend = NULL, tolerance = NULL))
+      } else if (input$tol == 0){
+        comp_args <- list(trend = list(sig_lvl = input$sig), `repeat` = list(prepend = input$pre, tolerance = NULL))
+      } else if (input$pre == 0){
+        comp_args <- list(trend = list(sig_lvl = input$sig), `repeat` = list(prepend = NULL, tolerance = input$tol))
+      } else {
+        comp_args <- list(trend = list(sig_lvl = input$sig), `repeat` = list(prepend = input$pre, tolerance = input$tol))
+      }
+
+      ## handle weights
+      if(input$custom_weights != "Custom" | input$opts == FALSE) {
+        weight_vals <- NULL
+      } else {
+        weight_inputs <- paste0("weight_", input$components)
+
+        weight_vals <-
+          weight_inputs %>%
+          purrr::map_dbl(., function(x) input[[x]]) %>%
+          purrr::set_names(input$components)
+      }
+      scores <- plane_score(prepped_signal(), prepped_seed(), components = input$components, args = comp_args, weights = weight_vals)
+      scores
+    })
+
     dataServer("tab1", data_1 = data_1, data_2 = data_2, signal_type = input$status, n_obs_eval = input$n_obs_eval)
 
-    plotServer("tab2", score = score, data_1 = data_1, locations = locations, seed = prepped_seed, signal_to_eval = prepped_signal, btn1 = btn1, status = status, outcome = outcome, btn2 = btn2)
+    plotServer("tab2", scoring = scoring, components = components, data_1 = data_1, locations = locations, seed = prepped_seed, signal_to_eval = prepped_signal, btn1 = btn1, status = status, outcome = outcome, btn2 = btn2)
 
     # reset all inputs including the ones in the modules
     observeEvent(input$reset,{

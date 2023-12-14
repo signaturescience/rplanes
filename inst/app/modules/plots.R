@@ -2,16 +2,16 @@
 # UI Side ####
 #~~~~~~~~~~~~~~~~~~~~~~~~
 
-inputsUI <- function(id){
-  ns <- NS(id)
-  tagList(
-    shinyjs::hidden(div(id = ns("args_trend"),
-                        numericInput(ns("sig"), "Significance (Trend)", value = 0.1, min = 0, max = 1, step = 0.01))),
-    shinyjs::hidden(div(id = ns("args_repeat"),
-                        numericInput(ns("tol"), label = "Tolerance (Repeat)", value = 0, min = 0, max = 50, step = 1),
-                        numericInput(ns("pre"), label = "Prepend Values (Repeat)",  value = 0, min = 0, max = 365, step = 1)))
-  )
-}
+# inputsUI <- function(id){
+#   ns <- NS(id)
+#   tagList(
+#     shinyjs::hidden(div(id = ns("args_trend"),
+#                         numericInput(ns("sig"), "Significance (Trend)", value = 0.1, min = 0, max = 1, step = 0.01))),
+#     shinyjs::hidden(div(id = ns("args_repeat"),
+#                         numericInput(ns("tol"), label = "Tolerance (Repeat)", value = 0, min = 0, max = 50, step = 1),
+#                         numericInput(ns("pre"), label = "Prepend Values (Repeat)",  value = 0, min = 0, max = 365, step = 1)))
+#   )
+# }
 
 plotUI <- function(id){
   ns <- NS(id)
@@ -41,40 +41,20 @@ plotUI <- function(id){
 # Server Side ####
 #~~~~~~~~~~~~~~~~~~~~~~~~
 
-plotServer <- function(id, score, data_1, locations, seed, signal_to_eval, btn1, status, outcome, btn2) {
+plotServer <- function(id, scoring, components, data_1, seed, signal_to_eval, btn1, status, locations, outcome, btn2) {
   moduleServer(id, function(input, output, session) {
 
     observe({
       updatePickerInput(session = session, inputId = "loc", choices = locations())
       choice <- c("Coverage" = "cover", "Difference" = "diff", "Repeat" = "repeat", "Taper" = "taper", "Trend" = "trend", "Shape" = "shape", "Zero" = "zero")
-      plot_choice <- choice[choice %in% score()]
+      plot_choice <- choice[choice %in% components()]
       updateAwesomeRadio(session = session, inputId = "plot_type", choices = plot_choice, inline = TRUE, status = "warning")
     })
 
 
-
-    # unhide the locations options and function arguments depending on scoring selection
+    # unhide the scoring results after the analyze button has been clicked
     observe({
-      shinyjs::toggle(id = "args_trend", condition = {"trend" %in% score()})
-      shinyjs::toggle(id = "args_repeat", condition = {"repeat" %in% score()})
       shinyjs::toggle(id = "scoring_results", condition = {btn1()})
-    })
-
-    # run the scoring using logic to modify the args parameter in plane_score for the repeats function
-    # This applies to the repeats option, was not taking my direct inputs unless I specified it out into a list like below.
-    scoring <- eventReactive(btn1(),{
-
-      if (input$tol == 0 & input$pre == 0){
-        comp_args <- list(trend = list(sig_lvl = input$sig), `repeat` = list(prepend = NULL, tolerance = NULL))
-      } else if (input$tol == 0){
-        comp_args <- list(trend = list(sig_lvl = input$sig), `repeat` = list(prepend = input$pre, tolerance = NULL))
-      } else if (input$pre == 0){
-        comp_args <- list(trend = list(sig_lvl = input$sig), `repeat` = list(prepend = NULL, tolerance = input$tol))
-      } else {
-        comp_args <- list(trend = list(sig_lvl = input$sig), `repeat` = list(prepend = input$pre, tolerance = input$tol))
-      }
-      scores <- plane_score(signal_to_eval(), seed(), components = score(), args = comp_args)
-      scores
     })
 
     output$score_table <- DT::renderDataTable(server = FALSE, {
