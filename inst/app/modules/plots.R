@@ -281,27 +281,39 @@ plotServer <- function(id, score, data_1, locations, seed, signal_to_eval, btn1,
 
         shape_df <-
           plot_df() %>%
-          dplyr::filter(type == "Evaluated")
+          dplyr::filter(type == "Evaluated") %>%
+          dplyr::mutate(flag = ifelse(shape()$indicator, TRUE, FALSE))
+
 
         p <- ggplot() +
           geom_point(data = plot_df(), aes(date, point, color = type), size = 4) +
-          geom_point(data = shape_df, aes(date, point, alpha = "Shape"), shape = 5, size = 6, stroke=2, color = 'darkred') +
+          geom_point(data = shape_df %>% dplyr::filter(flag), aes(date, point, alpha = "Shape"), shape = 5, size = 6, stroke=2, color = 'darkred') +
           geom_line(data = plot_df(), aes(date, point), alpha = 0.3) +
           labs(title = paste0("Shape", ifelse(shape()$indicator, " (Flagged)", " (Not Flagged)")), x = "", y = "Value", subtitle = paste0("Location: ", input$loc), caption = "Flagged shapes are highlighted in red diamond.") +
           theme(legend.title=element_blank())
 
       } else if (input$plot_type == "zero") {
 
-        zero_df <-
-          plot_df() %>%
-          dplyr::filter(type == "Evaluated") %>%
-          dplyr::filter(value == 0)
+        ## if there is a zero flagged then find the zero
+        ## otherwise create an empty tibble so we dont have change code in plotting
+        if(zero()$indicator) {
+          zero_df <-
+            plot_df() %>%
+            dplyr::filter(type == "Evaluated") %>%
+            dplyr::mutate(flag = ifelse(zero()$indicator, TRUE, FALSE)) %>%
+            dplyr::filter(value == 0)
+        } else {
+          zero_df <-
+            plot_df() %>%
+            dplyr::filter(type == "Evaluated") %>%
+            dplyr::mutate(flag = ifelse(zero()$indicator, TRUE, FALSE))
+        }
 
         p <- ggplot() +
           geom_point(data = plot_df(), aes(date, point, color = type), size = 4) +
-          geom_point(data = zero_df, aes(date, point, alpha = "Zero"), shape = 5, size = 6, stroke=2, color = 'darkred') +
+          geom_point(data = zero_df %>% dplyr::filter(flag), aes(date, point, alpha = "Zero"), shape = 5, size = 6, stroke=2, color = 'darkred') +
           geom_line(data = plot_df(), aes(date, point), alpha = 0.3) +
-          labs(title = paste0("Repeat", ifelse(zero()$indicator, " (Flagged)", " (Not Flagged)")), x = "", y = "Value", subtitle = paste0("Location: ", input$loc), caption = "Flagged zeros are highlighted in red diamond.") +
+          labs(title = paste0("Zero", ifelse(zero()$indicator, " (Flagged)", " (Not Flagged)")), x = "", y = "Value", subtitle = paste0("Location: ", input$loc), caption = "Flagged zeros are highlighted in red diamond.") +
           theme(legend.title=element_blank())
 
       }
