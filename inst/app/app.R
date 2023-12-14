@@ -36,7 +36,7 @@ ui <- navbarPage(title = "rplanes Explorer",
                                                        shinyjs::hidden(div(id = "choice_forc_upload",
                                                                            fileInput("upload_2", label = "Upload Forecast Data", multiple = FALSE, accept = ".csv"))),
                                                        shinyjs::hidden(div(id = "choice_forc_format",
-                                                                           awesomeRadio("forecast_format", "Forecast file format", choices = c("Legacy" = "legacy", "Hubverse" = "hubverse"), selected = "legacy", inline = TRUE, status = "warning"))),
+                                                                           awesomeRadio("forecast_format", "Forecast file format", choices = c("Hubverse" = "hubverse", "Legacy" = "legacy"), selected = "hubverse", inline = TRUE, status = "warning"))),
 
                                                        shinyjs::hidden(div(id = "choice_nobs",
                                                                            numericInput("n_obs_eval", "Number of Observed Values to Evaluate", value = 1, min = 1, max = Inf, step = 1))),
