@@ -196,34 +196,36 @@ server <- function(input, output, session){
             df <- switch(ext,
                          csv = read.csv(input$upload_2$datapath),
                          validate("Invalid file; Please upload a .csv file"))
+
+            if(input$status == "Forecast"){
+
+              if(input$forecast_format == "legacy") {
+                df$forecast_date <- as.Date(df$forecast_date, format = "%Y-%m-%d")
+                df$target_end_date <- as.Date(df$target_end_date, format = "%Y-%m-%d")
+                width <- round(rplanes:::q_boundary(as.numeric(input$width)), 2)
+                quant_list <- round(c(0.01, 0.025, seq(0.05, 0.95, by = 0.05), 0.975, 0.99), 2)
+                validate(need(all(width %in% quant_list), message = "Quantiles unavailable for width specified."))
+                df <- df %>%
+                  dplyr::mutate(quantile = ifelse(is.na(df$quantile), 0.5, df$quantile)) %>%
+                  filter(quantile %in% width)
+
+              } else if (input$forecast_format == "hubverse") {
+                df$forecast_date <- as.Date(df$reference_date, format = "%Y-%m-%d")
+                df$target_end_date <- as.Date(df$target_end_date, format = "%Y-%m-%d")
+                width <- round(rplanes:::q_boundary(as.numeric(input$width)), 2)
+                quant_list <- round(c(0.01, 0.025, seq(0.05, 0.95, by = 0.05), 0.975, 0.99), 2)
+                validate(need(all(width %in% quant_list), message = "Quantiles unavailable for width specified."))
+                df <- df %>%
+                  dplyr::mutate(quantile = ifelse(is.na(df$output_type_id), 0.5, df$output_type_id)) %>%
+                  filter(quantile %in% width)
+
+              }
+            } else {
+              validate(need(is.convertible.to.date(df$date[1]), message = "Columns containing dates need to be formatted like: 2022-10-31"))
+              df$date <- as.Date(df$date, format = "%Y-%m-%d")
+            }
         }
-        if(input$status == "Forecast"){
 
-          if(input$forecast_format == "legacy") {
-            df$forecast_date <- as.Date(df$forecast_date, format = "%Y-%m-%d")
-            df$target_end_date <- as.Date(df$target_end_date, format = "%Y-%m-%d")
-            width <- round(rplanes:::q_boundary(as.numeric(input$width)), 2)
-            quant_list <- round(c(0.01, 0.025, seq(0.05, 0.95, by = 0.05), 0.975, 0.99), 2)
-            validate(need(all(width %in% quant_list), message = "Quantiles unavailable for width specified."))
-            df <- df %>%
-              dplyr::mutate(quantile = ifelse(is.na(df$quantile), 0.5, df$quantile)) %>%
-              filter(quantile %in% width)
-
-          } else if (input$forecast_format == "hubverse") {
-            df$forecast_date <- as.Date(df$reference_date, format = "%Y-%m-%d")
-            df$target_end_date <- as.Date(df$target_end_date, format = "%Y-%m-%d")
-            width <- round(rplanes:::q_boundary(as.numeric(input$width)), 2)
-            quant_list <- round(c(0.01, 0.025, seq(0.05, 0.95, by = 0.05), 0.975, 0.99), 2)
-            validate(need(all(width %in% quant_list), message = "Quantiles unavailable for width specified."))
-            df <- df %>%
-              dplyr::mutate(quantile = ifelse(is.na(df$output_type_id), 0.5, df$output_type_id)) %>%
-              filter(quantile %in% width)
-
-          }
-        } else {
-            validate(need(is.convertible.to.date(df$date[1]), message = "Columns containing dates need to be formatted like: 2022-10-31"))
-            df$date <- as.Date(df$date, format = "%Y-%m-%d")
-        }
         df
     }) %>% bindEvent(input$width, input$choice, input$upload_2)
 
@@ -274,7 +276,7 @@ server <- function(input, output, session){
     locations <- reactive({
       ## conditionally get locations either as intersection of observed (i.e., seed) and forecast locations
       ## or if the signal is observed then just use observed locations
-      if(input$status == "Forecast") {
+      if(input$choice == "Example" | input$status == "Forecast") {
         generics::intersect(data_1()$location, data_2()$location)
       } else if (input$status == "Observed") {
         unique(data_1()$location)
