@@ -23,7 +23,7 @@ ui <- navbarPage(title = "rplanes Explorer",
                                                        prettyRadioButtons("choice", "Choose Dataset", choices = c("Custom", "Example"), selected = "Custom",  status = "warning", inline = TRUE, icon = icon("check"), bigger = TRUE),
                                                        awesomeRadio("status", "Type of signal to be evaluated", choices = c("Forecast", "Observed"), selected= "Forecast", inline = TRUE, status = "warning"),
                                                        shinyjs::hidden(div(id = "example_info",
-                                                                           HTML("<strong>The example data includes 4 week-ahead forecasts for flu hospitalizations in the United States.</strong>" ),
+                                                                           HTML("<strong>The example data includes 4 week-ahead forecasts for flu hospitalizations in select United States locations.</strong>" ),
                                                                            tags$hr())),
                                                        shinyjs::hidden(div(id = "choice_obs_upload",
                                                                            fileInput("upload_1", label = "Upload Observed Data", multiple = FALSE, accept = ".csv"))),
@@ -133,7 +133,9 @@ server <- function(input, output, session){
     data_1 <- reactive({
         if (input$choice == "Example") {
             # example observed data
-            df <- read.csv(system.file("extdata/observed", "hdgov_hosp_weekly.csv", package = "rplanes"))
+            df <- read.csv(system.file("extdata/observed", "hdgov_hosp_weekly.csv", package = "rplanes"))  %>%
+              ## truncate the example data for performance
+              dplyr::filter(location %in% c("US","02","06","09","12","15","22","25","28","32","37","45","48","51","54"))
         } else {
             # Uploading observed data
             req(input$upload_1)
@@ -156,7 +158,9 @@ server <- function(input, output, session){
     data_2 <- reactive({
         if(input$choice == "Example") {
             # example forecast data
-            df <- read.csv(system.file("extdata/forecast", "2022-10-31-SigSci-TSENS.csv", package = "rplanes"))
+            df <- read.csv(system.file("extdata/forecast", "2022-10-31-SigSci-TSENS.csv", package = "rplanes"))  %>%
+              ## truncate the example data for performance
+              dplyr::filter(location %in% c("US","02","06","09","12","15","22","25","28","32","37","45","48","51","54"))
         } else {
             # Uploading forecast data
             req(input$upload_2)
@@ -222,6 +226,8 @@ server <- function(input, output, session){
     prepped_signal <- reactive({
         if (input$choice == "Example"){
             prepped <- read_forecast(system.file("extdata/forecast", "2022-10-31-SigSci-TSENS.csv", package = "rplanes"), pi_width = as.numeric(input$width)) %>%
+              ## truncate the example data for performance
+              dplyr::filter(location %in% c("US","02","06","09","12","15","22","25","28","32","37","45","48","51","54")) %>%
                 to_signal(., outcome = "flu.admits", type = "forecast", horizon = 4, resolution = "weekly")
         } else if (input$status == "Forecast"){
             prepped <- read_forecast(input$upload_2$datapath, pi_width = as.numeric(input$width), format = input$forecast_format) %>%

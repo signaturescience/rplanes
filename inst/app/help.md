@@ -17,7 +17,7 @@ The `rplanes` Explorer is written as a Shiny web application to translate the R 
 <a name="example"></a>
 ## Example Data
 
-To demonstrate usage, the app features an example data set. Users can select the "Example" option to load pre-populated forecast data for plausibility analysis. This data set contains 4 week-ahead forecasts for incident flu hospitalizations in the United States (all 50 states and national resolution). The forecasts begin with the week ending 2022-11-05 and extend through the week of 2022-11-26. The baseline data used to generate the seed is loaded from [HHS Protect flu hospitalizations](https://healthdata.gov/Hospital/COVID-19-Reported-Patient-Impact-and-Hospital-Capa/g62h-syeh) that have been aggregated from daily to weekly reports at the state and national level. All of the data preparation is done internally. Users simply click "Analyze" to explore the kinds of outputs that `rplanes` generates.
+To demonstrate usage, the app features an example data set. Users can select the "Example" option to load pre-populated forecast data for plausibility analysis. This data set contains 4 week-ahead forecasts for incident flu hospitalizations in select United States locations. The forecasts begin with the week ending 2022-11-05 and extend through the week of 2022-11-26. The baseline data used to generate the seed is loaded from [HHS Protect flu hospitalizations](https://healthdata.gov/Hospital/COVID-19-Reported-Patient-Impact-and-Hospital-Capa/g62h-syeh) that have been aggregated from daily to weekly reports at the state and national level. All of the data preparation is done internally. Users simply click "Analyze" to explore the kinds of outputs that `rplanes` generates.
 
 <a name="analysis-steps"></a>
 ## Analysis Steps
