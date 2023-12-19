@@ -11,7 +11,7 @@
 <!-- badges: end -->
 
 > **DEVELOPMENT STATUS**: The `rplanes` package is being actively
-> developed. As of v0.0.1 the package is under alpha release. Users
+> developed. As of v0.0.2 the package is under alpha release. Users
 > should be aware that there may be significant changes to the API in
 > this phase.
 

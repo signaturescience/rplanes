@@ -21,7 +21,7 @@ knitr::opts_chunk$set(
 [![R-CMD-check](https://github.com/signaturescience/rplanes/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/signaturescience/rplanes/actions/workflows/R-CMD-check.yaml)
 <!-- badges: end -->
 
-> **DEVELOPMENT STATUS**: The `rplanes` package is being actively developed. As of v0.0.1 the package is under alpha release. Users should be aware that there may be significant changes to the API in this phase.
+> **DEVELOPMENT STATUS**: The `rplanes` package is being actively developed. As of v0.0.2 the package is under alpha release. Users should be aware that there may be significant changes to the API in this phase.
 
 ## Introduction
 
