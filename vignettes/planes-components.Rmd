@@ -877,7 +877,7 @@ prepped_forecast <-
     date = seq(as.Date("2022-06-11"), as.Date("2022-07-02"), by = 7),
     horizon = 1:4,
     lower = point_est - 10,
-    ## make an normal, familiar shape in hospitalizations to not trigger shape component
+    ## make a familiar shape in hospitalizations to not trigger shape component
     point = point_est,
     upper = point_est + 10,
   ) %>%
@@ -917,7 +917,7 @@ shape_dat %>%
   geom_ribbon(aes(ymin = lower, ymax = upper, fill = type), alpha = 0.2) +
   xlab("Date") +
   ylab("Flu hospitalizations") +
-  ggtitle("Shape component\n Not Flagged")
+  ggtitle("Shape component\nNot Flagged")
 ```
 
 
@@ -925,7 +925,7 @@ shape_dat %>%
 
 ## Zero - `plane_zero()`
 
-This function checks for the presence of any value(s) equal to zero in the evaluated signal. If there are any zeros found, then the function will internally assess the seed to find whether or not the input data had zeros anywhere else in the time series. If so, the function will consider the evaluated zero plausible and no flags will be raised (i.e., indicator returned as FALSE). If not, the function will consider the evaluated zero implausible and a flag will be raised (i.e., indicator returned as TRUE). This function can be used on either forecast or observed signals.
+This function checks for the presence of any value(s) equal to zero in the evaluated signal. If there are any zeros found, then the function will look in the seed to see if there are zeros anywhere else in the time series. If so, the function will consider the evaluated zero plausible and no flags will be raised (i.e., indicator returned as `FALSE`). If not, the function will consider the evaluated zero implausible and a flag will be raised (i.e., indicator returned as `TRUE`). This function can be used on either forecast or observed signals.
 
 
 ### Flagged as implausible
@@ -966,9 +966,9 @@ We would then expect an implausibility flag to be raised for this location:
 ```{r}
 plane_zero(location = "01", input = prepped_forecast, seed = prepped_seed)
 ```
-The indicator is `TRUE`, meaning that the forecast signal is implausible, because there are zeros in the forecast signal but not in the observed seed.
+The indicator is `TRUE`, meaning that the forecast signal is implausible because there are zeros in the forecast signal but not in the observed seed.
 
-We can visualize this below. The signal in red (a forecast in this example) has a zero around July 1st (red diamond), but there were no zeros found in the seed data in blue.
+We can visualize this below. The signal in red (a forecast in this example) has a zero in early July, but there were no zeros found in the seed data in blue.
 
 ```{r}
 zero_dat <- 
@@ -1034,7 +1034,7 @@ plane_zero(location = "02", input = prepped_forecast, seed = prepped_seed)
 ```
 The indicator is `FALSE`, meaning that the forecast signal is plausible, because there are zeros in the forecast signal and in the observed seed.
 
-We can visualize this below. The signal in red (a forecast in this example) has a zero around early-mid June (diamond), but there were also zeros (diamonds) found in the seed data in blue.
+We can visualize this below. The signal in red (a forecast in this example) has a zero around early-mid June, but there were also zeros found in the seed data in blue.
 
 ```{r}
 zero_dat <- 
