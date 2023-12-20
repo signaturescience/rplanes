@@ -14,8 +14,8 @@
 <link rel="apple-touch-icon" type="image/png" sizes="76x76" href="../apple-touch-icon-76x76.png">
 <link rel="apple-touch-icon" type="image/png" sizes="60x60" href="../apple-touch-icon-60x60.png">
 <script src="../deps/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-<link href="../deps/bootstrap-5.2.2/bootstrap.min.css" rel="stylesheet">
-<script src="../deps/bootstrap-5.2.2/bootstrap.bundle.min.js"></script><!-- Font Awesome icons --><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.12.1/css/all.min.css" integrity="sha256-mmgLkCYLUQbXn0B1SRqzHar6dCnv9oZFPEC1g1cwlkk=" crossorigin="anonymous">
+<link href="../deps/bootstrap-5.3.1/bootstrap.min.css" rel="stylesheet">
+<script src="../deps/bootstrap-5.3.1/bootstrap.bundle.min.js"></script><!-- Font Awesome icons --><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.12.1/css/all.min.css" integrity="sha256-mmgLkCYLUQbXn0B1SRqzHar6dCnv9oZFPEC1g1cwlkk=" crossorigin="anonymous">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.12.1/css/v4-shims.min.css" integrity="sha256-wZjR52fzng1pJHwx4aV2AO3yyTOXrcDW7jBpJtTwVxw=" crossorigin="anonymous">
 <!-- bootstrap-toc --><script src="https://cdn.jsdelivr.net/gh/afeld/bootstrap-toc@v1.0.1/dist/bootstrap-toc.min.js" integrity="sha256-4veVQbu7//Lk5TSmc7YV48MxtMy98e26cf5MrgZYnwo=" crossorigin="anonymous"></script><!-- headroom.js --><script src="https://cdnjs.cloudflare.com/ajax/libs/headroom/0.11.0/headroom.min.js" integrity="sha256-AsUX4SJE1+yuDu5+mAVzJbuYNPHj/WroHuZ8Ir/CkE0=" crossorigin="anonymous"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/headroom/0.11.0/jQuery.headroom.min.js" integrity="sha256-ZX/yNShbjqsohH1k95liqY9Gd8uOiE1S4vZc+9KQ1K4=" crossorigin="anonymous"></script><!-- clipboard.js --><script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.6/clipboard.min.js" integrity="sha256-inc5kl9MA1hkeYUt+EC3BhlIgyp/2jDIyBLS6k3UxPI=" crossorigin="anonymous"></script><!-- search --><script src="https://cdnjs.cloudflare.com/ajax/libs/fuse.js/6.4.6/fuse.js" integrity="sha512-zv6Ywkjyktsohkbp9bb45V6tEMoWhzFzXis+LrMehmJZZSys19Yxf1dopHx7WzIKxr5tK2dVcYmaCk2uqdjF4A==" crossorigin="anonymous"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/autocomplete.js/0.38.0/autocomplete.jquery.min.js" integrity="sha512-GU9ayf+66Xx2TmpxqJpliWbT5PiGYxpaG8rfnBEk1LL8l1KGkRShhngwdXK1UgqhAzWpZHSiYPc09/NwDQIGyg==" crossorigin="anonymous"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/mark.js/8.11.1/mark.min.js" integrity="sha512-5CYOlHXGh6QpOFA/TeTylKLWfB3ftPsde7AnmhuitiTX4K5SqCLBeKro6sPS8ilsz1Q4NRx3v8Ko2IBiszzdww==" crossorigin="anonymous"></script><!-- pkgdown --><script src="../pkgdown.js"></script><meta property="og:title" content="Basic Usage">
 <meta property="og:description" content="rplanes">
@@ -33,7 +33,7 @@
     
     <a class="navbar-brand me-2" href="../index.html">rplanes</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.0.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.0.2</small>
 
     
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -49,6 +49,8 @@
   <a href="#" class="nav-link dropdown-toggle" data-bs-toggle="dropdown" role="button" aria-expanded="false" aria-haspopup="true" id="dropdown-articles">Articles</a>
   <div class="dropdown-menu" aria-labelledby="dropdown-articles">
     <a class="dropdown-item" href="../articles/basic-usage.html">Basic Usage</a>
+    <a class="dropdown-item" href="../articles/planes-components.html">PLANES Components</a>
+    <a class="dropdown-item" href="../articles/rplanes-explorer.html">rplanes Explorer</a>
   </div>
 </li>
 <li class="nav-item">
@@ -103,8 +105,7 @@ location</li>
 <p>The package workflow is demonstrated in detail below (see
 <strong>Figure 1</strong>).</p>
 <div class="figure">
-<img src="workflow.png" id="id" class="class" style="width:90.0%;height:100.0%" alt=""><p class="caption"><strong>Figure 1</strong>: Workflow of the rplanes
-package</p>
+<img src="workflow.png" id="id" class="class" style="width:90.0%;height:100.0%" alt=""><p class="caption">Figure 1: Workflow of the rplanes package</p>
 </div>
 <p><strong>Figure 1</strong> provides a detailed description of the
 workflow used in <code>rplanes</code>. The <code>rplanes</code>
@@ -134,8 +135,7 @@ apply.</p>
 <p>Plausibility analysis can support operational forecasting and
 outbreak analytic activities. Here we demonstrate how to use
 <code>rplanes</code> to score an example forecasted data set.</p>
-<p>Several packages must be loaded to prior to conducting the
-analysis:</p>
+<p>Several packages must be loaded prior to conducting the analysis:</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://signaturescience.github.io/rplanes/">rplanes</a></span><span class="op">)</span></span>
 <span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://dplyr.tidyverse.org" class="external-link">dplyr</a></span><span class="op">)</span></span>
@@ -445,11 +445,15 @@ same seed (i.e., we would not have to recreate the seed for each
 forecast).</p>
 <p>The output of <code><a href="../reference/plane_score.html">plane_score()</a></code> is a list of scoring results
 for all locations. We can convert the <code>scores_summary</code>
-element from that list to a <code>tibble</code>. The <code>res</code>
+element from that list to a <code>tibble</code>. By default, the score
+uses equal weights for all components. However, users can modify this
+behavior using the “weights” argument as needed. The <code>res</code>
 object below shows the location, the number of flags raised (“n_flags”),
-the number of components tested (“n_components”), the “score” (which is
-“n_flags” divided by “n_components”), the names of components tested,
-and the names of the components that were flagged (if any):</p>
+the weighted flags (“n_flags_weighted”), the number of components tested
+(“n_components”), the overall sum of weights for components tested
+(“weights_denominator”), and the “score” (which is “n_flags_weighted”
+divided by “weights_denominator”), the names of components tested, and
+the names of the components that were flagged (if any):</p>
 <div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">res</span> <span class="op">&lt;-</span></span>
 <span>  <span class="va">scores</span><span class="op">$</span><span class="va">scores_summary</span> <span class="op"><a href="../reference/pipe.html">%&gt;%</a></span></span>
@@ -458,17 +462,21 @@ and the names of the components that were flagged (if any):</p>
 <span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">res</span><span class="op">)</span></span></code></pre></div>
 <table class="table">
 <colgroup>
-<col width="10%">
+<col width="6%">
+<col width="5%">
 <col width="9%">
-<col width="15%">
+<col width="11%">
+<col width="14%">
 <col width="7%">
-<col width="35%">
-<col width="21%">
+<col width="28%">
+<col width="16%">
 </colgroup>
 <thead><tr class="header">
 <th align="left">location</th>
 <th align="right">n_flags</th>
 <th align="right">n_components</th>
+<th align="right">n_flags_weighted</th>
+<th align="right">weights_denominator</th>
 <th align="right">score</th>
 <th align="left">components</th>
 <th align="left">flagged</th>
@@ -477,60 +485,72 @@ and the names of the components that were flagged (if any):</p>
 <tr class="odd">
 <td align="left">02</td>
 <td align="right">1</td>
-<td align="right">5</td>
-<td align="right">0.2</td>
-<td align="left">cover;diff;repeat;taper;trend</td>
+<td align="right">7</td>
+<td align="right">1</td>
+<td align="right">7</td>
+<td align="right">0.1428571</td>
+<td align="left">cover;diff;repeat;shape;taper;trend;zero</td>
 <td align="left">cover</td>
 </tr>
 <tr class="even">
 <td align="left">04</td>
 <td align="right">0</td>
-<td align="right">5</td>
-<td align="right">0.0</td>
-<td align="left">cover;diff;repeat;taper;trend</td>
+<td align="right">7</td>
+<td align="right">0</td>
+<td align="right">7</td>
+<td align="right">0.0000000</td>
+<td align="left">cover;diff;repeat;shape;taper;trend;zero</td>
 <td align="left">NA</td>
 </tr>
 <tr class="odd">
 <td align="left">05</td>
 <td align="right">0</td>
-<td align="right">5</td>
-<td align="right">0.0</td>
-<td align="left">cover;diff;repeat;taper;trend</td>
+<td align="right">7</td>
+<td align="right">0</td>
+<td align="right">7</td>
+<td align="right">0.0000000</td>
+<td align="left">cover;diff;repeat;shape;taper;trend;zero</td>
 <td align="left">NA</td>
 </tr>
 <tr class="even">
 <td align="left">06</td>
 <td align="right">0</td>
-<td align="right">5</td>
-<td align="right">0.0</td>
-<td align="left">cover;diff;repeat;taper;trend</td>
+<td align="right">7</td>
+<td align="right">0</td>
+<td align="right">7</td>
+<td align="right">0.0000000</td>
+<td align="left">cover;diff;repeat;shape;taper;trend;zero</td>
 <td align="left">NA</td>
 </tr>
 <tr class="odd">
 <td align="left">08</td>
 <td align="right">0</td>
-<td align="right">5</td>
-<td align="right">0.0</td>
-<td align="left">cover;diff;repeat;taper;trend</td>
+<td align="right">7</td>
+<td align="right">0</td>
+<td align="right">7</td>
+<td align="right">0.0000000</td>
+<td align="left">cover;diff;repeat;shape;taper;trend;zero</td>
 <td align="left">NA</td>
 </tr>
 <tr class="even">
 <td align="left">09</td>
-<td align="right">3</td>
-<td align="right">5</td>
-<td align="right">0.6</td>
-<td align="left">cover;diff;repeat;taper;trend</td>
-<td align="left">cover;diff;repeat</td>
+<td align="right">4</td>
+<td align="right">7</td>
+<td align="right">4</td>
+<td align="right">7</td>
+<td align="right">0.5714286</td>
+<td align="left">cover;diff;repeat;shape;taper;trend;zero</td>
+<td align="left">cover;diff;repeat;shape</td>
 </tr>
 </tbody>
 </table>
 <div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">res</span> <span class="op"><a href="../reference/pipe.html">%&gt;%</a></span></span>
-<span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/count.html" class="external-link">count</a></span><span class="op">(</span><span class="va">score</span><span class="op">)</span> <span class="op"><a href="../reference/pipe.html">%&gt;%</a></span></span>
-<span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/mutate.html" class="external-link">mutate</a></span><span class="op">(</span>score <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/character.html" class="external-link">as.character</a></span><span class="op">(</span><span class="va">score</span><span class="op">)</span><span class="op">)</span> <span class="op"><a href="../reference/pipe.html">%&gt;%</a></span></span>
-<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggplot.html" class="external-link">ggplot</a></span><span class="op">(</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span><span class="va">score</span>,<span class="va">n</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span>
+<span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/count.html" class="external-link">count</a></span><span class="op">(</span><span class="va">n_flags</span><span class="op">)</span> <span class="op"><a href="../reference/pipe.html">%&gt;%</a></span></span>
+<span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/mutate.html" class="external-link">mutate</a></span><span class="op">(</span>n_flags <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/character.html" class="external-link">as.character</a></span><span class="op">(</span><span class="va">n_flags</span><span class="op">)</span><span class="op">)</span> <span class="op"><a href="../reference/pipe.html">%&gt;%</a></span></span>
+<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggplot.html" class="external-link">ggplot</a></span><span class="op">(</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span><span class="va">n_flags</span>,<span class="va">n</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_bar.html" class="external-link">geom_col</a></span><span class="op">(</span><span class="op">)</span> <span class="op">+</span></span>
-<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html" class="external-link">labs</a></span><span class="op">(</span>x <span class="op">=</span> <span class="st">"Score"</span>, y <span class="op">=</span> <span class="st">"Count"</span><span class="op">)</span></span></code></pre></div>
+<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html" class="external-link">labs</a></span><span class="op">(</span>x <span class="op">=</span> <span class="st">"Number of flags raised"</span>, y <span class="op">=</span> <span class="st">"Count"</span><span class="op">)</span></span></code></pre></div>
 <p><img src="basic-usage_files/figure-html/unnamed-chunk-15-1.png" width="672" style="display: block; margin: auto;"></p>
 <p>For the evaluated forecast, most of the locations had one or fewer of
 the flags raised. However, several locations had two or three of the
@@ -641,7 +661,11 @@ characteristics up through the most recent reported date (i.e.,
 convenience in the <code><a href="../reference/plane_score.html">plane_score()</a></code> function. Since we are
 assessing an observed signal in this case, we can explicitly tell the
 scoring to use certain components. It is important to emphasize that not
-all components will work for both forecasts and observed signals:</p>
+all components will work for both forecasts and observed signals.
+Currently, <code><a href="../reference/plane_cover.html">plane_cover()</a></code>, <code><a href="../reference/plane_taper.html">plane_taper()</a></code>,
+<code><a href="../reference/plane_trend.html">plane_trend()</a></code>, and <code><a href="../reference/plane_shape.html">plane_shape()</a></code> (all of which
+are run inside <code><a href="../reference/plane_score.html">plane_score()</a></code>) work only for forecasts and
+not for observed data:</p>
 <div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">scores</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/plane_score.html">plane_score</a></span><span class="op">(</span><span class="va">observed_signal</span>, seed <span class="op">=</span> <span class="va">prepped_seed</span>, components <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"repeat"</span>,<span class="st">"diff"</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
 <div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
@@ -651,10 +675,22 @@ all components will work for both forecasts and observed signals:</p>
 <span>  </span>
 <span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">res</span><span class="op">)</span></span></code></pre></div>
 <table class="table">
+<colgroup>
+<col width="9%">
+<col width="8%">
+<col width="13%">
+<col width="18%">
+<col width="21%">
+<col width="6%">
+<col width="12%">
+<col width="8%">
+</colgroup>
 <thead><tr class="header">
 <th align="left">location</th>
 <th align="right">n_flags</th>
 <th align="right">n_components</th>
+<th align="right">n_flags_weighted</th>
+<th align="right">weights_denominator</th>
 <th align="right">score</th>
 <th align="left">components</th>
 <th align="left">flagged</th>
@@ -662,6 +698,8 @@ all components will work for both forecasts and observed signals:</p>
 <tbody>
 <tr class="odd">
 <td align="left">01</td>
+<td align="right">0</td>
+<td align="right">2</td>
 <td align="right">0</td>
 <td align="right">2</td>
 <td align="right">0</td>
@@ -673,11 +711,15 @@ all components will work for both forecasts and observed signals:</p>
 <td align="right">0</td>
 <td align="right">2</td>
 <td align="right">0</td>
+<td align="right">2</td>
+<td align="right">0</td>
 <td align="left">diff;repeat</td>
 <td align="left">NA</td>
 </tr>
 <tr class="odd">
 <td align="left">04</td>
+<td align="right">0</td>
+<td align="right">2</td>
 <td align="right">0</td>
 <td align="right">2</td>
 <td align="right">0</td>
@@ -689,11 +731,15 @@ all components will work for both forecasts and observed signals:</p>
 <td align="right">0</td>
 <td align="right">2</td>
 <td align="right">0</td>
+<td align="right">2</td>
+<td align="right">0</td>
 <td align="left">diff;repeat</td>
 <td align="left">NA</td>
 </tr>
 <tr class="odd">
 <td align="left">06</td>
+<td align="right">0</td>
+<td align="right">2</td>
 <td align="right">0</td>
 <td align="right">2</td>
 <td align="right">0</td>
@@ -705,6 +751,8 @@ all components will work for both forecasts and observed signals:</p>
 <td align="right">0</td>
 <td align="right">2</td>
 <td align="right">0</td>
+<td align="right">2</td>
+<td align="right">0</td>
 <td align="left">diff;repeat</td>
 <td align="left">NA</td>
 </tr>
@@ -712,11 +760,11 @@ all components will work for both forecasts and observed signals:</p>
 </table>
 <div class="sourceCode" id="cb16"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">res</span> <span class="op"><a href="../reference/pipe.html">%&gt;%</a></span></span>
-<span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/count.html" class="external-link">count</a></span><span class="op">(</span><span class="va">score</span><span class="op">)</span> <span class="op"><a href="../reference/pipe.html">%&gt;%</a></span></span>
-<span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/mutate.html" class="external-link">mutate</a></span><span class="op">(</span>score <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/character.html" class="external-link">as.character</a></span><span class="op">(</span><span class="va">score</span><span class="op">)</span><span class="op">)</span> <span class="op"><a href="../reference/pipe.html">%&gt;%</a></span></span>
-<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggplot.html" class="external-link">ggplot</a></span><span class="op">(</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span><span class="va">score</span>,<span class="va">n</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span>
+<span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/count.html" class="external-link">count</a></span><span class="op">(</span><span class="va">n_flags</span><span class="op">)</span> <span class="op"><a href="../reference/pipe.html">%&gt;%</a></span></span>
+<span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/mutate.html" class="external-link">mutate</a></span><span class="op">(</span>n_flags <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/character.html" class="external-link">as.character</a></span><span class="op">(</span><span class="va">n_flags</span><span class="op">)</span><span class="op">)</span> <span class="op"><a href="../reference/pipe.html">%&gt;%</a></span></span>
+<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggplot.html" class="external-link">ggplot</a></span><span class="op">(</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span><span class="va">n_flags</span>,<span class="va">n</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_bar.html" class="external-link">geom_col</a></span><span class="op">(</span><span class="op">)</span> <span class="op">+</span></span>
-<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html" class="external-link">labs</a></span><span class="op">(</span>x <span class="op">=</span> <span class="st">"Score"</span>, y <span class="op">=</span> <span class="st">"Count"</span><span class="op">)</span></span></code></pre></div>
+<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html" class="external-link">labs</a></span><span class="op">(</span>x <span class="op">=</span> <span class="st">"Number of flags raised"</span>, y <span class="op">=</span> <span class="st">"Count"</span><span class="op">)</span></span></code></pre></div>
 <p><img src="basic-usage_files/figure-html/unnamed-chunk-23-1.png" width="672" style="display: block; margin: auto;"></p>
 <p>These results indicate that there is just one location for which any
 flag has been raised. Again, in this case only two components are used
