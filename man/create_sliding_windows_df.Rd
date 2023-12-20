@@ -9,11 +9,11 @@ create_sliding_windows_df(vector, window_size)
 \arguments{
 \item{vector}{A numeric or integer vector that is the time series to be used to create sliding windows}
 
-\item{window_size}{The size of the windowed time series desired}
+\item{window_size}{An integer specifying the size (i.e., number of elements) of the windowed time series desired}
 }
 \value{
 A \code{data.frame} where each row is a subset (a sliding window) of a time series.
 }
 \description{
-This helper function is used within \code{plane_shape()} to generate sliding windows from a vector and return a data frame where each row is a subset (a sliding window) of a time series. The length of the time series (and therefore number of columns) is equal to window_size. The number of windows is equal to \code{length(vector) - window_size + 1}. If you have a time series of length 38 and a window size of length 4, then there will be 35 windowed time series (rows), with 4 time stamps each (columns).
+This unexported helper function is used within \code{plane_shape()} to generate sliding windows from a vector and return a data frame where each row is a subset (a sliding window) of a time series. The length of the each windowed time series (and therefore number of columns) is equal to "window_size". The number of windows is equal to \code{(length(vector) - window_size) + 1}. For example, given a time series of length 38 and a window size of length 4, then there will be 35 windowed time series (rows), with 4 time stamps each (columns).
 }

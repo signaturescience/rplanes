@@ -384,9 +384,9 @@ plane_repeat <- function(location, input, seed, tolerance = NULL, prepend = NULL
 #'
 #' @param input Input signal data to be scored; object must be one of [forecast][to_signal()] or [observed][to_signal()]
 #' @param seed Prepared [seed][plane_seed()]
-#' @param components Character vector specifying components. Must be either `"all"` or any combination of `"cover"`, `"diff"`, `"taper"`, `"trend"`, `"repeat"`, `"shape"`, and `"zero"`. Default is `"all"` and will use all available components for the given signal
-#' @param args Named list of arguments for component functions. List elements must be named to match the given component and arguments passed as a nested list (e.g., `args = list(trend = list(sig_lvl = 0.05))`). Default is `NULL` and defaults for all components will be used
-#' @param weights Named vector with weights to be applied; default is `NULL` and all components will be equally weighted; if not `NULL` then the length of the vector must equal the number of components to, with component set given a numeric weight (see Examples)
+#' @param components Character vector specifying component; must be either `"all"` or any combination of `"cover"`, `"diff"`, `"taper"`, `"trend"`, `"repeat"`, `"shape"`, and `"zero"`; default is `"all"` and will use all available components for the given signal
+#' @param args Named list of arguments for component functions. List elements must be named to match the given component and arguments passed as a nested list (e.g., `args = list("trend" = list("sig_lvl" = 0.05))`). Default is `NULL` and defaults for all components will be used
+#' @param weights Named vector with weights to be applied; default is `NULL` and all components will be equally weighted; if not `NULL` then the length of the vector must equal the number of components, with each component given a numeric weight (see Examples)
 #'
 #'
 #'
@@ -544,7 +544,7 @@ plane_score <- function(input, seed, components = "all", args = NULL, weights = 
 
 }
 
-#' Trend Component
+#' Trend component
 #' @description
 #'
 #' This function identifies any change points in the forecast data or in the final observed data point. Change points are identified by any significant change in magnitude or direction of the slope of the time series.
@@ -552,7 +552,7 @@ plane_score <- function(input, seed, components = "all", args = NULL, weights = 
 #' @param location Character vector with location code; the location must appear in input and seed
 #' @param input Input signal data to be scored; object must be [forecast][to_signal()]
 #' @param seed Prepared [seed][plane_seed()]
-#' @param sig_lvl The significance level at which to identify change points (between zero and one); default is 0.1
+#' @param sig_lvl The significance level at which to identify change points (between zero and one); default is `0.1`
 #'
 #' @return
 #' A `list` with the following values:
@@ -599,7 +599,7 @@ plane_score <- function(input, seed, components = "all", args = NULL, weights = 
 #' @export
 #'
 #' @examples
-#'  ## read in example observed data and prep observed signal:
+#' ## read in example observed data and prep observed signal
 #' hosp <- read.csv(system.file("extdata/observed/hdgov_hosp_weekly.csv", package = "rplanes"))
 #' tmp_hosp <-
 #'   hosp %>%
@@ -609,7 +609,7 @@ plane_score <- function(input, seed, components = "all", args = NULL, weights = 
 #' prepped_observed <- to_signal(tmp_hosp, outcome = "flu.admits",
 #'                              type = "observed", resolution = "weeks")
 #'
-#' ## read in example forecast and prep forecast signal:
+#' ## read in example forecast and prep forecast signal
 #' prepped_forecast <- read_forecast(system.file("extdata/forecast/2022-10-31-SigSci-TSENS.csv",
 #'                                                package = "rplanes")) %>%
 #'    to_signal(., outcome = "flu.admits", type = "forecast", horizon = 4)
@@ -617,11 +617,11 @@ plane_score <- function(input, seed, components = "all", args = NULL, weights = 
 #' ## prepare seed with cut date
 #' prepped_seed <- plane_seed(prepped_observed, cut_date = "2022-10-29")
 #'
-#' ## Run plane trend component:
+#' ## run plane component
 #' plane_trend(location = "05", input = prepped_forecast, seed = prepped_seed, sig_lvl = .2)
-#' ## Change location:
+#' ## change location
 #' plane_trend(location = "09", input = prepped_forecast, seed = prepped_seed, sig_lvl = .2)
-#' ## Change sig_lvl:
+#' ## change sig_lvl
 #' plane_trend(location = "06", input = prepped_forecast, seed = prepped_seed, sig_lvl = .05)
 #'
 plane_trend <- function(location, input, seed, sig_lvl = 0.1) {
@@ -718,11 +718,11 @@ plane_trend <- function(location, input, seed, sig_lvl = 0.1) {
 }
 
 
-#' Shape Component
+#' Shape component
 #'
 #' @description
 #'
-#' This function evaluates the shape of the trajectory of the forecast signal and compares that shape to existing shapes in observed data. If the shape is identified as novel, a flag is raised, and the signal is considered implausible. See the Details section for further information.
+#' This function identifies the shape of the trajectory for a forecasted signal to compare against existing shapes in seed data. If the shape is identified as novel, a flag is raised, and the signal is considered implausible. See the Details section for further information.
 #'
 #' @param location Character vector with location code; the location must appear in input and seed
 #' @param input Input signal data to be scored; object must be one of [forecast][to_signal()]
@@ -732,12 +732,12 @@ plane_trend <- function(location, input, seed, sig_lvl = 0.1) {
 #'
 #' A `list` with the following values:
 #'
-#' - **indicator**: Logical as to whether or not the the shape of the evaluated signal is novel (`TRUE` if shape is novel, `FALSE` if a familiar shape exists in the seed).
+#' - **indicator**: Logical as to whether or not the the shape of the evaluated signal is novel (`TRUE` if shape is novel, `FALSE` if a familiar shape exists in the seed)
 #'
 #'
 #' @details
 #'
-#' This function uses a Dynamic Time Warping (DTW) algorithm to identify shapes within the data used to generate the seed and then compares the shape of the forecast input signal to the observed shapes. This is done in three broad steps:
+#' This function uses a Dynamic Time Warping (DTW) algorithm to identify shapes within the seed data and then compares the shape of the forecast input signal to the observed shapes. This is done in three broad steps:
 #'
 #' 1. The prepared [seed][plane_seed()] data is divided into a set of sliding windows with a step size of one, each representing a section of the overall time series. The length of these windows is determined by the horizon length of the input data signal (e.g., 2 weeks). If your seed data was a vector, `c(1, 2, 3, 4, 5)`, and your horizon length was 2, then the sliding windows for your observed seed data would be: `c(1, 2)`, `c(2, 3)`, `c(3, 4)`, and `c(4, 5)`. Each sliding window is a subset of the total trajectory shape of the observed data.
 #'
@@ -746,7 +746,7 @@ plane_trend <- function(location, input, seed, sig_lvl = 0.1) {
 #'     - We find the minimum distances for each windowed time series to use as a baseline for "observed distances" between chunks of the larger observed time series.
 #'     - We then calculate the maximum of those minimum distance across the observed time series. This will be our **threshold**. If the minimum of the forecast:observed distance matrix is greater than the greatest minimum observed:observed distance, then we can infer that the forecast is unfamiliar (i.e., a novel shape).
 #'
-#' 3. We calculate the shape-based DTW distances between the forecast signal (including the point estimate, lower, and upper bounds) and every observed sliding window. If the distance between the forecast and **any** observed sliding window is less than or equal to our threshold defined above, then this shape is not novel and no flag is raised (**indicator** = `FALSE`).
+#' 3. We calculate the shape-based DTW distances between the forecast signal (including the point estimate, lower, and upper bounds) and every observed sliding window. If the distance between the forecast and *any* observed sliding window is less than or equal to our threshold defined above, then this shape is not novel and no flag is raised (**indicator** = `FALSE`).
 #'
 #'
 #' @references
@@ -758,8 +758,7 @@ plane_trend <- function(location, input, seed, sig_lvl = 0.1) {
 #' @export
 #'
 #' @examples
-#' # We'll use the HHS Protect data that is internal to rplanes:
-#'
+#' ## read in example observed data and prep observed signal
 #' hosp <- read.csv(system.file("extdata/observed/hdgov_hosp_weekly.csv", package = "rplanes"))
 #'
 #' tmp_hosp <-
@@ -771,17 +770,19 @@ plane_trend <- function(location, input, seed, sig_lvl = 0.1) {
 #'                                outcome = "flu.admits",
 #'                                type = "observed",
 #'                                resolution = "weeks")
-#'
+#' ## read in example forecast and prep forecast signal
 #' prepped_forecast <- read_forecast(system.file("extdata/forecast/2022-10-31-SigSci-TSENS.csv",
 #'                                                 package = "rplanes")) %>%
 #'    to_signal(., outcome = "flu.admits", type = "forecast", horizon = 4)
 #'
+#' ## prepare seed with cut date
 #' prepped_seed <- plane_seed(prepped_observed, cut_date = "2022-10-29")
 #'
-#' # First, an example where the shape is novel and a flag is raised:
+#' ## run plane component
+#' ## this location is an example of where we expect a flag to be raised
 #' plane_shape(location = "13", input = prepped_forecast, seed = prepped_seed)
 #'
-#' # Next, an example where a flag is not raised:
+#' ## this location is an example of where we do not expect a flag to be raised
 #' plane_shape(location = "06", input = prepped_forecast, seed = prepped_seed)
 #'
 #'
@@ -883,11 +884,11 @@ plane_shape <- function(location, input, seed) {
 
 }
 
-#' Zero Component
+#' Zero component
 #'
 #' @description
 #'
-#' This function checks for the presence of any value(s) equal to zero in the evaluated signal. If there are any zeros found, then the function will internally assess the [seed][plane_seed()] to find whether or not the input data had zeros anywhere else in the time series. If so, the function will consider the evaluated zero plausible and no flag will be raised (i.e., indicator returned as `FALSE`). If not, the function will consider the evaluated zero implausible and a flag will be raised (i.e., indicator returned as `TRUE`).
+#' This function checks for the presence of any value(s) equal to zero in the evaluated signal. If there are any zeros found, then the function assesses whether or not any zeros have been observed in the [seed][plane_seed()] for the given location. If so, the function will consider the evaluated zero plausible and no flag will be raised (i.e., indicator returned as `FALSE`). If not, the function will consider the evaluated zero implausible and a flag will be raised (i.e., indicator returned as `TRUE`).
 #'
 #' @param location Character vector with location code; the location must appear in input and seed
 #' @param input Input signal data to be scored; object must be one of [forecast][to_signal()] or [observed][to_signal()]
@@ -897,7 +898,7 @@ plane_shape <- function(location, input, seed) {
 #'
 #' A `list` with the following values:
 #'
-#' - **indicator**: Logical as to whether or not there are zeros in evaluated signal but not in seed data.
+#' - **indicator**: Logical as to whether or not there are zeros in evaluated signal but not in seed data
 #'
 #' @export
 #'

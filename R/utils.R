@@ -45,7 +45,7 @@ is_forecast <- function(x) {
 #'
 #' @description
 #'
-#' This function reads a probabilistic ("quantile") forecast csv file and prepares it for the [to_signal] function and downstream plausibility analysis. The quantile forecast file can be either a "legacy" or "hubverse" format (see Details for more information). The object returned is a tibble with summarized forecast data (i.e., prediction interval) for each location and horizon in the original file.
+#' This function reads a probabilistic ("quantile") forecast csv file and prepares it for the [to_signal] function and downstream plausibility analysis. The quantile forecast file can be either a "legacy" or "hubverse" format (see Details for more information). The object returned is a `tibble` with summarized forecast data (i.e., prediction interval) for each location and horizon in the original file.
 #'
 #'
 #' @param file Path to csv file containing quantile forecasts
@@ -57,9 +57,9 @@ is_forecast <- function(x) {
 #' - **location**: Geographic unit such as FIPS code
 #' - **date**: Date corresponding the forecast horizon
 #' - **horizon**: Forecast horizon
-#' - **lower**: Lower limit of the prediction interval for the forecast. If forecast contains quantile predictions.
+#' - **lower**: Lower limit of the prediction interval for the forecast
 #' - **point**: Point estimate for the forecast
-#' - **upper**: Upper limit of the prediction interval for the forecast. If forecast contains quantile predictions.
+#' - **upper**: Upper limit of the prediction interval for the forecast
 #'
 #' @export
 #'
@@ -67,8 +67,8 @@ is_forecast <- function(x) {
 #'
 #' The probabilistic forecast format has been used by multiple forecasting hubs. In general, this format includes one row per combination of quantile, location, target, and horizon. At each row the forecasted value is provided. The specific format, including columns required, has changed over time. This function accommodates the "legacy" as well as more recent "hubverse" formats. For more details on specific columns and see the links in the References.
 #'
-#' @references Hubverse: https://hubdocs.readthedocs.io/en/latest/user-guide/model-output.html
-#' @references Legacy: https://github.com/cdcepi/Flusight-forecast-data/tree/master/data-forecasts#forecast-file-format
+#' @references Hubverse: [https://hubdocs.readthedocs.io/en/latest/user-guide/model-output.html](https://hubdocs.readthedocs.io/en/latest/user-guide/model-output.html)
+#' @references Legacy: [https://github.com/cdcepi/Flusight-forecast-data/tree/master/data-forecasts#forecast-file-format](https://github.com/cdcepi/Flusight-forecast-data/tree/master/data-forecasts#forecast-file-format)
 #'
 #'
 #' @examples
@@ -356,11 +356,11 @@ q_boundary <- function(pi_width) {
 #'
 #' @description
 #'
-#' This helper function is used within `plane_shape()` to generate sliding windows from a vector and return a data frame where each row is a subset (a sliding window) of a time series. The length of the time series (and therefore number of columns) is equal to window_size. The number of windows is equal to `length(vector) - window_size + 1`. If you have a time series of length 38 and a window size of length 4, then there will be 35 windowed time series (rows), with 4 time stamps each (columns).
+#' This unexported helper function is used within `plane_shape()` to generate sliding windows from a vector and return a data frame where each row is a subset (a sliding window) of a time series. The length of the each windowed time series (and therefore number of columns) is equal to "window_size". The number of windows is equal to `(length(vector) - window_size) + 1`. For example, given a time series of length 38 and a window size of length 4, then there will be 35 windowed time series (rows), with 4 time stamps each (columns).
 #'
 #'
 #' @param vector A numeric or integer vector that is the time series to be used to create sliding windows
-#' @param window_size The size of the windowed time series desired
+#' @param window_size An integer specifying the size (i.e., number of elements) of the windowed time series desired
 #'
 #' @return
 #'

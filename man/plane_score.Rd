@@ -11,11 +11,11 @@ plane_score(input, seed, components = "all", args = NULL, weights = NULL)
 
 \item{seed}{Prepared \link[=plane_seed]{seed}}
 
-\item{components}{Character vector specifying components. Must be either \code{"all"} or any combination of \code{"cover"}, \code{"diff"}, \code{"taper"}, \code{"trend"}, \code{"repeat"}, \code{"shape"}, and \code{"zero"}. Default is \code{"all"} and will use all available components for the given signal}
+\item{components}{Character vector specifying component; must be either \code{"all"} or any combination of \code{"cover"}, \code{"diff"}, \code{"taper"}, \code{"trend"}, \code{"repeat"}, \code{"shape"}, and \code{"zero"}; default is \code{"all"} and will use all available components for the given signal}
 
-\item{args}{Named list of arguments for component functions. List elements must be named to match the given component and arguments passed as a nested list (e.g., \code{args = list(trend = list(sig_lvl = 0.05))}). Default is \code{NULL} and defaults for all components will be used}
+\item{args}{Named list of arguments for component functions. List elements must be named to match the given component and arguments passed as a nested list (e.g., \code{args = list("trend" = list("sig_lvl" = 0.05))}). Default is \code{NULL} and defaults for all components will be used}
 
-\item{weights}{Named vector with weights to be applied; default is \code{NULL} and all components will be equally weighted; if not \code{NULL} then the length of the vector must equal the number of components to, with component set given a numeric weight (see Examples)}
+\item{weights}{Named vector with weights to be applied; default is \code{NULL} and all components will be equally weighted; if not \code{NULL} then the length of the vector must equal the number of components, with each component given a numeric weight (see Examples)}
 }
 \value{
 A \code{list} with scoring results for all locations.

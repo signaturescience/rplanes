@@ -2,7 +2,7 @@
 % Please edit documentation in R/planes.R
 \name{plane_zero}
 \alias{plane_zero}
-\title{Zero Component}
+\title{Zero component}
 \usage{
 plane_zero(location, input, seed)
 }
@@ -16,11 +16,11 @@ plane_zero(location, input, seed)
 \value{
 A \code{list} with the following values:
 \itemize{
-\item \strong{indicator}: Logical as to whether or not there are zeros in evaluated signal but not in seed data.
+\item \strong{indicator}: Logical as to whether or not there are zeros in evaluated signal but not in seed data
 }
 }
 \description{
-This function checks for the presence of any value(s) equal to zero in the evaluated signal. If there are any zeros found, then the function will internally assess the \link[=plane_seed]{seed} to find whether or not the input data had zeros anywhere else in the time series. If so, the function will consider the evaluated zero plausible and no flag will be raised (i.e., indicator returned as \code{FALSE}). If not, the function will consider the evaluated zero implausible and a flag will be raised (i.e., indicator returned as \code{TRUE}).
+This function checks for the presence of any value(s) equal to zero in the evaluated signal. If there are any zeros found, then the function assesses whether or not any zeros have been observed in the \link[=plane_seed]{seed} for the given location. If so, the function will consider the evaluated zero plausible and no flag will be raised (i.e., indicator returned as \code{FALSE}). If not, the function will consider the evaluated zero implausible and a flag will be raised (i.e., indicator returned as \code{TRUE}).
 }
 \examples{
 ## read in example observed data and prep observed signal
