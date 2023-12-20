@@ -181,6 +181,7 @@ test_that("plane_score returns summary based on components specified", {
 
   prepped_forecast <-
     read_forecast(system.file("extdata/forecast/2022-10-31-SigSci-TSENS.csv", package = "rplanes")) %>%
+    dplyr::filter(location %in% c("02","04","05","13","US")) %>%
     to_signal(., outcome = "flu.admits", type = "forecast", horizon = 4)
 
   prepped_seed <- plane_seed(prepped_observed, cut_date = "2022-10-29")
@@ -239,12 +240,31 @@ test_that("plane_score handles components for signals appropriately", {
 
 })
 
+test_that("plane_score handles weights", {
+
+  prepped_forecast <-
+    read_forecast(system.file("extdata/forecast/2022-10-31-SigSci-TSENS.csv", package = "rplanes")) %>%
+    dplyr::filter(location %in% c("02","04","05","13","US")) %>%
+    to_signal(., outcome = "flu.admits", type = "forecast", horizon = 4)
+
+  prepped_seed <- plane_seed(prepped_observed, cut_date = "2022-10-29")
+
+  ## check that the score function weights sum up as expected
+  res <- plane_score(prepped_forecast, prepped_seed, components = c("diff","repeat"), weights = c("diff" = 4, "repeat"= 1))
+  expect_equal(res$scores_summary$`02`$weights_denominator, 5)
+
+  ## check that weight names are enforced
+  expect_error(plane_score(prepped_forecast, prepped_seed, components = c("diff","repeat"), weights = c("diff" = 4, "foo"= 1)))
+  expect_error(plane_score(prepped_forecast, prepped_seed, components = c("diff","repeat"), weights = c("diff" = 4, "cover"= 1)))
+
+})
 
 test_that("plane_trend flags known changepoints and is sensitive to changes in sig.lvl", {
 
   prepped_seed2 <- plane_seed(prepped_observed, cut_date = "2022-10-29") # need this cut date to test plane_trend
 
   prepped_forecast <- read_forecast(system.file("extdata/forecast/2022-10-31-SigSci-TSENS.csv", package = "rplanes")) %>%
+    dplyr::filter(location %in% c("02","04","05","13","US")) %>%
     to_signal(., outcome = "flu.admits", type = "forecast", horizon = 4)
 
   ## We know there is a changepoint at location 5 that should be flagged:
@@ -260,4 +280,75 @@ test_that("plane_trend flags known changepoints and is sensitive to changes in s
 })
 
 
+test_that("plane_shape flags novel shapes", {
 
+  prepped_forecast <- read_forecast(system.file("extdata/forecast/2022-10-31-SigSci-TSENS.csv",
+                                                package = "rplanes")) %>%
+    to_signal(., outcome = "flu.admits", type = "forecast", horizon = 4)
+
+  prepped_seed3 <- plane_seed(prepped_observed, cut_date = "2022-10-29") # need this cut date to test plane_shape
+
+  ## We know there is a novel shape at location 13 that should be flagged:
+  expect_true(plane_shape(location = "13", input = prepped_forecast, seed = prepped_seed3)$indicator)
+
+  ## We know that location 2 doesn't have any novel shapes that should be flagged:
+  expect_false(plane_shape(location = "02", input = prepped_forecast, seed = prepped_seed3)$indicator)
+
+})
+
+test_that("plane_zero handles zeros correctly", {
+
+  ## create some data to test
+  ## make a point estimate zero
+  point_est <- c(0,600,700,800)
+  prepped_forecast <-
+    dplyr::tibble(
+      location = "US",
+      date = seq(as.Date("2022-05-14"), as.Date("2022-06-04"), by = 7),
+      horizon = 1:4,
+      lower = point_est - 20,
+      point = point_est,
+      upper = point_est + 20
+    ) %>%
+    to_signal(outcome = "flu.admits", type = "forecast", horizon = 4)
+
+  ## US has no zeros => would expect TRUE
+  expect_true(plane_zero(location = "US", input = prepped_forecast, seed = prepped_seed)$indicator)
+
+  ## create some data to test
+  ## make no point estimate zero
+  point_est <- c(500,600,700,800)
+  prepped_forecast <-
+    dplyr::tibble(
+      location = "US",
+      date = seq(as.Date("2022-05-14"), as.Date("2022-06-04"), by = 7),
+      horizon = 1:4,
+      lower = point_est - 20,
+      point = point_est,
+      upper = point_est + 20
+    ) %>%
+    to_signal(outcome = "flu.admits", type = "forecast", horizon = 4)
+
+  ## US has no zeros => would expect FALSE if no zeros in eval
+  expect_false(plane_zero(location = "US", input = prepped_forecast, seed = prepped_seed)$indicator)
+
+
+  ## create some data to test
+  ## make all point estimates zero
+  point_est <- c(0,0,0,0)
+  prepped_forecast <-
+    dplyr::tibble(
+      location = "02",
+      date = seq(as.Date("2022-05-14"), as.Date("2022-06-04"), by = 7),
+      horizon = 1:4,
+      lower = point_est + 10,
+      point = point_est,
+      upper = point_est
+    ) %>%
+    to_signal(outcome = "flu.admits", type = "forecast", horizon = 4)
+
+  ## alaska has zeros => would expect FALSE if no zeros in eval
+  expect_false(plane_zero(location = "02", input = prepped_forecast, seed = prepped_seed)$indicator)
+
+
+})

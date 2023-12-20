@@ -2,7 +2,7 @@
 % Please edit documentation in R/planes.R
 \name{plane_trend}
 \alias{plane_trend}
-\title{Trend Component}
+\title{Trend component}
 \usage{
 plane_trend(location, input, seed, sig_lvl = 0.1)
 }
@@ -13,7 +13,7 @@ plane_trend(location, input, seed, sig_lvl = 0.1)
 
 \item{seed}{Prepared \link[=plane_seed]{seed}}
 
-\item{sig_lvl}{The significance level at which to identify change points (between zero and one); default is 0.1}
+\item{sig_lvl}{The significance level at which to identify change points (between zero and one); default is \code{0.1}}
 }
 \value{
 A \code{list} with the following values:
@@ -55,7 +55,7 @@ Given this data, e.divisive(x) would identify index #5 (74) as the change point,
 Further, we specify min.size = 2, which means that we are forcing a gap of at least 2 points between detecting change points. In a roundabout way, this increases the significance level or at least decreases the number of change points identified. Should we decide to change the function so that we're not using diff(x), it probably makes sense to change min.size to 3.
 }
 \examples{
- ## read in example observed data and prep observed signal:
+## read in example observed data and prep observed signal
 hosp <- read.csv(system.file("extdata/observed/hdgov_hosp_weekly.csv", package = "rplanes"))
 tmp_hosp <-
   hosp \%>\%
@@ -65,7 +65,7 @@ tmp_hosp <-
 prepped_observed <- to_signal(tmp_hosp, outcome = "flu.admits",
                              type = "observed", resolution = "weeks")
 
-## read in example forecast and prep forecast signal:
+## read in example forecast and prep forecast signal
 prepped_forecast <- read_forecast(system.file("extdata/forecast/2022-10-31-SigSci-TSENS.csv",
                                                package = "rplanes")) \%>\%
    to_signal(., outcome = "flu.admits", type = "forecast", horizon = 4)
@@ -73,11 +73,11 @@ prepped_forecast <- read_forecast(system.file("extdata/forecast/2022-10-31-SigSc
 ## prepare seed with cut date
 prepped_seed <- plane_seed(prepped_observed, cut_date = "2022-10-29")
 
-## Run plane trend component:
+## run plane component
 plane_trend(location = "05", input = prepped_forecast, seed = prepped_seed, sig_lvl = .2)
-## Change location:
+## change location
 plane_trend(location = "09", input = prepped_forecast, seed = prepped_seed, sig_lvl = .2)
-## Change sig_lvl:
+## change sig_lvl
 plane_trend(location = "06", input = prepped_forecast, seed = prepped_seed, sig_lvl = .05)
 
 }

@@ -4,7 +4,7 @@ output:
   rmarkdown::html_vignette:
     toc: TRUE
 vignette: >
-  %\VignetteIndexEntry{my-vignette}
+  %\VignetteIndexEntry{Basic Usage}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
@@ -36,7 +36,7 @@ The `rplanes` package (**pl**ausibility **an**alysis of **e**pidemiological **s*
 
 The package workflow is demonstrated in detail below (see **Figure 1**).
 
-![**Figure 1**: Workflow of the rplanes package](workflow.png){#id .class width=90% height=100%}
+![Figure 1: Workflow of the rplanes package](workflow.png){#id .class width=90% height=100%}
 
 **Figure 1** provides a detailed description of the workflow used in `rplanes`. The `rplanes` processing begins with forecast or observed data prepared in a pre-specified format. The required input data format is documented in the package. For convenience, the package includes the `read_forecast()` function to prepare forecast data that is in the quantile format commonly used in forecasting hubs. The prepped forecast or observed data is then converted to a signal object using `to_signal()`. The signal data will be compared against baseline characteristics for previously observed data at each location. These characteristics are aggregated using `plane_seed()`. With the seed and the signal data prepared, the user can run the plausibility scoring independently for each location in the evaluated data. Scores are comprised of individual binary plausibility components. The functions that drive each component are wrapped in the `plane_score()` function for ease-of-use. By default the `plane_score()` wrapper will try to use all relevant components, however the user can dictate specific components as needed. It is important to note that depending on the type of signal to be evaluated (i.e., forecast versus observed data), some components may not apply.
 
@@ -44,7 +44,7 @@ The package workflow is demonstrated in detail below (see **Figure 1**).
 
 Plausibility analysis can support operational forecasting and outbreak analytic activities. Here we demonstrate how to use `rplanes` to score an example forecasted data set.
 
-Several packages must be loaded to prior to conducting the analysis:
+Several packages must be loaded prior to conducting the analysis:
 
 ```{r message = FALSE}
 library(rplanes)
@@ -166,7 +166,7 @@ scores <- plane_score(input = forecast_signal, seed = prepped_seed)
 
 Note that if we had other forecasts to evaluate for the same time period, we could prepare each forecast signal appropriately and use the same seed (i.e., we would not have to recreate the seed for each forecast). 
 
-The output of `plane_score()` is a list of scoring results for all locations. We can convert the `scores_summary` element from that list to a `tibble`. The `res` object below shows the location, the number of flags raised ("n_flags"), the number of components tested ("n_components"), the "score" (which is "n_flags" divided by "n_components"), the names of components tested, and the names of the components that were flagged (if any):
+The output of `plane_score()` is a list of scoring results for all locations. We can convert the `scores_summary` element from that list to a `tibble`. By default, the score uses equal weights for all components. However, users can modify this behavior using the "weights" argument as needed. The `res` object below shows the location, the number of flags raised ("n_flags"), the weighted flags ("n_flags_weighted"), the number of components tested ("n_components"), the overall sum of weights for components tested ("weights_denominator"), and the "score" (which is "n_flags_weighted" divided by "weights_denominator"), the names of components tested, and the names of the components that were flagged (if any):
 
 ```{r, echo=TRUE, eval=FALSE}
 res <-
@@ -187,11 +187,11 @@ knitr::kable(head(res))
 
 ```{r fig.align = 'center'}
 res %>%
-  count(score) %>%
-  mutate(score = as.character(score)) %>%
-  ggplot(aes(score,n)) +
+  count(n_flags) %>%
+  mutate(n_flags = as.character(n_flags)) %>%
+  ggplot(aes(n_flags,n)) +
   geom_col() +
-  labs(x = "Score", y = "Count")
+  labs(x = "Number of flags raised", y = "Count")
 ```
 
 For the evaluated forecast, most of the locations had one or fewer of the flags raised. However, several locations had two or three of the five possible components flagged for implausibility.
@@ -248,7 +248,7 @@ prepped_seed <- plane_seed(observed_signal, cut_date = "2022-12-24")
 
 ## Run `plane_score()` and visualize results
 
-As with the forecast assessments, the PLANES scoring is wrapped for convenience in the `plane_score()` function. Since we are assessing an observed signal in this case, we can explicitly tell the scoring to use certain components. It is important to emphasize that not all components will work for both forecasts and observed signals:
+As with the forecast assessments, the PLANES scoring is wrapped for convenience in the `plane_score()` function. Since we are assessing an observed signal in this case, we can explicitly tell the scoring to use certain components. It is important to emphasize that not all components will work for both forecasts and observed signals. Currently, `plane_cover()`, `plane_taper()`, `plane_trend()`, and `plane_shape()` (all of which are run inside `plane_score()`) work only for forecasts and not for observed data:
 
 ```{r}
 scores <- plane_score(observed_signal, seed = prepped_seed, components = c("repeat","diff"))
@@ -272,11 +272,11 @@ knitr::kable(head(res))
 
 ```{r fig.align = 'center'}
 res %>%
-  count(score) %>%
-  mutate(score = as.character(score)) %>%
-  ggplot(aes(score,n)) +
+  count(n_flags) %>%
+  mutate(n_flags = as.character(n_flags)) %>%
+  ggplot(aes(n_flags,n)) +
   geom_col() +
-  labs(x = "Score", y = "Count")
+  labs(x = "Number of flags raised", y = "Count")
 ```
 
 These results indicate that there is just one location for which any flag has been raised. Again, in this case only two components are used for scoring so the results should be interpreted accordingly. Furthermore, we have to consider that for reported signals the date at which the observed data is retrieved is paramount. It will likely be most meaningful to analyze plausibility of observed data in real time (or near real time) as opposed to retrospectively, since backfill and reporting issues may be corrected prior to assessment.

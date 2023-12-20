@@ -39,10 +39,8 @@
 #'
 plane_diff <- function(location, input, seed) {
 
-  ## double check that location is in seed before proceeding
-  if(!location %in% names(seed)) {
-    stop(sprintf("%s does not appear in the seed object. Check that the seed was prepared with the location specified.", location))
-  }
+  ## double check that location is in seed and input before proceeding
+  valid_location(location, input, seed)
 
   tmp_seed <- seed[[location]]
 
@@ -133,10 +131,8 @@ plane_diff <- function(location, input, seed) {
 #' plane_cover(location = "47", input = prepped_forecast, seed = prepped_seed)
 plane_cover <- function(location, input, seed) {
 
-  ## double check that location is in seed before proceeding
-  if(!location %in% names(seed)) {
-    stop(sprintf("%s does not appear in the seed object. Check that the seed was prepared with the location specified.", location))
-  }
+  ## double check that location is in seed and input before proceeding
+  valid_location(location, input, seed)
 
   tmp_seed <- seed[[location]]
 
@@ -221,6 +217,9 @@ plane_cover <- function(location, input, seed) {
 #' plane_taper(location = "44", input = prepped_forecast, seed = prepped_seed)
 plane_taper <- function(location, input, seed) {
 
+  ## double check that location is in seed and input before proceeding
+  valid_location(location, input, seed)
+
   ## NOTE: do we need seed here? maybe not?
 
   if(is_observed(input)) {
@@ -293,10 +292,9 @@ plane_taper <- function(location, input, seed) {
 #'
 plane_repeat <- function(location, input, seed, tolerance = NULL, prepend = NULL){
 
-  ## double check that location is in seed before proceeding
-  if(!location %in% names(seed)) {
-    stop(sprintf("%s does not appear in the seed object. Check that the seed was prepared with the location specified.", location))
-  }
+  ## double check that location is in seed and input before proceeding
+  valid_location(location, input, seed)
+
   tmp_seed <- seed[[location]]
 
   ## by default tolerance is NULL
@@ -386,8 +384,9 @@ plane_repeat <- function(location, input, seed, tolerance = NULL, prepend = NULL
 #'
 #' @param input Input signal data to be scored; object must be one of [forecast][to_signal()] or [observed][to_signal()]
 #' @param seed Prepared [seed][plane_seed()]
-#' @param components Character vector specifying components. Must be either "all" or any combination of "cover", "diff", "taper", "trend", and "repeat". Default is `"all"` and will use all available components for the given signal
-#' @param args Named list of arguments for component functions. List elements must be named to match the given component and arguments passed as a nested list (e.g., `args = list(trend = list(sig_lvl = 0.05))`). Default is `NULL` and defaults for all components will be used
+#' @param components Character vector specifying component; must be either `"all"` or any combination of `"cover"`, `"diff"`, `"taper"`, `"trend"`, `"repeat"`, `"shape"`, and `"zero"`; default is `"all"` and will use all available components for the given signal
+#' @param args Named list of arguments for component functions. List elements must be named to match the given component and arguments passed as a nested list (e.g., `args = list("trend" = list("sig_lvl" = 0.05))`). Default is `NULL` and defaults for all components will be used
+#' @param weights Named vector with weights to be applied; default is `NULL` and all components will be equally weighted; if not `NULL` then the length of the vector must equal the number of components, with each component given a numeric weight (see Examples)
 #'
 #'
 #'
@@ -414,17 +413,22 @@ plane_repeat <- function(location, input, seed, tolerance = NULL, prepend = NULL
 #' prepped_seed <- plane_seed(prepped_observed, cut_date = "2022-10-29")
 #'
 #' ## run plane scoring with all components
-#'
 #' plane_score(input = prepped_forecast, seed = prepped_seed)
 #'
 #' ## run plane scoring with select components
 #' plane_score(input = prepped_forecast, seed = prepped_seed, components = c("cover","taper"))
 #'
 #' ## run plane scoring with all components and additional args
-#' comp_args <- list(trend = list(sig_lvl = 0.05), repeats = list(prepend = 4, tolerance = 8))
+#' comp_args <- list("trend" = list("sig_lvl" = 0.05), "repeat" = list("prepend" = 4, "tolerance" = 8))
 #' plane_score(input = prepped_forecast, seed = prepped_seed, args = comp_args)
+#'
+#' ## run plane scoring with specific components and weights
+#' comps <- c("cover", "taper", "diff")
+#' wts <- c("cover" = 2, "taper" = 1, "diff" = 4)
+#' plane_score(input = prepped_forecast, seed = prepped_seed, components = comps, weights = wts)
+#'
 #' }
-plane_score <- function(input, seed, components = "all", args = NULL) {
+plane_score <- function(input, seed, components = "all", args = NULL, weights = NULL) {
 
   ## TODO: create this list as a built-in object?
   ## NOTE: consider using getFromNamespace to simplify this step
@@ -433,11 +437,13 @@ plane_score <- function(input, seed, components = "all", args = NULL) {
          diff = list(.function = plane_diff),
          taper = list(.function = plane_taper),
          `repeat` = list(.function = plane_repeat),
-         trend = list(.function = plane_trend)
+         trend = list(.function = plane_trend),
+         shape = list(.function = plane_shape),
+         zero = list(.function = plane_zero)
     )
 
   ## verify components for signal type ... some won't apply to observed
-  allowed_observed <- c("repeat","diff")
+  allowed_observed <- c("repeat","diff","zero")
 
   ## handle condition when "all" components are requested
   ## observed data will only have a subset (the allowed compoments above)
@@ -479,10 +485,15 @@ plane_score <- function(input, seed, components = "all", args = NULL) {
   ## grab full list of component results
   full_results <- purrr::map(retl, purrr::pluck)
 
+  ## separator regex
+  ## this should create something like "-(?=[diff|trend|taper])"
+  ## when applied below that will split *only on hyphens that are followed by diff or trend or taper
+  sep_rx <- paste0("-(?=[", paste0(components,collapse = "|"), "])")
+
   ## pull out summary tibble components and locations from the returned list above
   loc_tbl <-
     dplyr::tibble(loc_component = names(retl), indicator = purrr::map_lgl(retl, "indicator")) %>%
-    tidyr::separate(.data$loc_component, into = c("location", "component"), sep = "-")
+    tidyr::separate(.data$loc_component, into = c("location", "component"), sep = sep_rx)
 
   which_flags <-
     loc_tbl %>%
@@ -490,9 +501,24 @@ plane_score <- function(input, seed, components = "all", args = NULL) {
     dplyr::filter(.data$indicator) %>%
     dplyr::summarise(flagged = paste0(.data$component, collapse = ";"))
 
+  ## construct a tibble with weights for components
+  ## if the weights argument is NULL then apply equal weights to all components
+  if(is.null(weights)) {
+    weights_tbl <-
+      dplyr::tibble(component = components, weight = 1)
+  } else {
+    if(!all(sort(names(weights)) == sort(components))) {
+      stop("Weights must be provided as a vector with all components used included by name (e.g., c('diff' = 4, 'cover' = 1))")
+    }
+    weights_tbl <-
+      dplyr::tibble(component = names(weights), weight = weights)
+  }
+
   ## convert the tibble into a list
   loc_list <-
     loc_tbl %>%
+    ## join to weights tbl defined above
+    dplyr::left_join(weights_tbl, by = "component") %>%
     ## count number of flags (numerator for score)
     ## count number of components (denominator for score)
     ## convert to score
@@ -500,7 +526,9 @@ plane_score <- function(input, seed, components = "all", args = NULL) {
     dplyr::group_by(.data$location) %>%
     dplyr::summarise(n_flags = sum(.data$indicator),
                      n_components = dplyr::n(),
-                     score = .data$n_flags / .data$n_components,
+                     n_flags_weighted = sum(.data$indicator * .data$weight),
+                     weights_denominator = sum(.data$weight),
+                     score = .data$n_flags_weighted / .data$weights_denominator,
                      components = paste0(.data$component, collapse = ";")
     ) %>%
     ## join back to tibble that enumerates which components were flagged
@@ -516,7 +544,7 @@ plane_score <- function(input, seed, components = "all", args = NULL) {
 
 }
 
-#' Trend Component
+#' Trend component
 #' @description
 #'
 #' This function identifies any change points in the forecast data or in the final observed data point. Change points are identified by any significant change in magnitude or direction of the slope of the time series.
@@ -524,7 +552,7 @@ plane_score <- function(input, seed, components = "all", args = NULL) {
 #' @param location Character vector with location code; the location must appear in input and seed
 #' @param input Input signal data to be scored; object must be [forecast][to_signal()]
 #' @param seed Prepared [seed][plane_seed()]
-#' @param sig_lvl The significance level at which to identify change points (between zero and one); default is 0.1
+#' @param sig_lvl The significance level at which to identify change points (between zero and one); default is `0.1`
 #'
 #' @return
 #' A `list` with the following values:
@@ -571,7 +599,7 @@ plane_score <- function(input, seed, components = "all", args = NULL) {
 #' @export
 #'
 #' @examples
-#'  ## read in example observed data and prep observed signal:
+#' ## read in example observed data and prep observed signal
 #' hosp <- read.csv(system.file("extdata/observed/hdgov_hosp_weekly.csv", package = "rplanes"))
 #' tmp_hosp <-
 #'   hosp %>%
@@ -581,7 +609,7 @@ plane_score <- function(input, seed, components = "all", args = NULL) {
 #' prepped_observed <- to_signal(tmp_hosp, outcome = "flu.admits",
 #'                              type = "observed", resolution = "weeks")
 #'
-#' ## read in example forecast and prep forecast signal:
+#' ## read in example forecast and prep forecast signal
 #' prepped_forecast <- read_forecast(system.file("extdata/forecast/2022-10-31-SigSci-TSENS.csv",
 #'                                                package = "rplanes")) %>%
 #'    to_signal(., outcome = "flu.admits", type = "forecast", horizon = 4)
@@ -589,18 +617,17 @@ plane_score <- function(input, seed, components = "all", args = NULL) {
 #' ## prepare seed with cut date
 #' prepped_seed <- plane_seed(prepped_observed, cut_date = "2022-10-29")
 #'
-#' ## Run plane trend component:
+#' ## run plane component
 #' plane_trend(location = "05", input = prepped_forecast, seed = prepped_seed, sig_lvl = .2)
-#' ## Change location:
+#' ## change location
 #' plane_trend(location = "09", input = prepped_forecast, seed = prepped_seed, sig_lvl = .2)
-#' ## Change sig_lvl:
+#' ## change sig_lvl
 #' plane_trend(location = "06", input = prepped_forecast, seed = prepped_seed, sig_lvl = .05)
 #'
 plane_trend <- function(location, input, seed, sig_lvl = 0.1) {
-  ## double check that location is in seed before proceeding
-  if(!location %in% names(seed)) {
-    stop(sprintf("%s does not appear in the seed object. Check that the seed was prepared with the location specified.", location))
-  }
+
+  ## double check that location is in seed and input before proceeding
+  valid_location(location, input, seed)
 
   tmp_seed <- seed[[location]]
 
@@ -690,3 +717,259 @@ plane_trend <- function(location, input, seed, sig_lvl = 0.1) {
 
 }
 
+
+#' Shape component
+#'
+#' @description
+#'
+#' This function identifies the shape of the trajectory for a forecasted signal to compare against existing shapes in seed data. If the shape is identified as novel, a flag is raised, and the signal is considered implausible. See the Details section for further information.
+#'
+#' @param location Character vector with location code; the location must appear in input and seed
+#' @param input Input signal data to be scored; object must be one of [forecast][to_signal()]
+#' @param seed Prepared [seed][plane_seed()]
+#'
+#' @return
+#'
+#' A `list` with the following values:
+#'
+#' - **indicator**: Logical as to whether or not the the shape of the evaluated signal is novel (`TRUE` if shape is novel, `FALSE` if a familiar shape exists in the seed)
+#'
+#'
+#' @details
+#'
+#' This function uses a Dynamic Time Warping (DTW) algorithm to identify shapes within the seed data and then compares the shape of the forecast input signal to the observed shapes. This is done in three broad steps:
+#'
+#' 1. The prepared [seed][plane_seed()] data is divided into a set of sliding windows with a step size of one, each representing a section of the overall time series. The length of these windows is determined by the horizon length of the input data signal (e.g., 2 weeks). If your seed data was a vector, `c(1, 2, 3, 4, 5)`, and your horizon length was 2, then the sliding windows for your observed seed data would be: `c(1, 2)`, `c(2, 3)`, `c(3, 4)`, and `c(4, 5)`. Each sliding window is a subset of the total trajectory shape of the observed data.
+#'
+#' 2. Shape-based DTW distances are calculated for every 1x1 combination of the observed sliding windows and are stored in a distance matrix. We use these distances to calibrate our function for identifying outlying shapes in forecast data.
+#'
+#'     - We find the minimum distances for each windowed time series to use as a baseline for "observed distances" between chunks of the larger observed time series.
+#'     - We then calculate the maximum of those minimum distance across the observed time series. This will be our **threshold**. If the minimum of the forecast:observed distance matrix is greater than the greatest minimum observed:observed distance, then we can infer that the forecast is unfamiliar (i.e., a novel shape).
+#'
+#' 3. We calculate the shape-based DTW distances between the forecast signal (including the point estimate, lower, and upper bounds) and every observed sliding window. If the distance between the forecast and *any* observed sliding window is less than or equal to our threshold defined above, then this shape is not novel and no flag is raised (**indicator** = `FALSE`).
+#'
+#'
+#' @references
+#'
+#' Toni Giorgino. Computing and Visualizing Dynamic Time Warping Alignments in R: The dtw Package. Journal of Statistical Software, 31(7), 1-24. doi:10.18637/jss.v031.i07
+#'
+#' Tormene, P.; Giorgino, T.; Quaglini, S. & Stefanelli, M. Matching incomplete time series with dynamic time warping: an algorithm and an application to post-stroke rehabilitation. Artif Intell Med, 2009, 45, 11-34. doi:10.1016/j.artmed.2008.11.007
+#'
+#' @export
+#'
+#' @examples
+#' ## read in example observed data and prep observed signal
+#' hosp <- read.csv(system.file("extdata/observed/hdgov_hosp_weekly.csv", package = "rplanes"))
+#'
+#' tmp_hosp <-
+#'  hosp %>%
+#'  dplyr::select(date, location, flu.admits) %>%
+#'  dplyr::mutate(date = as.Date(date))
+#'
+#' prepped_observed <- to_signal(tmp_hosp,
+#'                                outcome = "flu.admits",
+#'                                type = "observed",
+#'                                resolution = "weeks")
+#' ## read in example forecast and prep forecast signal
+#' prepped_forecast <- read_forecast(system.file("extdata/forecast/2022-10-31-SigSci-TSENS.csv",
+#'                                                 package = "rplanes")) %>%
+#'    to_signal(., outcome = "flu.admits", type = "forecast", horizon = 4)
+#'
+#' ## prepare seed with cut date
+#' prepped_seed <- plane_seed(prepped_observed, cut_date = "2022-10-29")
+#'
+#' ## run plane component
+#' ## this location is an example of where we expect a flag to be raised
+#' plane_shape(location = "13", input = prepped_forecast, seed = prepped_seed)
+#'
+#' ## this location is an example of where we do not expect a flag to be raised
+#' plane_shape(location = "06", input = prepped_forecast, seed = prepped_seed)
+#'
+#'
+plane_shape <- function(location, input, seed) {
+
+  ## double check that location is in seed and input before proceeding
+  valid_location(location, input, seed)
+
+  # The observed data:
+  tmp_seed <- seed[[location]]
+
+  ## return the forecast data (with the filter on cut date)
+  tmp_dat <-
+    input$data %>%
+    dplyr::filter(.data$location == .env$location) %>%
+    dplyr::filter(.data$date > as.Date(tmp_seed$meta$cut_date, format = "%Y-%m-%d"))
+
+  ## check that dates are valid (i.e., no observed data overlaps with seed
+  valid_dates(seed_date = tmp_seed$meta$date_range$max, signal_date = min(tmp_dat$date), resolution = tmp_seed$meta$resolution)
+
+  # Pull forecast point estimate:
+  forepoint <-
+    tmp_dat %>%
+    dplyr::pull("point")
+
+  ## select only the PI and point estimate columns
+  forecast <- tmp_dat[,c("lower","point","upper")]
+
+  ## how many observed points to "prepend" to forecasts?
+  ## NOTE: this is set to 4 times as many observations as there are forecasted horizons.
+  prepend_length <- 4 * length(forepoint)
+
+  # Get dates for observed and forecast data:
+  dates <- c(seq(tmp_seed$meta$date_range$min, tmp_seed$meta$date_range$max, by = tmp_seed$meta$resolution), tmp_dat$date)
+
+  ## If there are fewer than 2 time stamps in forecast, abort
+  if(length(forepoint) < 2) {
+    stop(sprintf("%s forecast must be of length greater than one.", location))
+  }
+
+  # Pull observed points:
+  obspoint <- tmp_seed$all_values
+
+  ## If the observed/training data is not at least 4x as long as the forecast, abort
+  if(length(obspoint) < prepend_length) {
+    stop(sprintf("%s observed training data must be at least 4x the length of the forecast data.", location))
+  }
+
+  # Set the window size and step size
+  window_size <- input[["horizon"]]  # Adjust this based on your desired window size (horizon_length)
+
+  # Create sliding windows and return a data frame
+  obs_traj <- create_sliding_windows_df(obspoint, window_size)
+
+  # Calculate all distances in distance matrix:
+  distmat <- dtw::dtwDist(obs_traj)
+  diag(distmat) <- NA
+
+  # Find minimum distances for each time series to use as a baseline for "observed distances" between chunks of the larger observed time series:
+  mins <- apply(distmat, 1, FUN = min, na.rm = TRUE)
+
+  # Find the maximum, minimum distance across the observed time series. This will be our threshold. If the minimum of the forecast:observed distance matrix is less than or equal to the greatest, minimum observed distance, than we can infer that the forecast is not a novel shape
+  threshold <- max(mins)
+
+
+  ############################################################
+  # Calculate forecast distances and flag any forecast that has an unusually high distance:
+
+  ## split the observed windows matrix from above into a list
+  list_obs_traj <-
+    obs_traj %>%
+    dplyr::mutate(index = 1:dplyr::n()) %>%
+    dplyr::group_split(.data$index) %>%
+    purrr::map(., ~dplyr::select(.x, -.data$index) %>% unlist(., use.names = FALSE))
+
+  ## split the forecast components ...
+  ## ... the lower bound, point estimate, upper bound ...
+  ## ... into a list
+  forc_list <- list(lower = forecast$lower,
+                    point = forecast$point,
+                    upper = forecast$upper)
+
+  ## create all combinations of elements from these two lists
+  to_map <- tidyr::crossing(obs = list_obs_traj, forc = forc_list)
+
+  ## iterate over the combinations and compute distances
+  ## NOTE: need to get the first element to get the vectors stored in the list
+  dtw_distances <- purrr::map2_dbl(to_map$forc, to_map$obs, ~dtw::dtw(.x,.y)$distance)
+
+  ## check to see if each distance is <= the defined threshold
+  novel_shape_check <- purrr::map_lgl(dtw_distances, function(x) ifelse(x<= threshold, FALSE, TRUE))
+
+  ## are any of the distances checked <= than the threshold?
+  ## if so this will return TRUE and a flag should be raised
+  ## if any of the shape check results are FALSE then this will return FALSE (no flag)
+  novel_shape <- all(novel_shape_check)
+
+  return(list(indicator = novel_shape))
+
+}
+
+#' Zero component
+#'
+#' @description
+#'
+#' This function checks for the presence of any value(s) equal to zero in the evaluated signal. If there are any zeros found, then the function assesses whether or not any zeros have been observed in the [seed][plane_seed()] for the given location. If so, the function will consider the evaluated zero plausible and no flag will be raised (i.e., indicator returned as `FALSE`). If not, the function will consider the evaluated zero implausible and a flag will be raised (i.e., indicator returned as `TRUE`).
+#'
+#' @param location Character vector with location code; the location must appear in input and seed
+#' @param input Input signal data to be scored; object must be one of [forecast][to_signal()] or [observed][to_signal()]
+#' @param seed Prepared [seed][plane_seed()]
+#'
+#' @return
+#'
+#' A `list` with the following values:
+#'
+#' - **indicator**: Logical as to whether or not there are zeros in evaluated signal but not in seed data
+#'
+#' @export
+#'
+#' @examples
+#' ## read in example observed data and prep observed signal
+#' hosp <- read.csv(system.file("extdata/observed/hdgov_hosp_weekly.csv", package = "rplanes"))
+#' hosp$date <- as.Date(hosp$date, format = "%Y-%m-%d")
+#' prepped_observed <- to_signal(hosp, outcome = "flu.admits", type = "observed", resolution = "weeks")
+#'
+#' ## read in example forecast and prep forecast signal
+#' fp <- system.file("extdata/forecast/2022-10-31-SigSci-TSENS.csv", package = "rplanes")
+#' prepped_forecast <- read_forecast(fp) %>%
+#'   to_signal(., outcome = "flu.admits", type = "forecast", horizon = 4)
+#'
+#' ## prepare seed with cut date
+#' prepped_seed <- plane_seed(prepped_observed, cut_date = "2022-10-29")
+#'
+#' ## run plane component
+#' plane_zero(location = "10", input = prepped_forecast, seed = prepped_seed)
+#' plane_zero(location = "51", input = prepped_forecast, seed = prepped_seed)
+#'
+plane_zero <- function(location, input, seed) {
+
+  ## double check that location is in seed and input before proceeding
+  valid_location(location, input, seed)
+
+  tmp_seed <- seed[[location]]
+
+  ## check for class of input to see if it is observed
+  ## if so ... filter on seed dates to so that we're comparing the observed of interest to seed vals
+  if(is_observed(input)) {
+    tmp_dat <-
+      input$data %>%
+      dplyr::filter(.data$location == .env$location) %>%
+      dplyr::filter(.data$date > as.Date(tmp_seed$meta$cut_date, format = "%Y-%m-%d"))
+
+    ## check that dates are valid (i.e., no observed data doesnt overlap with seed
+    valid_dates(seed_date = tmp_seed$meta$date_range$max, signal_date = min(tmp_dat$date), resolution = tmp_seed$meta$resolution)
+
+    ## pull the outcome values to be evaluated
+    tmp_vals <-
+      tmp_dat %>%
+      dplyr::pull(input$outcome)
+
+  } else if(is_forecast(input)) {
+    ## return the forecast data (with the filter on cut date)
+    tmp_dat <-
+      input$data %>%
+      dplyr::filter(.data$location == .env$location) %>%
+      dplyr::filter(.data$date > as.Date(tmp_seed$meta$cut_date, format = "%Y-%m-%d"))
+
+    ## check that dates are valid (i.e., no observed data doesnt overlap with seed
+    valid_dates(seed_date = tmp_seed$meta$date_range$max, signal_date = min(tmp_dat$date), resolution = tmp_seed$meta$resolution)
+
+    ## after all the checks ...
+    ## pull the point estimates
+    tmp_vals <-
+      tmp_dat %>%
+      dplyr::pull("point")
+
+  }
+
+  ## if there are no zeros in the seed (i.e., if any zeros is FALSE) ...
+  ## ... then check if any evaluated points are 0
+  ## otherwise set indicator to FALSE (and don't raise a flag)
+  if(!tmp_seed$any_zeros) {
+    ind <- any(tmp_vals == 0)
+  } else {
+    ind <- FALSE
+  }
+
+  return(list(indicator = ind))
+
+}

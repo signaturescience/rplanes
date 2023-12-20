@@ -26,10 +26,12 @@ seed_engine <- function(input, location, cut_date=NULL) {
     cut_date <- as.Date(cut_date, format = "%Y-%m-%d")
   }
 
-  ## use cut date to get
+  ## use cut date to restrict data to appropriate time window
   tmp_data <-
     input$data %>%
     dplyr::filter(.data$location == .env$location) %>%
+    ## NOTE: date *must* be arranged in ascending order for seeding
+    dplyr::arrange(.data$date) %>%
     dplyr::filter(.data$date <= cut_date)
 
   ## get vector of observed values for the outcome
@@ -52,6 +54,9 @@ seed_engine <- function(input, location, cut_date=NULL) {
 
   ## get all values for repeat
   all_vals <- tmp_obs
+
+  ## get any zeros
+  any_zeros <- any(tmp_obs == 0)
 
   ## get max repeats
   max_repeats <-
@@ -78,6 +83,7 @@ seed_engine <- function(input, location, cut_date=NULL) {
       all_values = all_vals,
       max_repeats = max_repeats,
       last_value = last_val,
+      any_zeros = any_zeros,
       ## TODO: add other metadata to this list
       meta = list(cut_date = cut_date, resolution = input$resolution, date_range = list(min = min(tmp_data$date), max = max(tmp_data$date)))
     )
