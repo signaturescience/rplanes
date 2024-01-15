@@ -31,7 +31,7 @@ The `rplanes` package (**pl**ausibility **an**alysis of **e**pidemiological **s*
 ## Installation
 
 ``` r
-#install.pacakges("remotes")
+#install.packages("remotes")
 remotes::install_github("signaturescience/rplanes", build_vignettes=TRUE)
 ```
 

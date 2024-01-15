@@ -27,7 +27,7 @@ independently and then presented as a combined score.
 ## Installation
 
 ``` r
-#install.pacakges("remotes")
+#install.packages("remotes")
 remotes::install_github("signaturescience/rplanes", build_vignettes=TRUE)
 ```
 
