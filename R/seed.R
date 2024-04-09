@@ -39,6 +39,10 @@ seed_engine <- function(input, location, cut_date=NULL) {
     tmp_data %>%
     dplyr::pull(input$outcome)
 
+  if(all(is.na(tmp_obs))) {
+    stop(sprintf("The values for the signal selected are missing for all dates in the following location: %s. Cannot create seed characteristics. Remove any locations that are missing signal input data for all dates prior to seeding.", location))
+  }
+
   ## return max diff
   max_diff <-
     (tmp_obs - dplyr::lag(tmp_obs)) %>%
