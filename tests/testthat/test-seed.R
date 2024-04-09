@@ -53,3 +53,21 @@ test_that("plane_seed gets last value by date even if dates are not ordered asce
 
 })
 
+
+test_that("plane_seed handles missing data as expected", {
+
+  ## create a location where all values for all dates
+  missing_dat <-
+    dplyr::tibble(date = unique(hosp$date),
+                  location = "Bermuda Triangle",
+                  flu.admits = NA)
+
+  ## use tmp_hosp data above ... and bind in missing data
+  tst_signal <-
+    rbind(tmp_hosp,missing_dat) %>%
+    to_signal(., outcome = "flu.admits", type = "observed", resolution = "weeks")
+
+  ## should generate a stop() with seed given one location with all missing
+  expect_error(plane_seed(tst_signal, cut_date = "2023-03-25"))
+
+})
