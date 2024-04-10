@@ -248,7 +248,7 @@ plane_taper <- function(location, input, seed) {
 #'
 #' @description
 #'
-#' This function evaluates whether consecutive values in observations or forecasts are repeated a k number of times. This function takes in a [forecast][to_signal()] or [observed][to_signal()] object that is either from an observed dataset or forecast dataset.
+#' This function evaluates whether consecutive values in observations or forecasts are repeated a k number of times. This function takes in a [forecast][to_signal()] or [observed][to_signal()] object that is either from an observed dataset or forecast dataset. Note that if a signal is contant (i.e., the same value is repeated for all time points) then the repeat component will return `FALSE`.
 #'
 #' @param location Character vector with location code; the location must appear in input and seed
 #' @param input Input signal data to be scored; object must be one of [forecast][to_signal()] or [observed][to_signal()]
@@ -367,9 +367,16 @@ plane_repeat <- function(location, input, seed, tolerance = NULL, prepend = NULL
     dplyr::filter(.data$n_repeats >= k) %>%
     dplyr::select(-"repeat_id", -"n_repeats", -"prepend_type")
 
-  ## indicator for whether or not the number of rows is > 0
-  ## this would indicate that there are repeats
-  ind <- nrow(repeat_tbl) > 0
+  ## logic to check if data is constant in the reported signal
+  ## if so ... we cannot fairly say there is a repeat so set to FALSE
+  if(length(unique(tmp_seed$all_values)) == 1) {
+    ind <- FALSE
+  ## if not ... look at the repeat table to determine if flag is raised
+  } else {
+    ## indicator for whether or not the number of rows is > 0
+    ## this would indicate that there are repeats
+    ind <- nrow(repeat_tbl) > 0
+  }
 
   ## return list with indicator and info
   return(list(indicator = ind, repeats = repeat_tbl))
