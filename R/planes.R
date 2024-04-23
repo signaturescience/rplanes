@@ -393,7 +393,7 @@ plane_repeat <- function(location, input, seed, tolerance = NULL, prepend = NULL
 #' @param seed Prepared [seed][plane_seed()]
 #' @param components Character vector specifying component; must be either `"all"` or any combination of `"cover"`, `"diff"`, `"taper"`, `"trend"`, `"repeat"`, `"shape"`, and `"zero"`; default is `"all"` and will use all available components for the given signal
 #' @param args Named list of arguments for component functions. List elements must be named to match the given component and arguments passed as a nested list (e.g., `args = list("trend" = list("sig_lvl" = 0.05))`). Default is `NULL` and defaults for all components will be used
-#' @param weights Named vector with weights to be applied; default is `NULL` and all components will be equally weighted; if not `NULL` then the length of the vector must equal the number of components, with each component given a numeric weight (see Examples)
+#' @param weights Named vector with weights to be applied; default is `NULL` and all components will be equally weighted; if not `NULL` then the length of the vector must equal the number of components, with each component given a numeric weight (see Examples). Specified weights must be real numbers greater than or equal to 1.
 #'
 #'
 #'
@@ -431,7 +431,7 @@ plane_repeat <- function(location, input, seed, tolerance = NULL, prepend = NULL
 #'
 #' ## run plane scoring with specific components and weights
 #' comps <- c("cover", "taper", "diff")
-#' wts <- c("cover" = 2, "taper" = 1, "diff" = 4)
+#' wts <- c("cover" = 1.5, "taper" = 1, "diff" = 4)
 #' plane_score(input = prepped_forecast, seed = prepped_seed, components = comps, weights = wts)
 #'
 #' }
@@ -511,14 +511,17 @@ plane_score <- function(input, seed, components = "all", args = NULL, weights = 
   ## construct a tibble with weights for components
   ## if the weights argument is NULL then apply equal weights to all components
   if(is.null(weights)) {
-    weights_tbl <-
-      dplyr::tibble(component = components, weight = 1)
+    weights_tbl <- dplyr::tibble(component = components, weight = 1)
   } else {
+    if(any(weights < 1)) {
+      stop("Weights must be a real number >= 1")
+    }
+
     if(!all(sort(names(weights)) == sort(components))) {
       stop("Weights must be provided as a vector with all components used included by name (e.g., c('diff' = 4, 'cover' = 1))")
     }
-    weights_tbl <-
-      dplyr::tibble(component = names(weights), weight = weights)
+
+    weights_tbl <- dplyr::tibble(component = names(weights), weight = weights)
   }
 
   ## convert the tibble into a list
