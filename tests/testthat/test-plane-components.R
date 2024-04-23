@@ -257,6 +257,9 @@ test_that("plane_score handles weights", {
   expect_error(plane_score(prepped_forecast, prepped_seed, components = c("diff","repeat"), weights = c("diff" = 4, "foo"= 1)))
   expect_error(plane_score(prepped_forecast, prepped_seed, components = c("diff","repeat"), weights = c("diff" = 4, "cover"= 1)))
 
+  ## check that weights are enforced to be >= 1
+  expect_error( plane_score(prepped_forecast, prepped_seed, components = c("diff","repeat"), weights = c("diff" = 0.5, "repeat"= 1)))
+
 })
 
 test_that("plane_trend flags known changepoints and is sensitive to changes in sig.lvl", {
