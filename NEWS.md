@@ -8,7 +8,7 @@ In the previous version of the package, if a user input signal data that include
 
 ### More intuitive `plane_repeat()` behavior
 
-The PLANES scoring includes `plane_repeat()` to implement a "repeat" algorithm (i.e., checking if the evaluated signal creates a repeat sequence longer than any previously observed in the seed). We observed that this was flagging instances where all values of the time series were the same. In this release we have adjusted the algorithm to ono longer flag a constant time series as implausible.
+The PLANES scoring includes `plane_repeat()` to implement a "repeat" algorithm (i.e., checking if the evaluated signal creates a repeat sequence longer than any previously observed in the seed). We observed that this was flagging instances where all values of the time series were the same. In this release we have adjusted the algorithm to no longer flag a constant time series as implausible.
 
 ### Weighting scheme constraints
 
