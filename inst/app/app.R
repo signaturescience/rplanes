@@ -145,7 +145,7 @@ server <- function(input, output, session){
     ## value will be set at 1 by default
     ## id will be weight_ component to make it easy to find / parse as input for plane_score
     components() %>%
-      purrr::map(., function(x) numericInput(inputId = paste0("weight_",x), label = paste0("Weight: ", tcase(x)), value = 1))
+      purrr::map(., function(x) numericInput(inputId = paste0("weight_",x), label = paste0("Weight: ", tcase(x)), value = 1, min = 1))
   })
 
     # pass in actionBttn to module plots
