@@ -1,3 +1,25 @@
+# rplanes 0.0.3
+
+## New features
+
+### Better handling of locations with all missing data
+
+In the previous version of the package, if a user input signal data that included a location with all values missing the `plane_seed()` function would proceed. However, this would lead to background characteristics in the seed that could not be used in downstream algorithms (e.g., infinite range). We now trigger an error if the input data for `to_signal()` includes any locations with all values missing.
+
+### More intuitive `plane_repeat()` behavior
+
+The PLANES scoring includes `plane_repeat()` to implement a "repeat" algorithm (i.e., checking if the evaluated signal creates a repeat sequence longer than any previously observed in the seed). We observed that this was flagging instances where all values of the time series were the same. In this release we have adjusted the algorithm to no longer flag a constant time series as implausible.
+
+### Weighting scheme constraints
+
+In this release, we have introduced a new feature to constrain component weights passed to `plane_score()` at values >= 1. Before adding this constraint, we saw inconsistent behavior in some cases when weights were set a < 1. We have updated the function documentation for `plane_score()` "weights" argument to reflect this change.
+
+## Bug fixes
+
+### Documentation typos
+
+This release introduces minor fixes for typos in function documentation and the README.
+
 # rplanes 0.0.2
 
 ## New features

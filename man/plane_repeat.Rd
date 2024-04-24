@@ -25,7 +25,7 @@ A \code{list} with the following values:
 }
 }
 \description{
-This function evaluates whether consecutive values in observations or forecasts are repeated a k number of times. This function takes in a \link[=to_signal]{forecast} or \link[=to_signal]{observed} object that is either from an observed dataset or forecast dataset.
+This function evaluates whether consecutive values in observations or forecasts are repeated a k number of times. This function takes in a \link[=to_signal]{forecast} or \link[=to_signal]{observed} object that is either from an observed dataset or forecast dataset. Note that if a signal is contant (i.e., the same value is repeated for all time points) then the repeat component will return \code{FALSE}.
 }
 \examples{
 ## read in example observed data and prep observed signal

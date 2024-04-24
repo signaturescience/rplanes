@@ -248,7 +248,7 @@ plane_taper <- function(location, input, seed) {
 #'
 #' @description
 #'
-#' This function evaluates whether consecutive values in observations or forecasts are repeated a k number of times. This function takes in a [forecast][to_signal()] or [observed][to_signal()] object that is either from an observed dataset or forecast dataset.
+#' This function evaluates whether consecutive values in observations or forecasts are repeated a k number of times. This function takes in a [forecast][to_signal()] or [observed][to_signal()] object that is either from an observed dataset or forecast dataset. Note that if a signal is contant (i.e., the same value is repeated for all time points) then the repeat component will return `FALSE`.
 #'
 #' @param location Character vector with location code; the location must appear in input and seed
 #' @param input Input signal data to be scored; object must be one of [forecast][to_signal()] or [observed][to_signal()]
@@ -367,9 +367,16 @@ plane_repeat <- function(location, input, seed, tolerance = NULL, prepend = NULL
     dplyr::filter(.data$n_repeats >= k) %>%
     dplyr::select(-"repeat_id", -"n_repeats", -"prepend_type")
 
-  ## indicator for whether or not the number of rows is > 0
-  ## this would indicate that there are repeats
-  ind <- nrow(repeat_tbl) > 0
+  ## logic to check if data is constant in the reported signal
+  ## if so ... we cannot fairly say there is a repeat so set to FALSE
+  if(length(unique(tmp_seed$all_values)) == 1) {
+    ind <- FALSE
+  ## if not ... look at the repeat table to determine if flag is raised
+  } else {
+    ## indicator for whether or not the number of rows is > 0
+    ## this would indicate that there are repeats
+    ind <- nrow(repeat_tbl) > 0
+  }
 
   ## return list with indicator and info
   return(list(indicator = ind, repeats = repeat_tbl))
@@ -386,7 +393,7 @@ plane_repeat <- function(location, input, seed, tolerance = NULL, prepend = NULL
 #' @param seed Prepared [seed][plane_seed()]
 #' @param components Character vector specifying component; must be either `"all"` or any combination of `"cover"`, `"diff"`, `"taper"`, `"trend"`, `"repeat"`, `"shape"`, and `"zero"`; default is `"all"` and will use all available components for the given signal
 #' @param args Named list of arguments for component functions. List elements must be named to match the given component and arguments passed as a nested list (e.g., `args = list("trend" = list("sig_lvl" = 0.05))`). Default is `NULL` and defaults for all components will be used
-#' @param weights Named vector with weights to be applied; default is `NULL` and all components will be equally weighted; if not `NULL` then the length of the vector must equal the number of components, with each component given a numeric weight (see Examples)
+#' @param weights Named vector with weights to be applied; default is `NULL` and all components will be equally weighted; if not `NULL` then the length of the vector must equal the number of components, with each component given a numeric weight (see Examples). Specified weights must be real numbers greater than or equal to 1.
 #'
 #'
 #'
@@ -424,7 +431,7 @@ plane_repeat <- function(location, input, seed, tolerance = NULL, prepend = NULL
 #'
 #' ## run plane scoring with specific components and weights
 #' comps <- c("cover", "taper", "diff")
-#' wts <- c("cover" = 2, "taper" = 1, "diff" = 4)
+#' wts <- c("cover" = 1.5, "taper" = 1, "diff" = 4)
 #' plane_score(input = prepped_forecast, seed = prepped_seed, components = comps, weights = wts)
 #'
 #' }
@@ -504,14 +511,17 @@ plane_score <- function(input, seed, components = "all", args = NULL, weights = 
   ## construct a tibble with weights for components
   ## if the weights argument is NULL then apply equal weights to all components
   if(is.null(weights)) {
-    weights_tbl <-
-      dplyr::tibble(component = components, weight = 1)
+    weights_tbl <- dplyr::tibble(component = components, weight = 1)
   } else {
+    if(any(weights < 1)) {
+      stop("Weights must be a real number >= 1")
+    }
+
     if(!all(sort(names(weights)) == sort(components))) {
       stop("Weights must be provided as a vector with all components used included by name (e.g., c('diff' = 4, 'cover' = 1))")
     }
-    weights_tbl <-
-      dplyr::tibble(component = names(weights), weight = weights)
+
+    weights_tbl <- dplyr::tibble(component = names(weights), weight = weights)
   }
 
   ## convert the tibble into a list
