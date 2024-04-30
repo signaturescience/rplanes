@@ -4,7 +4,7 @@
 \alias{plane_shape}
 \title{Shape component}
 \usage{
-plane_shape(location, input, seed)
+plane_shape(location, input, seed, method = "naive")
 }
 \arguments{
 \item{location}{Character vector with location code; the location must appear in input and seed}
@@ -12,6 +12,8 @@ plane_shape(location, input, seed)
 \item{input}{Input signal data to be scored; object must be one of \link[=to_signal]{forecast}}
 
 \item{seed}{Prepared \link[=plane_seed]{seed}}
+
+\item{method}{The method for determining shapes; must be one of "sdiff" or "dtw" (see Details); default is "sdiff"}
 }
 \value{
 A \code{list} with the following values:
@@ -23,7 +25,17 @@ A \code{list} with the following values:
 This function identifies the shape of the trajectory for a forecasted signal to compare against existing shapes in seed data. If the shape is identified as novel, a flag is raised, and the signal is considered implausible. See the Details section for further information.
 }
 \details{
-This function uses a Dynamic Time Warping (DTW) algorithm to identify shapes within the seed data and then compares the shape of the forecast input signal to the observed shapes. This is done in three broad steps:
+The approach for determining shapes can be customized by the user with the \code{plane_shape()} "method" argument. The two methods available are "sdiff" (default) and "dtw".
+
+The "sdiff" method will use consecutive scaled differences to construct shapes. The algorithm operates in three steps:
+\enumerate{
+\item The prepared \link[=plane_seed]{seed} data is combined with forecasted point estimates and each point-to-point difference is calculated.
+\item The differences are centered and scaled, then cut into categories. Differences greater than or equal to 1 standard deviation above the mean of differences are considered an "increase". Differences less than or equal to 1 standard deviation below  the mean of differences are considered a "decrease". All other differences are considered "stable".
+\item The categorical differences are then combined into windows of equal size to the forecasted horizon. Collectively these combined categorical differences create a "shape" (e.g., "increase;stable;stable;decrease").
+\item Lastly, the algorithm compares the shape for the forecast to all of the shapes observed. If the shape assessed has not been observed in the time series before then a flag is raised and the indicator returned is \code{TRUE}.
+}
+
+The "dtw" method uses a Dynamic Time Warping (DTW) algorithm to identify shapes within the seed data and then compares the shape of the forecast input signal to the observed shapes. This is done in three broad steps:
 \enumerate{
 \item The prepared \link[=plane_seed]{seed} data is divided into a set of sliding windows with a step size of one, each representing a section of the overall time series. The length of these windows is determined by the horizon length of the input data signal (e.g., 2 weeks). If your seed data was a vector, \code{c(1, 2, 3, 4, 5)}, and your horizon length was 2, then the sliding windows for your observed seed data would be: \code{c(1, 2)}, \code{c(2, 3)}, \code{c(3, 4)}, and \code{c(4, 5)}. Each sliding window is a subset of the total trajectory shape of the observed data.
 \item Shape-based DTW distances are calculated for every 1x1 combination of the observed sliding windows and are stored in a distance matrix. We use these distances to calibrate our function for identifying outlying shapes in forecast data.
