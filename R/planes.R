@@ -809,7 +809,7 @@ plane_trend <- function(location, input, seed, sig_lvl = 0.1) {
 #' plane_shape(location = "06", input = prepped_forecast, seed = prepped_seed)
 #'
 #'
-plane_shape <- function(location, input, seed, method = "naive") {
+plane_shape <- function(location, input, seed, method = "sdiff") {
 
   ## double check that location is in seed and input before proceeding
   valid_location(location, input, seed)
