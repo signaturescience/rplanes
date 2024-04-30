@@ -434,7 +434,7 @@ get_shapes <- function(input_data, window_size) {
   ## split the categorical difference into windowed chunks
   tmp_shapes <-
     tmp_dat %>%
-    dplyr::pull(.data$shape) %>%
+    dplyr::pull(.data$cat_diff) %>%
     to_chunk(., window_size)
 
   ## the chunking may result in a "remainder" from windows not having enough shapes in the chunk

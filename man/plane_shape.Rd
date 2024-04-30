@@ -4,7 +4,7 @@
 \alias{plane_shape}
 \title{Shape component}
 \usage{
-plane_shape(location, input, seed, method = "naive")
+plane_shape(location, input, seed, method = "sdiff")
 }
 \arguments{
 \item{location}{Character vector with location code; the location must appear in input and seed}
