@@ -292,10 +292,10 @@ test_that("plane_shape flags novel shapes", {
   prepped_seed3 <- plane_seed(prepped_observed, cut_date = "2022-10-29") # need this cut date to test plane_shape
 
   ## We know there is a novel shape at location 13 that should be flagged:
-  expect_true(plane_shape(location = "13", input = prepped_forecast, seed = prepped_seed3)$indicator)
+  expect_true(plane_shape(location = "13", input = prepped_forecast, seed = prepped_seed3, method = "dtw")$indicator)
 
   ## We know that location 2 doesn't have any novel shapes that should be flagged:
-  expect_false(plane_shape(location = "02", input = prepped_forecast, seed = prepped_seed3)$indicator)
+  expect_false(plane_shape(location = "02", input = prepped_forecast, seed = prepped_seed3, method = "dtw")$indicator)
 
 })
 
