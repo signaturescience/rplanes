@@ -857,7 +857,7 @@ plane_shape <- function(location, input, seed, method = "naive") {
   # Set the window size and step size
   window_size <- input[["horizon"]]  # Adjust this based on your desired window size (horizon_length)
 
-  if(method == "simple") {
+  if(method == "sdiff") {
 
     ## set up input data using the observed points and forecasted point estimates
     input_data <- dplyr::tibble(value = c(obspoint, forepoint), date = dates)
