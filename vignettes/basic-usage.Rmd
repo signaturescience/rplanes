@@ -194,7 +194,7 @@ res %>%
   labs(x = "Number of flags raised", y = "Count")
 ```
 
-For the evaluated forecast, most of the locations had one or fewer of the flags raised. However, several locations had two or three of the five possible components flagged for implausibility.
+For the evaluated forecast, most of the locations had one or fewer of the flags raised. However, several locations had two or three of the seven possible components flagged for implausibility.
 
 # Analyzing plausibility of observed data
 
