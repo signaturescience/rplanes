@@ -58,7 +58,9 @@ ui <- navbarPage(title = "rplanes Explorer",
                                                                                                numericInput("sig", "Significance (Trend)", value = 0.1, min = 0, max = 1, step = 0.01))),
                                                                            shinyjs::hidden(div(id = "args_repeat",
                                                                                                numericInput("tol", label = "Tolerance (Repeat)", value = 0, min = 0, max = 50, step = 1),
-                                                                                               numericInput("pre", label = "Prepend Values (Repeat)",  value = 0, min = 0, max = 365, step = 1)))
+                                                                                               numericInput("pre", label = "Prepend Values (Repeat)",  value = 0, min = 0, max = 365, step = 1))),
+                                                                           shinyjs::hidden(div(id = "args_shape",
+                                                                                               radioButtons("method", label = "Method (Shape)", choices = c("Default" = "sdiff", "Dynamic Time Warping" = "dtw"), selected = "sdiff")))
                                                        )),
                                                        actionBttn("run", "Analyze", style = "unite", color = "danger"),
                                                        actionBttn("reset", "Reset", style = "stretch", color = "warning")
@@ -126,6 +128,7 @@ server <- function(input, output, session){
     shinyjs::toggle(id = "weight_choices", condition = {input$custom_weights == "Custom"})
     shinyjs::toggle(id = "args_trend", condition = {"trend" %in% input$components})
     shinyjs::toggle(id = "args_repeat", condition = {"repeat" %in% input$components})
+    shinyjs::toggle(id = "args_shape", condition = {"shape" %in% input$components})
     })
 
   # update scoring options based on user input of observed or forecast comparison
@@ -288,13 +291,13 @@ server <- function(input, output, session){
     scoring <- eventReactive(input$run,{
 
       if (input$tol == 0 & input$pre == 0){
-        comp_args <- list(trend = list(sig_lvl = input$sig), `repeat` = list(prepend = NULL, tolerance = NULL))
+        comp_args <- list(trend = list(sig_lvl = input$sig), `repeat` = list(prepend = NULL, tolerance = NULL), shape = list(method = input$method))
       } else if (input$tol == 0){
-        comp_args <- list(trend = list(sig_lvl = input$sig), `repeat` = list(prepend = input$pre, tolerance = NULL))
+        comp_args <- list(trend = list(sig_lvl = input$sig), `repeat` = list(prepend = input$pre, tolerance = NULL), shape = list(method = input$method))
       } else if (input$pre == 0){
-        comp_args <- list(trend = list(sig_lvl = input$sig), `repeat` = list(prepend = NULL, tolerance = input$tol))
+        comp_args <- list(trend = list(sig_lvl = input$sig), `repeat` = list(prepend = NULL, tolerance = input$tol), shape = list(method = input$method))
       } else {
-        comp_args <- list(trend = list(sig_lvl = input$sig), `repeat` = list(prepend = input$pre, tolerance = input$tol))
+        comp_args <- list(trend = list(sig_lvl = input$sig), `repeat` = list(prepend = input$pre, tolerance = input$tol), shape = list(method = input$method))
       }
 
       ## handle weights
