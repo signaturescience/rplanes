@@ -801,8 +801,6 @@ ggplot(data = trend_dat, mapping = aes(x = date, y = flu.admits)) +
 
 The shape component evaluates the shape of the trajectory of the forecast signal and compares that shape to existing shapes in the observed seed data. If the shape is identified as novel, a flag is raised, and the signal is considered implausible. 
 
-This function uses Dynamic Time Warping (DTW) to identify shapes and flag novel shapes. This function works in three broad steps. First, the prepared seed data is divided into a set of sliding windows, each representing a subset of the total trajectory shape of the observed data. Second, shape-based DTW distances are calculated for every combination of the observed sliding windows, and these distances are used to calibrate a distance threshold that will define whether or not a signal shape is novel. Third, we calculate DTW distances between the forecast signal and each of the observed sliding windows. If any of those distances are less than the defined threshold, the shape is not novel, no flag is raised, and the forecast is considered plausible.
-
 For more information on the shape algorithm, see `?plane_shape()`.
 
 ### Flagged as implausible
@@ -869,7 +867,7 @@ shape_dat %>%
 
 Next we'll look at an example of a forecast with a familiar shape that shouldn't trigger a flag:
 ```{r}
-point_est <- c(35, 18, 30, 20)
+point_est <- c(28, 18, 30, 20)
 
 prepped_forecast <-
   tibble(
