@@ -441,7 +441,7 @@ get_shapes <- function(input_data, window_size) {
   ## need to figure out the remainder and then use that as n rows to trim below
   rows_to_trim <- nrow(tmp_dat) %% window_size
 
-  ## add a column with the chunked catagorical differences created above
+  ## add a column with the chunked categorical differences created above
   ## this needs to be reversed to get the order correct and collapsed as a character vector
   ## also need to rearrange the data ascending by date now
   ## and lop off the number of "remainder" rows identified above
@@ -469,7 +469,7 @@ cutter <- function(x, threshold = 1) {
   if (x >= threshold) {
     "increase"
   } else if (x <= -threshold) {
-    "descrease"
+    "decrease"
   } else {
     "stable"
   }
