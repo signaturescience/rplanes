@@ -402,3 +402,100 @@ valid_location <- function(location, input, seed) {
   return(invisible(TRUE))
 
 }
+
+#' Determine shapes
+#'
+#' @description
+#'
+#' This unexported helper function is used to identify the shape in the `plane_shape()` function "simple" method.
+#'
+#' @param input_data A data frame containing at least two columns, one of which must be named "value" with the value assessed and another named "dates" with the date for the observed data
+#' @param window_size The number of of categorical differences used to define the shape
+#'
+#' @return A vector with the shapes identified. Each element of the vector will include a shape, which is a cluster of categorical differences (of the same size as the specified "window_size") collapsed with ";" (e.g., c("decrease;stable;stable;stable","stable;stable;stable;increase","stable;stable;increase;increase")).
+#'
+#'
+get_shapes <- function(input_data, window_size) {
+
+  ## create temporary data with differences for each consecutive observed value
+  ## NOTE: this assumes that data is coming in with date ascending
+  ## the difference is scaled and centered
+  tmp_dat <-
+    input_data %>%
+    dplyr::mutate(diff = .data$value - dplyr::lag(.data$value)) %>%
+    dplyr::mutate(scaled_diff = scale(.data$diff)[,1]) %>%
+    ## chop off first row because the value - lag will be NA
+    dplyr::filter(dplyr::row_number() > 1) %>%
+    ## resort with the dates descending for processing below
+    dplyr::arrange(dplyr::desc(.data$date)) %>%
+    ## describe the categorical difference (inc, decr, stable) with cutter() helper
+    dplyr::mutate(cat_diff = purrr::map_chr(.data$scaled_diff, function(x) cutter(x)))
+
+  ## split the categorical difference into windowed chunks
+  tmp_shapes <-
+    tmp_dat %>%
+    dplyr::pull(.data$cat_diff) %>%
+    to_chunk(., window_size)
+
+  ## the chunking may result in a "remainder" from windows not having enough shapes in the chunk
+  ## need to figure out the remainder and then use that as n rows to trim below
+  rows_to_trim <- nrow(tmp_dat) %% window_size
+
+  ## add a column with the chunked categorical differences created above
+  ## this needs to be reversed to get the order correct and collapsed as a character vector
+  ## also need to rearrange the data ascending by date now
+  ## and lop off the number of "remainder" rows identified above
+  tmp_dat %>%
+    dplyr::mutate(window_shapes = tmp_shapes %>% purrr::map(., rev) %>% purrr::map_chr(., paste0, collapse  = ";")) %>%
+    dplyr::arrange(.data$date) %>%
+    dplyr::filter(dplyr::row_number() > rows_to_trim) %>%
+    dplyr::pull(.data$window_shapes)
+
+}
+
+
+#' Cut into categorical differences
+#'
+#' @description
+#'
+#' This unexported helper function takes an input number for an observed difference and cuts it into a categorical description (e.g., "increase", "decrease", or "stable") of the change.
+#'
+#' @param x Vector of length 1 with scaled difference to be categorized
+#' @param threshold Limit used to define the categorical differences; default is `1`
+#'
+#' @return Character vector of length 1 with the categorical description of difference
+#'
+cutter <- function(x, threshold = 1) {
+  if (x >= threshold) {
+    "increase"
+  } else if (x <= -threshold) {
+    "decrease"
+  } else {
+    "stable"
+  }
+}
+
+#' Chunk a vector
+#'
+#' @description
+#'
+#' This unexported helper function creates a list with contents of a vector spit into chunks. The user can specify how large each chunk should be with the "size" argument.
+#'
+#' @param x Vector to be split into chunks as large as teh "size" specified
+#' @param size Width of the chunks for "x" vector
+#'
+#' @return A list with as many elements as the number of chunks created. Each element will include vector with a length equal to the "size" specified.
+#'
+to_chunk <- function(x, size) {
+
+  ## establish the beginning and end indices for the chunks
+  ## TODO: dont hardcode the 3 here ... should be by = 1 ?
+  # ind1 <- seq(1, length(x), by = size - 3)
+  ind1 <- seq(1, length(x), by = 1)
+  ind2 <- ind1 + (size - 1)
+  ## the last of the end indices cant be greater than length of input vector
+  ind2[length(ind2)] <- length(x)
+
+  ## index the input vector in the specified chunk
+  purrr::map2(ind1, ind2, function(start,end) x[start:end])
+}

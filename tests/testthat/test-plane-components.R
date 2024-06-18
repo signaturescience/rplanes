@@ -285,17 +285,36 @@ test_that("plane_trend flags known changepoints and is sensitive to changes in s
 
 test_that("plane_shape flags novel shapes", {
 
+  prepped_seed3 <- plane_seed(prepped_observed, cut_date = "2022-10-29") # need this cut date to test plane_shape
+
+  ## default method
+  ## create some data to test
+  ## make a forecast with increase;decrease;increase;decrease shape
+  point_est <- c(400,10,600,15)
+  prepped_forecast <-
+    dplyr::tibble(
+      location = "01",
+      date = seq(as.Date("2022-11-05"), as.Date("2022-11-26"), by = 7),
+      horizon = 1:4,
+      lower = point_est - 50,
+      ## make a novel shape in the point estimate
+      point = point_est,
+      upper = point_est + 50
+    ) %>%
+    to_signal(outcome = "flu.admits", type = "forecast", horizon = 4)
+
+  expect_true(plane_shape("01", prepped_forecast, prepped_seed3)$indicator)
+
+  ## dtw method
   prepped_forecast <- read_forecast(system.file("extdata/forecast/2022-10-31-SigSci-TSENS.csv",
                                                 package = "rplanes")) %>%
     to_signal(., outcome = "flu.admits", type = "forecast", horizon = 4)
 
-  prepped_seed3 <- plane_seed(prepped_observed, cut_date = "2022-10-29") # need this cut date to test plane_shape
-
   ## We know there is a novel shape at location 13 that should be flagged:
-  expect_true(plane_shape(location = "13", input = prepped_forecast, seed = prepped_seed3)$indicator)
+  expect_true(plane_shape(location = "13", input = prepped_forecast, seed = prepped_seed3, method = "dtw")$indicator)
 
   ## We know that location 2 doesn't have any novel shapes that should be flagged:
-  expect_false(plane_shape(location = "02", input = prepped_forecast, seed = prepped_seed3)$indicator)
+  expect_false(plane_shape(location = "02", input = prepped_forecast, seed = prepped_seed3, method = "dtw")$indicator)
 
 })
 

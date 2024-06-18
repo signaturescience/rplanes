@@ -737,6 +737,7 @@ plane_trend <- function(location, input, seed, sig_lvl = 0.1) {
 #' @param location Character vector with location code; the location must appear in input and seed
 #' @param input Input signal data to be scored; object must be one of [forecast][to_signal()]
 #' @param seed Prepared [seed][plane_seed()]
+#' @param method The method for determining shapes; must be one of "sdiff" or "dtw" (see Details); default is "sdiff"
 #'
 #' @return
 #'
@@ -747,7 +748,19 @@ plane_trend <- function(location, input, seed, sig_lvl = 0.1) {
 #'
 #' @details
 #'
-#' This function uses a Dynamic Time Warping (DTW) algorithm to identify shapes within the seed data and then compares the shape of the forecast input signal to the observed shapes. This is done in three broad steps:
+#' The approach for determining shapes can be customized by the user with the `plane_shape()` "method" argument. The two methods available are "sdiff" (default) and "dtw".
+#'
+#' The "sdiff" method will use consecutive scaled differences to construct shapes. The algorithm operates in three steps:
+#'
+#' 1. The prepared [seed][plane_seed()] data is combined with forecasted point estimates and each point-to-point difference is calculated.
+#'
+#' 2. The differences are centered and scaled, then cut into categories. Differences greater than or equal to 1 standard deviation above the mean of differences are considered an "increase". Differences less than or equal to 1 standard deviation below  the mean of differences are considered a "decrease". All other differences are considered "stable".
+#'
+#' 3. The categorical differences are then combined into windows of equal size to the forecasted horizon. Collectively these combined categorical differences create a "shape" (e.g., "increase;stable;stable;decrease").
+#'
+#' 4. Lastly, the algorithm compares the shape for the forecast to all of the shapes observed. If the shape assessed has not been observed in the time series before then a flag is raised and the indicator returned is `TRUE`.
+#'
+#' The "dtw" method uses a Dynamic Time Warping (DTW) algorithm to identify shapes within the seed data and then compares the shape of the forecast input signal to the observed shapes. This is done in three broad steps:
 #'
 #' 1. The prepared [seed][plane_seed()] data is divided into a set of sliding windows with a step size of one, each representing a section of the overall time series. The length of these windows is determined by the horizon length of the input data signal (e.g., 2 weeks). If your seed data was a vector, `c(1, 2, 3, 4, 5)`, and your horizon length was 2, then the sliding windows for your observed seed data would be: `c(1, 2)`, `c(2, 3)`, `c(3, 4)`, and `c(4, 5)`. Each sliding window is a subset of the total trajectory shape of the observed data.
 #'
@@ -789,14 +802,10 @@ plane_trend <- function(location, input, seed, sig_lvl = 0.1) {
 #' prepped_seed <- plane_seed(prepped_observed, cut_date = "2022-10-29")
 #'
 #' ## run plane component
-#' ## this location is an example of where we expect a flag to be raised
 #' plane_shape(location = "13", input = prepped_forecast, seed = prepped_seed)
 #'
-#' ## this location is an example of where we do not expect a flag to be raised
-#' plane_shape(location = "06", input = prepped_forecast, seed = prepped_seed)
 #'
-#'
-plane_shape <- function(location, input, seed) {
+plane_shape <- function(location, input, seed, method = "sdiff") {
 
   ## double check that location is in seed and input before proceeding
   valid_location(location, input, seed)
@@ -844,51 +853,71 @@ plane_shape <- function(location, input, seed) {
   # Set the window size and step size
   window_size <- input[["horizon"]]  # Adjust this based on your desired window size (horizon_length)
 
-  # Create sliding windows and return a data frame
-  obs_traj <- create_sliding_windows_df(obspoint, window_size)
+  if(method == "sdiff") {
 
-  # Calculate all distances in distance matrix:
-  distmat <- dtw::dtwDist(obs_traj)
-  diag(distmat) <- NA
+    ## set up input data using the observed points and forecasted point estimates
+    input_data <- dplyr::tibble(value = c(obspoint, forepoint), date = dates)
 
-  # Find minimum distances for each time series to use as a baseline for "observed distances" between chunks of the larger observed time series:
-  mins <- apply(distmat, 1, FUN = min, na.rm = TRUE)
+    ## run the get_shapes helper to get a vector of all shapes identified
+    all_shapes <- get_shapes(input_data, window_size)
 
-  # Find the maximum, minimum distance across the observed time series. This will be our threshold. If the minimum of the forecast:observed distance matrix is less than or equal to the greatest, minimum observed distance, than we can infer that the forecast is not a novel shape
-  threshold <- max(mins)
+    ## pull out the last shape ... which will be the forecasted shape given the setup for window size above
+    eval_shape <- tail(all_shapes,1)
+
+    ## check if the evaluated shape appears in the vector of all shapes
+    ## make sure that the last shape (the evaluated shape) is excluded
+    novel_shape <- !(eval_shape %in% all_shapes[-length(all_shapes)])
+
+  } else if (method == "dtw") {
+
+    # Create sliding windows and return a data frame
+    obs_traj <- create_sliding_windows_df(obspoint, window_size)
+
+    # Calculate all distances in distance matrix:
+    distmat <- dtw::dtwDist(obs_traj)
+    diag(distmat) <- NA
+
+    # Find minimum distances for each time series to use as a baseline for "observed distances" between chunks of the larger observed time series:
+    mins <- apply(distmat, 1, FUN = min, na.rm = TRUE)
+
+    # Find the maximum, minimum distance across the observed time series. This will be our threshold. If the minimum of the forecast:observed distance matrix is less than or equal to the greatest, minimum observed distance, than we can infer that the forecast is not a novel shape
+    threshold <- max(mins)
 
 
-  ############################################################
-  # Calculate forecast distances and flag any forecast that has an unusually high distance:
+    ############################################################
+    # Calculate forecast distances and flag any forecast that has an unusually high distance:
 
-  ## split the observed windows matrix from above into a list
-  list_obs_traj <-
-    obs_traj %>%
-    dplyr::mutate(index = 1:dplyr::n()) %>%
-    dplyr::group_split(.data$index) %>%
-    purrr::map(., ~dplyr::select(.x, -.data$index) %>% unlist(., use.names = FALSE))
+    ## split the observed windows matrix from above into a list
+    list_obs_traj <-
+      obs_traj %>%
+      dplyr::mutate(index = 1:dplyr::n()) %>%
+      dplyr::group_split(.data$index) %>%
+      purrr::map(., ~dplyr::select(.x, -.data$index) %>% unlist(., use.names = FALSE))
 
-  ## split the forecast components ...
-  ## ... the lower bound, point estimate, upper bound ...
-  ## ... into a list
-  forc_list <- list(lower = forecast$lower,
-                    point = forecast$point,
-                    upper = forecast$upper)
+    ## split the forecast components ...
+    ## ... the lower bound, point estimate, upper bound ...
+    ## ... into a list
+    forc_list <- list(lower = forecast$lower,
+                      point = forecast$point,
+                      upper = forecast$upper)
 
-  ## create all combinations of elements from these two lists
-  to_map <- tidyr::crossing(obs = list_obs_traj, forc = forc_list)
+    ## create all combinations of elements from these two lists
+    to_map <- tidyr::crossing(obs = list_obs_traj, forc = forc_list)
 
-  ## iterate over the combinations and compute distances
-  ## NOTE: need to get the first element to get the vectors stored in the list
-  dtw_distances <- purrr::map2_dbl(to_map$forc, to_map$obs, ~dtw::dtw(.x,.y)$distance)
+    ## iterate over the combinations and compute distances
+    ## NOTE: need to get the first element to get the vectors stored in the list
+    dtw_distances <- purrr::map2_dbl(to_map$forc, to_map$obs, ~dtw::dtw(.x,.y)$distance)
 
-  ## check to see if each distance is <= the defined threshold
-  novel_shape_check <- purrr::map_lgl(dtw_distances, function(x) ifelse(x<= threshold, FALSE, TRUE))
+    ## check to see if each distance is <= the defined threshold
+    novel_shape_check <- purrr::map_lgl(dtw_distances, function(x) ifelse(x<= threshold, FALSE, TRUE))
 
-  ## are any of the distances checked <= than the threshold?
-  ## if so this will return TRUE and a flag should be raised
-  ## if any of the shape check results are FALSE then this will return FALSE (no flag)
-  novel_shape <- all(novel_shape_check)
+    ## are any of the distances checked <= than the threshold?
+    ## if so this will return TRUE and a flag should be raised
+    ## if any of the shape check results are FALSE then this will return FALSE (no flag)
+    novel_shape <- all(novel_shape_check)
+
+  }
+
 
   return(list(indicator = novel_shape))
 
