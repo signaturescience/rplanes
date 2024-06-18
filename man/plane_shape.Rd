@@ -68,11 +68,7 @@ prepped_forecast <- read_forecast(system.file("extdata/forecast/2022-10-31-SigSc
 prepped_seed <- plane_seed(prepped_observed, cut_date = "2022-10-29")
 
 ## run plane component
-## this location is an example of where we expect a flag to be raised
 plane_shape(location = "13", input = prepped_forecast, seed = prepped_seed)
-
-## this location is an example of where we do not expect a flag to be raised
-plane_shape(location = "06", input = prepped_forecast, seed = prepped_seed)
 
 
 }

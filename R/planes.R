@@ -802,11 +802,7 @@ plane_trend <- function(location, input, seed, sig_lvl = 0.1) {
 #' prepped_seed <- plane_seed(prepped_observed, cut_date = "2022-10-29")
 #'
 #' ## run plane component
-#' ## this location is an example of where we expect a flag to be raised
 #' plane_shape(location = "13", input = prepped_forecast, seed = prepped_seed)
-#'
-#' ## this location is an example of where we do not expect a flag to be raised
-#' plane_shape(location = "06", input = prepped_forecast, seed = prepped_seed)
 #'
 #'
 plane_shape <- function(location, input, seed, method = "sdiff") {
