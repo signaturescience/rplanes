@@ -1,5 +1,5 @@
 ---
-title: "PLANES Interpretations and Limitations"
+title: "`rplanes` Interpretations and Limitations"
 output: 
   rmarkdown::html_vignette:
     toc: TRUE
@@ -29,103 +29,81 @@ library(dplyr)
 
 # Overview
 
-The `rplanes` package website has vignettes on [basic usage](basic-usage.html) as well as a description of [individual components](planes-components.html). This vignette will go into greater detail about the interpretation and analysis of `rplanes` outputs (including its weighting scheme) and some of the package's limitations. 
+The `rplanes` package website offers vignettes on [basic usage](basic-usage.html) and descriptions of [individual components](planes-components.html). This vignette goes into greater detail about the interpretation and analysis of `rplanes` outputs, including its weighting scheme, and discusses some of the package's limitations. 
 
 
 
 
 # Weighting Scheme within `plane_score()`:
-  - We include an optional `weights` argument within the wrapper function, `plane_score()`. For details about `plane_score()`, users should refer to the “Basic Usage” vignette.
-  - Rationale behind including weighting scheme:
-     - The score may be context-dependent. Some users may be more or less concerned with certain components being raised.
-     - Added `weights` argument to `plane_score()`, where the default is `NULL` and all components will be weighted equally.
-  - If `weights` != `NULL`, then the user must specify a vector where each value represents the weight given to each component. The length of the vector must equal the number of components used in the `components` argument of `plane_score()`.
+The `plane_score()` wrapper function includes an optional `weights` argument. For details about `plane_score()`, users should refer to the [basic usage](basic-usage.html) vignette. The weighting scheme is incorporated, because scores may be context-dependent. Users may have varying concerns about specific components being highlighted. The `weights` argument in `plane_score()` allows customization, where the default is `NULL` and all components are weighted equally. If `weights` != `NULL`, users must specify a vector with each value representing the weight given to each component. The length of the vector must equal the number of components used in the `components` argument of `plane_score()`.
 
 
-## Weighting examples and rationale:
-  - *Difference component, `plane_diff()`:*
-    - Perhaps a user is retrospectively analyzing forecast signals after the observed data for that horizon has been reported.
-    - The user might know that a large jump in reported cases actually occurred (according to the ground-truth, observed data).
-    - Therefore, a user might not be as interested in the difference component which evaluates the forecast and raises a flag if there is a point-to-point difference greater than any difference found in the observed seed.
-    - However, one might still be interested in any exorbitant jumps in forecasted cases.
-    - So rather than completely eliminating the difference component, the user can reduce the weight of the difference component from within `plane_score()`.
-    
-  - *Repeat Component, `plane_repeat()`:* maybe it’s the beginning of a season and you know that there tend to be a lot of zeros, then you might want to reduce the relative weight of `plane_zero()` and `plane_repeat()`.
-  - *Trend component, `plane_trend()`:* maybe it’s the beginning of an expected large uptick in cases. You might want to increase the weight of `plane_trend()` so that an unexpected dip in cases would be more heavily penalized.
-  - *Shape Component, `plane_shape()`:* if you’re working with a short time-series of seed data that only covers several months, you will likely see many shape flags, because the seed data simply does not contain many shapes.
-    - We could address this by decreasing the sensitivity of `plane_shape()`, but we could also reduce the relative weight of the shape function.
+## Weighting Examples and Rationale:
+Consider a user who is retrospectively analyzing forecast signals after the ground-truth, observed data for that horizon has been reported, and they are aware that a large jump in reported cases actually occurred. In this scenario, they might be less interested in the difference component, `plane_diff()`, which evaluates the forecast and raises a flag if there is a point-to-point difference greater than any difference found in the observed seed. However, the user might still be concerned about any exorbitant jumps in forecasted cases. Rather than eliminating the difference component altogether, the user can reduce its weight within `plane_score()`.
+
+At the beginning of a season, when there tend to be many zeros, users may want to reduce the relative weight of the `plane_zero()` and `plane_repeat()` components. This adjustment helps to account for the seasonality and expected patterns in the data.
+
+During an expected large uptick in cases, users might increase the weight of the `plane_trend()` component to more heavily penalize unexpected dips in cases. This ensures that significant trends are given the appropriate emphasis in the analysis.
+
+When working with short time-series seed data that only covers several months, users may encounter many shape flags due to the limited number of shapes found in the seed data. In such cases, users can either decrease the sensitivity of the `plane_shape()` component or reduce its relative weight to avoid excessive flagging.
 
 
 
-
-# Limitations that arise from seed data:
-  - There are several considerations when thinking about the observed data that is used as the seed object (see [Basic Usage vignette](basic-usage.html) for instructions related to creating a seed object).
-  - The seed data is the data that our components treat as the reference truth, so results will depend upon the reliability and length of your seed data.
+# Limitations that Arise from Seed Data:
+Several considerations must be made when thinking about the observed data that is used as the seed object (see [Basic Usage vignette](basic-usage.html) for instructions related to creating a seed object). The seed data serves as the reference truth for our components, so results will depend upon the reliability and length of the seed data.
 
 
 
 ## Reliability of Seed Data:
-  - If the observed seed data has reporting issues, backfill, manual entry mistakes, biases, or any other problems that make it less reliable than ideal, any number of erroneous behaviors may occur with rplanes (too many or too few flags).
-  - If there are known issues with the seed data, the user should carefully consider all [individual components](planes-components.html) used in `plane_score()` and assess whether these issues will bias the results of their plausibility analysis. 
-  - One example of an issue that we have run into with unreliable seed data is lack of reporting in certain locations. We have had training data with many consecutive zeros across a long time-span followed by more reliable reporting. In this case, rplanes would rarely (if ever) raise flags for too many repeats, `plane_repeat()`, or zeros, `plane_zero()`. In this situation, it might make sense to truncate the seed data such that it begins when the observed signal becomes more reliable (after the repeated zeros have ended and a “normal” case count has begun).
+Unreliable seed data, such as data with reporting issues, backfill, manual entry mistakes, biases, or any other problems that make it less reliable than ideal, can cause erroneous behaviors in `rplanes` (i.e., too many or too few flags). If there are known issues within the seed data, users should carefully consider all [individual components](planes-components.html) used in `plane_score()` and assess whether these issues will bias the results of their plausibility analysis. 
+
+One example of an issue with unreliable seed data is lack of reporting in certain locations. Some training seed data may contain many consecutive zeros across a long time-span followed by more reliable reporting. In this case, `rplanes` would rarely (if ever) raise flags for too many repeats, `plane_repeat()`, or zeros, `plane_zero()`. In such cases, truncating the seed data to begin when reporting becomes more reliable should improve performance.
+
 
 
 ## Length of Seed Data:
-  - In general, more training data provides more reliable results, but we should consider computational costs and a potential reduction in sensitivity in some components as the length of the observed seed data increases.
-  
-  
-### Seed data not long enough: 
+In general, more training data provides more reliable results, but users should consider computational costs and a potential reduction in sensitivity in some components as the length of the observed seed data increases.
 
-First, let’s consider if the seed data is too short:
 
-  - Most of our individual components have a required seed length to signal length ratio that must be met for the function to run (e.g., `plane_shape()` requires that the seed is at least 4 times the length of the forecast being evaluated).
-  - Even with this built in minimum length, there are still cases where the seed data may be too short to produce reasonable results.
-  - When the seed data is shorter, `plane_diff()`, `plane_repeat()`, `plane_shape()`, and `plane_zero()` become more sensitive and will therefore produce more flags.
-  - Below is a list of possible complications caused by a seed object that is too short. For all of these potential issues, you should manually examine flagged locations for plausibility and consider reducing their relative weights within the `plane_score()` function.
+
+### Seed Data is too Short: 
+Short seed data can cause higher sensitivity in some components and result in more flags. Most of the individual components have a required seed length to signal length ratio that must be met for the function to run (e.g., `plane_shape()` requires that the seed is at least 4 times the length of the forecast being evaluated). However, even with a built in minimum length, there are cases where the seed data may be too short to produce reasonable results. When the seed data is shorter, `plane_diff()`, `plane_repeat()`, `plane_shape()`, and `plane_zero()` become more sensitive and will therefore produce more flags.
+
+Below is a list of possible complications caused by a seed object that is too short. For all of these potential issues, you should manually examine flagged locations for plausibility and consider reducing their relative weights within the `plane_score()` function.
 
 
 ```{r, eval=TRUE, echo=FALSE}
 tibble(
   `Component` = c("Difference", "Repeat", "Shape", "Zero"),
   `Function Description` = c("Point-to-point difference", "Values repeat more than expected", "Shape of signal trajectory has not been observed in seed data", "Zeros found in signal when not in seed"),
-  `Reason for Issue` = c("Without enough point-to-point differences evaluated in the seed data, a true and reasonable jump in the signal may be flagged.", "If there are by chance no repeats in the seed, a single repeat will not be tolerated and will be flagged (also true for very few repeats). Decreasing the prepend length and increasing the repeat tolerance should help mitigate this.", "A short seed object means that there are fewer signal trajectory shapes that can be compared to the signal so a reasonable trajectory might be flagged.", "If there are no zeros in the seed a single zero in the signal will not be tolerated and will be flagged")
+  `Reason for Issue` = c("Without enough point-to-point differences evaluated in the seed data, a true and reasonable jump in the signal may be flagged as implausible.", "If there are, by chance, no repeats in the seed, a single repeat will not be tolerated and will be flagged (also true for very few repeats). Decreasing the prepend length and/or increasing the repeat tolerance should help mitigate this.", "A short seed object is comprised of fewer signal trajectory shapes that can be compared to the signal, so a reasonable trajectory might be erroneously flagged.", "If there are no zeros in the seed, a single zero in the signal will not be tolerated and will be flagged")
 ) %>%
   knitr::kable()
 ```
   
   
   
-### Seed data is too long:
-  - If the seed data is too long, you’ll see the opposite behaviors with the same components (`plane_diff()`, `plane_repeat()`, `plane_shape()`, and `plane_zero()`). They will become less sensitive, and you may see fewer flags.
-  - Unlike situations where the seed data is too short, changing the relative weights of these components will not have as much of an impact on overall scores. Down-weighting the components when using a short seed object causes potentially erroneous flags to have less of an effect on the overall score, however increasing the weights will not cause more flags to be raised.
-  - Further, manual inspection of flags that did not get raised is much trickier and will take longer. Instead, we suggest truncating your seed data if you are getting unreliable results.
-  - Truncating your seed data has the added benefit of reducing computational cost, but users should perform sensitivity analyses to arrive at the ideal length for their seed data.
-  - For `plane_repeat()`, increasing the prepend length and decreasing the repeat tolerance should increase the sensitivity of this component.
+### Seed Data is too Long:
+If the seed data is too long, you’ll see the opposite behaviors with the same components (`plane_diff()`, `plane_repeat()`, `plane_shape()`, and `plane_zero()`). They will become less sensitive, and you may see fewer flags. Specifically, for `plane_repeat()`, increasing the `prepend` length and decreasing the repeat tolerance should increase the sensitivity of this component. Unlike situations when the seed data is too short, changing the relative weights of these components will not have as much of an impact on overall scores. Down-weighting the components when using a short seed object causes potentially erroneous flags to have less of an effect on the overall score, however increasing the weights will not cause more flags to be raised (i.e., changing the weights does not change the sensitivity of components). Further, manual inspection of "negative flags" is much more challenging and time-consuming. Instead, we suggest truncating the seed data if `plane_score()` is producing unreliable results. Truncating the seed data has the added benefit of reducing computational cost, but users should perform sensitivity analyses to arrive at the ideal length for their seed data.
   
   
-#### Real-world Covid example of seed data that is too long:
-  - Let’s look at one real-world example where a time-series seed object would be too long. If a user is working with a very long time-series that covers many seasons of epidemiological signals for the same target, the sensitivity of some components will decrease. If using `plane_shape()`, a longer time-series means there are more unique shapes in the seed; this will result fewer novel shapes in forecasts. Therefore, fewer flags will be raised.
-  - Having observed a similar epidemiological signal before is not (alone) enough justification to say that this shape is not unusual and should not be flagged. 
-  - For example, if we were evaluating covid forecasts and saw forecast trajectories that mimicked covid signals from 2020, that should be flagged. If your seed data included pandemic case counts, it would not be flagged.
+#### Real-World COVID Example
+A very long time-series seed object, covering multiple seasons of epidemiological signals for the same target, reduces the sensitivity of some components. For example, if `plane_shape()` is being used, a longer seed time-series will contain more unique shapes, resulting in fewer novel shapes in forecasts and fewer flags being raised. Having observed a similar epidemiological signal before is not (alone) enough justification to infer that this shape is not unusual and should not be flagged. COVID forecasts in 2024 with trajectories mimicking signals from 2020 should be flagged as implausible. If a user's reference seed data included pandemic case counts however, it would not be flagged.
 
 
 
+# What to Do When a Flag is Raised:
+When a flag is raised, the following steps are recommended:
 
-# What to do when a flag is raised:
-  - This vignette has already addressed much of the protocol for what to do when a flag is raised and the evaluated signal is deemed implausible, but let’s recap. When a flag (or flags) are raised:
-    - Manually inspect the signal (plot observed seed data along with the signal being evaluated).
-    - If there are many flags raised and the signal appears implausible to a subject matter expert, you can likely accept this plausibility score and censor that forecast from your downstream analyses. You could also use the score for this forecast as a downstream weight (in an ensemble model for example).
-    - If there were one or more flags raised and the signal does not immediately appear implausible, inspect the individual components that were flagged.
-      - Changing the arguments for `plane_repeat()` and `plane_trend()` can increase or decrease their sensitivity.
-      - If your seed data is too short, `plane_diff()`, `plane_repeat()`, `plane_shape()`, and `plane_zero()` will be overly sensitive. You could either weight these components less within `plane_score()`, or you could remove them altogether.
+1. Manually inspect the signals by plotting the observed seed data along with the signal being evaluated.
+2. If many flags are raised and the signal appears implausible to subject matter experts, users can likely accept the plausibility score and censor that forecast from your downstream analyses. The score could also be used as a downstream weight for this forecast (in an ensemble model for example).
+3. If flags are raised but the signal does not appear implausible, inspect the individual flagged components. Adjusting the arguments for `plane_repeat()` and `plane_trend()` can increase or decrease their sensitivity. Short seed data can cause certain components to be overly-sensitive (`plane_diff()`, `plane_repeat()`, `plane_shape()`, and `plane_zero()`), and users can either weight these components less within `plane_score()` or remove them altogether.
 
-  - We also recommend performing a retrospective analysis of scoring and sensitivity before interpreting the `plane_score()` output to determine how many flags are "normal" for a *specific* signal being analyzed (e.g. Lyme disease vs. influenza or influenza in Florida vs. in New York).
+Retrospective analysis of scoring and sensitivity before interpreting `plane_score()` output can help determine normal flag frequencies for specific signals, such as Lyme disease versus influenza or influenza in Florida versus New York.
 
 
 # Key Takeaways:
-  - There are myriad reasons that a user might want to change the relative weights of individual components or leave components out of the `plane_score()` function altogether.
-  - We ultimately suggest manual inspection of all raised flags, because flags can be raised erroneously for all of the reasons discussed in this vignette. 
-  - Further, we suggest selecting (or simulating) a few signals that you would expect to trigger flags in `plane_diff()`, `plane_repeat()`, `plane_shape()`, and `plane_zero()` for calibration purposes. These are the components that are most impacted by the length and quality of the seed data. Additionally, you should calibrate the significance level argument that is used in `plane_trend()` to accurately capture unexpected inflection points in forecast signals.
+There are myriad reasons that a user might want to change the relative weights of individual components or leave components out of the `plane_score()` function altogether. Manual inspection of all raised flags is crucial, because flags can be raised erroneously for all of the reasons discussed in this vignette. Further, we recommend selecting (or simulating) a few signals that you would expect to trigger flags in `plane_diff()`, `plane_repeat()`, `plane_shape()`, and `plane_zero()` for calibration purposes. These components are most affected by the length and quality of the seed data. Additionally, calibration of the significance level argument in `plane_trend()` is suggested to accurately capture unexpected inflection points in forecast signals.
 
 
 
