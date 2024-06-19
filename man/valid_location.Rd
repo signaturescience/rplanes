@@ -17,5 +17,5 @@ valid_location(location, input, seed)
 The validation will return with a \code{stop()} if the location is not found in the seed or input signal. Otherwise the function will invisibly return \code{TRUE} indicating that the location is valid.
 }
 \description{
-This unexported helper is used inside of the individual plausibility component functions (e.g., \code{plane_diff()}) to validate that the location specified appears in both the input signal and seed.
+This unexported helper is used inside of the individual plausibility component functions (e.g., \code{plane_diff()}) to validate that the location specified appears in both the input signal and seed and that the location has as many values as other locations in the seed.
 }
