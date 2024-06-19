@@ -377,7 +377,7 @@ create_sliding_windows_df <- function(vector, window_size) {
 #'
 #' @description
 #'
-#' This unexported helper is used inside of the individual plausibility component functions (e.g., `plane_diff()`) to validate that the location specified appears in both the input signal and seed.
+#' This unexported helper is used inside of the individual plausibility component functions (e.g., `plane_diff()`) to validate that the location specified appears in both the input signal and seed and that the location has as many values as other locations in the seed.
 #'
 #'
 #' @param location Character vector with location code; the location must appear in input and seed
@@ -396,6 +396,17 @@ valid_location <- function(location, input, seed) {
 
   if(!location %in% input$data$location) {
     stop(sprintf("%s does not appear in the input object. Check that the input was prepared with the location specified.", location))
+  }
+
+  ## check to see if the location has fewer than max values
+  all_lengths <-
+    seed %>%
+    purrr::map(., "all_values") %>%
+    purrr::map(., function(x) x[!is.na(x)]) %>%
+    purrr::map_dbl(., length)
+
+  if(!all_lengths[location] == max(all_lengths)) {
+    warning(sprintf("%s has fewer values than some or all of the locations. This may introduce issues in downstream plausibility analysis.", location))
   }
 
   ## if the validation proceeds this far return TRUE
