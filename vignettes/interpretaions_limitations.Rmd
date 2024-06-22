@@ -29,10 +29,7 @@ library(dplyr)
 
 # Overview
 
-The `rplanes` package website offers vignettes on [basic usage](basic-usage.html) and descriptions of [individual components](planes-components.html). This vignette goes into greater detail about the interpretation and analysis of `rplanes` outputs, including its weighting scheme, and discusses some of the package's limitations. 
-
-
-
+The `rplanes` package includes vignettes detailing [basic usage](basic-usage.html) and descriptions of the [individual components](planes-components.html) that the package uses for plausibility analysis. This vignette focuses on interpreting `rplanes` plausibility outputs. The content includes a primer on the weighting scheme for plausibility components, a discussion of limitations that may arise from relying on seed data, and considerations for what to do when a flag is raised.
 
 # Weighting Scheme within `plane_score()`:
 The `plane_score()` wrapper function includes an optional `weights` argument. For details about `plane_score()`, users should refer to the [basic usage](basic-usage.html) vignette. The weighting scheme is incorporated, because scores may be context-dependent. Users may have varying concerns about specific components being highlighted. The `weights` argument in `plane_score()` allows customization, where the default is `NULL` and all components are weighted equally. If `weights` != `NULL`, users must specify a vector with each value representing the weight given to each component. The length of the vector must equal the number of components used in the `components` argument of `plane_score()`.
