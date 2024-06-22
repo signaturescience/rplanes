@@ -31,22 +31,22 @@ library(dplyr)
 
 The `rplanes` package includes vignettes detailing [basic usage](basic-usage.html) and descriptions of the [individual components](planes-components.html) that the package uses for plausibility analysis. This vignette focuses on interpreting `rplanes` plausibility outputs. The content includes a primer on the weighting scheme for plausibility components, a discussion of limitations that may arise from relying on seed data, and considerations for what to do when a flag is raised.
 
-# Weighting Scheme within `plane_score()`:
-The `plane_score()` wrapper function includes an optional `weights` argument. For details about `plane_score()`, users should refer to the [basic usage](basic-usage.html) vignette. The weighting scheme is incorporated, because scores may be context-dependent. Users may have varying concerns about specific components being highlighted. The `weights` argument in `plane_score()` allows customization, where the default is `NULL` and all components are weighted equally. If `weights` != `NULL`, users must specify a vector with each value representing the weight given to each component. The length of the vector must equal the number of components used in the `components` argument of `plane_score()`.
+# Weighting scheme within `plane_score()`
 
+The `plane_score()` function allows users to evaluate multiple plausibility components simultaneously (i.e., without having to call individual scoring functions for each given component). This wrapper returns an overall score to summarize all components evaluated. The `plane_score()` function includes an optional "weights" argument that allows user-specified weighting of components in the overall score. By default (`weights = NULL`), each component is given equal weighting. To optionally weight certain components higher or lower, the user must specify a named vector with each value representing the weight given to each component. The length of the vector must equal the number of components used in the `components` argument of `plane_score()`. For more technical details about `plane_score()` or how to apply the weighting scheme, users should refer to the function documentation (`?plane_score`) or the [basic usage](basic-usage.html) vignette. 
 
-## Weighting Examples and Rationale:
-Consider a user who is retrospectively analyzing forecast signals after the ground-truth, observed data for that horizon has been reported, and they are aware that a large jump in reported cases actually occurred. In this scenario, they might be less interested in the difference component, `plane_diff()`, which evaluates the forecast and raises a flag if there is a point-to-point difference greater than any difference found in the observed seed. However, the user might still be concerned about any exorbitant jumps in forecasted cases. Rather than eliminating the difference component altogether, the user can reduce its weight within `plane_score()`.
+## Motivations for weighting
 
-At the beginning of a season, when there tend to be many zeros, users may want to reduce the relative weight of the `plane_zero()` and `plane_repeat()` components. This adjustment helps to account for the seasonality and expected patterns in the data.
+The weighting scheme is incorporated because scores may be context-dependent. In other words, users may have varying concerns about specific components being evaluated given the timing, historical data patterns, and specific goals of their plausibility assessment. Below we have included several examples highlighting use-cases for applying the weighting scheme to `plane_score()`:
 
-During an expected large uptick in cases, users might increase the weight of the `plane_trend()` component to more heavily penalize unexpected dips in cases. This ensures that significant trends are given the appropriate emphasis in the analysis.
-
-When working with short time-series seed data that only covers several months, users may encounter many shape flags due to the limited number of shapes found in the seed data. In such cases, users can either decrease the sensitivity of the `plane_shape()` component or reduce its relative weight to avoid excessive flagging.
-
-
+- If users are retrospectively analyzing forecast signals after the ground-truth, observed data for that horizon has been reported, they may be aware that a large jump in reported cases actually occurred. In this scenario, they might be less interested in the *difference* component, which evaluates the forecast and raises a flag if there is a point-to-point difference greater than any difference found in the observed seed. However, the user might still be concerned about any exorbitant jumps in forecasted cases. Rather than eliminating the difference component altogether, the user can reduce its weight within `plane_score()`.
+- During an expected large uptick in cases, users might increase the weight of the *trend* component to more heavily penalize unexpected dips in cases. This ensures that significant trends are given the appropriate emphasis in the analysis.
+- At the beginning of a season, when there tend to be many zeros, users might decide to reduce the relative weight of the *zero* and *repeat* components. This adjustment may help account for the seasonality and expected patterns in the data.
+- When working with relatively short time-series seed data that only covers several months, users may encounter many shape flags due to the limited number of shapes found in the seed data. In such cases, users can either decrease the sensitivity of the *shape* component or reduce its relative weight to avoid excessive flagging.
+- If evaluating forecasts operationally, users may be more interested in ensuring that calibration of prediction intervals. In this case, the *cover* and *taper* components might merit higher weighting. 
 
 # Limitations that Arise from Seed Data:
+
 Several considerations must be made when thinking about the observed data that is used as the seed object (see [Basic Usage vignette](basic-usage.html) for instructions related to creating a seed object). The seed data serves as the reference truth for our components, so results will depend upon the reliability and length of the seed data.
 
 
