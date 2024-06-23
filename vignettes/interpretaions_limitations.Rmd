@@ -45,35 +45,26 @@ The weighting scheme is incorporated because scores may be context-dependent. In
 - When working with relatively short time-series seed data that only covers several months, users may encounter many shape flags due to the limited number of shapes found in the seed data. In such cases, users can either decrease the sensitivity of the *shape* component or reduce its relative weight to avoid excessive flagging.
 - If evaluating forecasts operationally, users may be more interested in ensuring that prediction intervals are appropriately calibrated (e.g., not too narrow). In this case, the *cover* and *taper* components might merit higher weighting. 
 
-# Limitations that Arise from Seed Data:
+# Limitations that arise from seed data
 
-Several considerations must be made when thinking about the observed data that is used as the seed object (see [Basic Usage vignette](basic-usage.html) for instructions related to creating a seed object). The seed data serves as the reference truth for our components, so results will depend upon the reliability and length of the seed data.
+As described in the [basic usage](basic-usage.html) vignette, the `rplanes` plausibility analysis procedure requires establishing a "seed" object based on an observed signal. The seed data serves as the basis for the background characteristics used to assess plausibility. As such, plausibility results will depend upon the reliability and length of the time series used to establish the seed data. Here we discuss how both of these issues could manifest in the seed and their potential impact on plausibility analysis with `rplanes`.
 
+## Reliability of seed data
 
+The plausibility analysis in `rplanes` assumes that users have access to observed data to establish baseline characteristics of the time series. Presumably, this observed signal is trustworthy and is a faithful representation of what we should expect from the signal to be evaluated. However, in practice data issues such as lagged reporting, backfill, and any other systematic bias in ascertainment may lead to unexpected behaviors in `rplanes` (i.e., too many or too few flags). If there are known. If there are known issues within the seed data, users should carefully consider all [individual components](planes-components.html) used in the plausibility scoring and determine how these issues might impact the results of their plausibility analysis. For example, consider observed data that may lack consistent reporting in certain locations, particularly early on in the time series. In this case, the seed data might contain many consecutive zeros across a long time-span followed by more reliable reporting at these locations. In this case, `rplanes` would rarely (if ever) raise flags for the *repeat* and *zero* components. In such cases, truncating the observed data to begin when reporting becomes more reliable prior to creating the seed may be appropriate. 
 
-## Reliability of Seed Data:
-Unreliable seed data, such as data with reporting issues, backfill, manual entry mistakes, biases, or any other problems that make it less reliable than ideal, can cause erroneous behaviors in `rplanes` (i.e., too many or too few flags). If there are known issues within the seed data, users should carefully consider all [individual components](planes-components.html) used in `plane_score()` and assess whether these issues will bias the results of their plausibility analysis. 
+## Length of seed data
 
-One example of an issue with unreliable seed data is lack of reporting in certain locations. Some training seed data may contain many consecutive zeros across a long time-span followed by more reliable reporting. In this case, `rplanes` would rarely (if ever) raise flags for too many repeats, `plane_repeat()`, or zeros, `plane_zero()`. In such cases, truncating the seed data to begin when reporting becomes more reliable should improve performance.
+Besides the reliability, the length (i.e., number of observations) of the observed signal used to create the seed can influence the `rplanes` plausibility scoring. In general, more data provides higher resolution for the characteristics that could manifest in evaluated data. However, users should be aware of computational costs and a potential reduction in sensitivity in some components as the length of the observed seed data increases. Here we provide a several considerations and examples of balancing length of observed used to create a seed. 
 
-
-
-## Length of Seed Data:
-In general, more training data provides more reliable results, but users should consider computational costs and a potential reduction in sensitivity in some components as the length of the observed seed data increases.
-
-
-
-### Seed Data is too Short: 
-Short seed data can cause higher sensitivity in some components and result in more flags. Most of the individual components have a required seed length to signal length ratio that must be met for the function to run (e.g., `plane_shape()` requires that the seed is at least 4 times the length of the forecast being evaluated). However, even with a built in minimum length, there are cases where the seed data may be too short to produce reasonable results. When the seed data is shorter, `plane_diff()`, `plane_repeat()`, `plane_shape()`, and `plane_zero()` become more sensitive and will therefore produce more flags.
-
-Below is a list of possible complications caused by a seed object that is too short. For all of these potential issues, you should manually examine flagged locations for plausibility and consider reducing their relative weights within the `plane_score()` function.
+In scenarios when the seed has been created with a relatively small number of observations, users may notice that some components have higher sensitivity resulting in more flags raised. Some of the individual components have a required seed length to signal length ratio that must be met for the function to run (e.g., *shape* requires that the seed is at least four times the length of the forecast being evaluated). However, even with a built in minimum length, there are cases where the seed data may be too short to produce reasonable results. For example, consider evaluating a forecast of four horizons ahead. In this case, the seed must contain at least 16 weekly observations for the given location in this case. However, 16 weeks is roughly four months of data, which (depending on seasonality and timing of the observations) may not adequately capture all of the shapes that could plausibly manifest four weeks into the future. Below is a list of some potential complications caused by a seed object that is too short. For all of these possible issues, we recommend that users should manually examine flagged locations for plausibility and consider reducing their relative weights within the `plane_score()` function.
 
 
 ```{r, eval=TRUE, echo=FALSE}
 tibble(
   `Component` = c("Difference", "Repeat", "Shape", "Zero"),
-  `Function Description` = c("Point-to-point difference", "Values repeat more than expected", "Shape of signal trajectory has not been observed in seed data", "Zeros found in signal when not in seed"),
-  `Reason for Issue` = c("Without enough point-to-point differences evaluated in the seed data, a true and reasonable jump in the signal may be flagged as implausible.", "If there are, by chance, no repeats in the seed, a single repeat will not be tolerated and will be flagged (also true for very few repeats). Decreasing the prepend length and/or increasing the repeat tolerance should help mitigate this.", "A short seed object is comprised of fewer signal trajectory shapes that can be compared to the signal, so a reasonable trajectory might be erroneously flagged.", "If there are no zeros in the seed, a single zero in the signal will not be tolerated and will be flagged")
+  `Description` = c("Point-to-point difference", "Values repeat more than expected", "Shape of signal trajectory has not been observed in seed data", "Zeros found in signal when not in seed"),
+  `Issue` = c("Without enough point-to-point differences evaluated in the seed data, a true and reasonable jump in the signal may be flagged as implausible.", "If there are, by chance, no repeats in the seed, a single repeat will not be tolerated and will be flagged (also true for very few repeats). Decreasing the prepend length and/or increasing the repeat tolerance should help mitigate this.", "A short seed object is comprised of fewer signal trajectory shapes that can be compared to the signal, so a reasonable trajectory might be erroneously flagged.", "If there are no zeros in the seed, a single zero in the signal will not be tolerated and will be flagged.")
 ) %>%
   knitr::kable()
 ```
