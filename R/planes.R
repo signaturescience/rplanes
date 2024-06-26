@@ -802,8 +802,10 @@ plane_trend <- function(location, input, seed, sig_lvl = 0.1) {
 #' prepped_seed <- plane_seed(prepped_observed, cut_date = "2022-10-29")
 #'
 #' ## run plane component
-#' plane_shape(location = "13", input = prepped_forecast, seed = prepped_seed)
+#' plane_shape(location = "37", input = prepped_forecast, seed = prepped_seed)
 #'
+#' ## run plane component with DTW method
+#' plane_shape(location = "37", input = prepped_forecast, seed = prepped_seed, method = "dtw")
 #'
 plane_shape <- function(location, input, seed, method = "sdiff") {
 
