@@ -82,6 +82,6 @@ Before drawing any conclusions from `rplanes` results, we recommend that users f
 
 # Summary
 
-There are many reasons that a user might want to change the relative weights of individual components or leave components out of the `plane_score()` function altogether. Manual inspection of raised flags may be informative, particularly if users suspect that flags are raised erroneously (for any of the reasons discussed in this vignette). We also recommend collecting (or simulating) a few signals that you would expect to trigger flags for calibration purposes. Lastly, we suggest that retrospective analysis of plausibility scores as a batch across multiple evaluation time points can be a highly informative for guiding interpretation. 
+There are many reasons that a user might want to change the relative weights of individual components or leave components out of the `plane_score()` function altogether. Manual inspection of raised flags may be informative, particularly if users suspect that flags are raised erroneously (for any of the reasons discussed in this vignette). We also recommend collecting (or simulating) a few signals that you would expect to trigger flags for calibration purposes. Lastly, we suggest that retrospective analysis of plausibility scores as a batch (across multiple evaluation time points) can be highly informative for guiding interpretation. 
 
 
