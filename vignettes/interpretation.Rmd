@@ -1,11 +1,10 @@
 ---
-title: "`rplanes` Interpretations and Limitations"
+title: "PLANES Interpretation"
 output: 
   rmarkdown::html_vignette:
     toc: TRUE
-    number_sections: true
 vignette: >
-  %\VignetteIndexEntry{PLANES Interpretations and Limitations}
+  %\VignetteIndexEntry{PLANES Interpretation}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
