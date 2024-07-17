@@ -1,114 +1,44 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-  <url>
-    <loc>https://signaturescience.github.io/rplanes/404.html</loc>
-  </url>
-  <url>
-    <loc>https://signaturescience.github.io/rplanes/LICENSE-text.html</loc>
-  </url>
-  <url>
-    <loc>https://signaturescience.github.io/rplanes/LICENSE.html</loc>
-  </url>
-  <url>
-    <loc>https://signaturescience.github.io/rplanes/articles/basic-usage.html</loc>
-  </url>
-  <url>
-    <loc>https://signaturescience.github.io/rplanes/articles/index.html</loc>
-  </url>
-  <url>
-    <loc>https://signaturescience.github.io/rplanes/articles/planes-components.html</loc>
-  </url>
-  <url>
-    <loc>https://signaturescience.github.io/rplanes/articles/rplanes-explorer.html</loc>
-  </url>
-  <url>
-    <loc>https://signaturescience.github.io/rplanes/authors.html</loc>
-  </url>
-  <url>
-    <loc>https://signaturescience.github.io/rplanes/index.html</loc>
-  </url>
-  <url>
-    <loc>https://signaturescience.github.io/rplanes/news/index.html</loc>
-  </url>
-  <url>
-    <loc>https://signaturescience.github.io/rplanes/reference/check_incomplete.html</loc>
-  </url>
-  <url>
-    <loc>https://signaturescience.github.io/rplanes/reference/create_sliding_windows_df.html</loc>
-  </url>
-  <url>
-    <loc>https://signaturescience.github.io/rplanes/reference/epiweek_start.html</loc>
-  </url>
-  <url>
-    <loc>https://signaturescience.github.io/rplanes/reference/index.html</loc>
-  </url>
-  <url>
-    <loc>https://signaturescience.github.io/rplanes/reference/is_forecast.html</loc>
-  </url>
-  <url>
-    <loc>https://signaturescience.github.io/rplanes/reference/is_observed.html</loc>
-  </url>
-  <url>
-    <loc>https://signaturescience.github.io/rplanes/reference/month-subtraction.html</loc>
-  </url>
-  <url>
-    <loc>https://signaturescience.github.io/rplanes/reference/month_start.html</loc>
-  </url>
-  <url>
-    <loc>https://signaturescience.github.io/rplanes/reference/pipe.html</loc>
-  </url>
-  <url>
-    <loc>https://signaturescience.github.io/rplanes/reference/plane_cover.html</loc>
-  </url>
-  <url>
-    <loc>https://signaturescience.github.io/rplanes/reference/plane_diff.html</loc>
-  </url>
-  <url>
-    <loc>https://signaturescience.github.io/rplanes/reference/plane_repeat.html</loc>
-  </url>
-  <url>
-    <loc>https://signaturescience.github.io/rplanes/reference/plane_score.html</loc>
-  </url>
-  <url>
-    <loc>https://signaturescience.github.io/rplanes/reference/plane_seed.html</loc>
-  </url>
-  <url>
-    <loc>https://signaturescience.github.io/rplanes/reference/plane_shape.html</loc>
-  </url>
-  <url>
-    <loc>https://signaturescience.github.io/rplanes/reference/plane_taper.html</loc>
-  </url>
-  <url>
-    <loc>https://signaturescience.github.io/rplanes/reference/plane_trend.html</loc>
-  </url>
-  <url>
-    <loc>https://signaturescience.github.io/rplanes/reference/plane_zero.html</loc>
-  </url>
-  <url>
-    <loc>https://signaturescience.github.io/rplanes/reference/q_boundary.html</loc>
-  </url>
-  <url>
-    <loc>https://signaturescience.github.io/rplanes/reference/read_forecast.html</loc>
-  </url>
-  <url>
-    <loc>https://signaturescience.github.io/rplanes/reference/resolve_resolution.html</loc>
-  </url>
-  <url>
-    <loc>https://signaturescience.github.io/rplanes/reference/rplanes-package.html</loc>
-  </url>
-  <url>
-    <loc>https://signaturescience.github.io/rplanes/reference/rplanes_explorer.html</loc>
-  </url>
-  <url>
-    <loc>https://signaturescience.github.io/rplanes/reference/seed_engine.html</loc>
-  </url>
-  <url>
-    <loc>https://signaturescience.github.io/rplanes/reference/to_signal.html</loc>
-  </url>
-  <url>
-    <loc>https://signaturescience.github.io/rplanes/reference/valid_dates.html</loc>
-  </url>
-  <url>
-    <loc>https://signaturescience.github.io/rplanes/reference/valid_location.html</loc>
-  </url>
+<urlset xmlns = 'http://www.sitemaps.org/schemas/sitemap/0.9'>
+<url><loc>https://signaturescience.github.io/rplanes/404.html</loc></url>
+<url><loc>https://signaturescience.github.io/rplanes/LICENSE-text.html</loc></url>
+<url><loc>https://signaturescience.github.io/rplanes/LICENSE.html</loc></url>
+<url><loc>https://signaturescience.github.io/rplanes/articles/basic-usage.html</loc></url>
+<url><loc>https://signaturescience.github.io/rplanes/articles/index.html</loc></url>
+<url><loc>https://signaturescience.github.io/rplanes/articles/interpretation.html</loc></url>
+<url><loc>https://signaturescience.github.io/rplanes/articles/planes-components.html</loc></url>
+<url><loc>https://signaturescience.github.io/rplanes/articles/rplanes-explorer.html</loc></url>
+<url><loc>https://signaturescience.github.io/rplanes/authors.html</loc></url>
+<url><loc>https://signaturescience.github.io/rplanes/index.html</loc></url>
+<url><loc>https://signaturescience.github.io/rplanes/news/index.html</loc></url>
+<url><loc>https://signaturescience.github.io/rplanes/reference/check_incomplete.html</loc></url>
+<url><loc>https://signaturescience.github.io/rplanes/reference/create_sliding_windows_df.html</loc></url>
+<url><loc>https://signaturescience.github.io/rplanes/reference/cutter.html</loc></url>
+<url><loc>https://signaturescience.github.io/rplanes/reference/epiweek_start.html</loc></url>
+<url><loc>https://signaturescience.github.io/rplanes/reference/get_shapes.html</loc></url>
+<url><loc>https://signaturescience.github.io/rplanes/reference/index.html</loc></url>
+<url><loc>https://signaturescience.github.io/rplanes/reference/is_forecast.html</loc></url>
+<url><loc>https://signaturescience.github.io/rplanes/reference/is_observed.html</loc></url>
+<url><loc>https://signaturescience.github.io/rplanes/reference/month-subtraction.html</loc></url>
+<url><loc>https://signaturescience.github.io/rplanes/reference/month_start.html</loc></url>
+<url><loc>https://signaturescience.github.io/rplanes/reference/pipe.html</loc></url>
+<url><loc>https://signaturescience.github.io/rplanes/reference/plane_cover.html</loc></url>
+<url><loc>https://signaturescience.github.io/rplanes/reference/plane_diff.html</loc></url>
+<url><loc>https://signaturescience.github.io/rplanes/reference/plane_repeat.html</loc></url>
+<url><loc>https://signaturescience.github.io/rplanes/reference/plane_score.html</loc></url>
+<url><loc>https://signaturescience.github.io/rplanes/reference/plane_seed.html</loc></url>
+<url><loc>https://signaturescience.github.io/rplanes/reference/plane_shape.html</loc></url>
+<url><loc>https://signaturescience.github.io/rplanes/reference/plane_taper.html</loc></url>
+<url><loc>https://signaturescience.github.io/rplanes/reference/plane_trend.html</loc></url>
+<url><loc>https://signaturescience.github.io/rplanes/reference/plane_zero.html</loc></url>
+<url><loc>https://signaturescience.github.io/rplanes/reference/q_boundary.html</loc></url>
+<url><loc>https://signaturescience.github.io/rplanes/reference/read_forecast.html</loc></url>
+<url><loc>https://signaturescience.github.io/rplanes/reference/resolve_resolution.html</loc></url>
+<url><loc>https://signaturescience.github.io/rplanes/reference/rplanes-package.html</loc></url>
+<url><loc>https://signaturescience.github.io/rplanes/reference/rplanes_explorer.html</loc></url>
+<url><loc>https://signaturescience.github.io/rplanes/reference/seed_engine.html</loc></url>
+<url><loc>https://signaturescience.github.io/rplanes/reference/to_chunk.html</loc></url>
+<url><loc>https://signaturescience.github.io/rplanes/reference/to_signal.html</loc></url>
+<url><loc>https://signaturescience.github.io/rplanes/reference/valid_dates.html</loc></url>
+<url><loc>https://signaturescience.github.io/rplanes/reference/valid_location.html</loc></url>
 </urlset>
+
