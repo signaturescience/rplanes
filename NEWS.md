@@ -1,3 +1,9 @@
+# rplanes 0.1.1
+
+## Bug fixes
+
+`plane_trend()` no longer sets the seed, but uses [`withr::with_seed()`]
+(https://withr.r-lib.org/reference/with_seed.html) to preserved the global state
 # rplanes 0.1.0
 
 ## New features

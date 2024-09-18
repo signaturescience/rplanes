@@ -371,7 +371,7 @@ plane_repeat <- function(location, input, seed, tolerance = NULL, prepend = NULL
   ## if so ... we cannot fairly say there is a repeat so set to FALSE
   if(length(unique(tmp_seed$all_values)) == 1) {
     ind <- FALSE
-  ## if not ... look at the repeat table to determine if flag is raised
+    ## if not ... look at the repeat table to determine if flag is raised
   } else {
     ## indicator for whether or not the number of rows is > 0
     ## this would indicate that there are repeats
@@ -682,8 +682,12 @@ plane_trend <- function(location, input, seed, sig_lvl = 0.1) {
   ex <- as.matrix(structure(c(tail(obspoint, prepend_length), forepoint))) # We want 4x as much training data as forecast data
 
   # Get break points. When k = NULL, all significant points are picked. Need to play around with the sig.lvl
-  set.seed(123)
-  ecp_output <- ecp::e.divisive(diff(ex), sig.lvl = sig_lvl, k = NULL, min.size = 2)
+  ecp_output <- withr::with_seed(
+    seed = 123,
+    code = {
+      ecp::e.divisive(diff(ex), sig.lvl = sig_lvl, k = NULL, min.size = 2)
+    }
+  )
   # We use diff(ex) instead of the raw data, which is a preference and slightly changes the way the points are identified. When we use diff(ex), the index aligns with the gap between points rather than the points themselves. Instead of identifying a change point based on the change in size between two points, it identifies change points based on the change in the change itself. For example, the dataframe below shows an example of ex and diff(ex):
   # ex diff.ex.
   # 1  3        6

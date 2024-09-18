@@ -1,19 +1,17 @@
 Package: rplanes
 Title: Plausibility Analysis of Epidemiological Signals
 Version: 0.1.0
-Authors@R: 
-    c(person(given = "VP",
-             family = "Nagraj",
-             role = c("aut", "cre"),
-             email = "nagraj@nagraj.net",
-             comment = c(ORCID = "0000-0003-0060-566X")),
-      person(given = "Desiree",
-             family = "Williams",
-             role = "aut"),
-      person(given = "Amy",
-             family = "Benefield",
-             role = "aut"))
-Description: Provides functionality to prepare data and analyze plausibility of both forecasted and reported epidemiological signals. The functions implement a set of plausibility algorithms that are agnostic to geographic and time resolutions and are calculated independently then presented as a combined score.
+Authors@R: c(
+    person("VP", "Nagraj", , "nagraj@nagraj.net", role = c("aut", "cre"),
+           comment = c(ORCID = "0000-0003-0060-566X")),
+    person("Desiree", "Williams", role = "aut"),
+    person("Amy", "Benefield", role = "aut")
+  )
+Description: Provides functionality to prepare data and analyze
+    plausibility of both forecasted and reported epidemiological signals.
+    The functions implement a set of plausibility algorithms that are
+    agnostic to geographic and time resolutions and are calculated
+    independently then presented as a combined score.
 License: MIT + file LICENSE
 URL: https://github.com/signaturescience/rplanes, https://signaturescience.github.io/rplanes/
 BugReports: https://github.com/signaturescience/rplanes/issues
@@ -31,18 +29,19 @@ Imports:
     stringr,
     tibble,
     tidyr,
-    utils
+    utils,
+    withr
 Suggests:
     DT,
     ggplot2,
-    markdown,
     knitr,
+    markdown,
     MMWRweek,
     rmarkdown,
     shiny,
+    shinycssloaders,
     shinyjs,
     shinyWidgets,
-    shinycssloaders,
     testthat (>= 3.0.0),
     tools
 VignetteBuilder: 
